@@ -29,7 +29,9 @@ fn main() -> Result<()> {
                     .args(words.collect::<Vec<_>>())
                     .status()?;
 
-                println!("{} exited with code {}", command, status);
+                if !status.success() {
+                    println!("{}: {}", command, status);
+                }
             }
             Err(ReadlineError::Interrupted) => {
                 continue;
