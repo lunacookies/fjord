@@ -4,6 +4,7 @@ const PROMPT: &'static str = "→ ";
 
 fn main() -> Result<()> {
     use {
+        fj::LexItemsIter,
         rustyline::{error::ReadlineError, Editor},
         std::process::Command,
     };
@@ -19,14 +20,16 @@ fn main() -> Result<()> {
                     continue;
                 }
 
-                let mut words = i.split_ascii_whitespace();
+                // We collect into a vector and convert back into an iterator to pull each lex
+                // item’s Result out and around the collection.
+                let lex_items: std::result::Result<Vec<_>, _> = LexItemsIter::new(&i).collect();
+                let lex_items = lex_items?;
+                let mut lex_items = lex_items.iter();
 
-                // We have already ensured that the input is not empty, so there must be at least a
-                // first item in this iterator;
-                let command = words.next().unwrap();
+                let command = lex_items.next().unwrap();
 
-                let status = Command::new(command)
-                    .args(words.collect::<Vec<_>>())
+                let status = Command::new(command.as_ref())
+                    .args(lex_items.map(|s| s.as_ref()))
                     .status()?;
 
                 if !status.success() {
