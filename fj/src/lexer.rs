@@ -1,4 +1,4 @@
-use {std::fmt, thiserror::Error};
+use {proptest::prelude::*, std::fmt, thiserror::Error};
 
 #[derive(Debug, PartialEq)]
 pub enum LexItem<'a> {
@@ -83,5 +83,54 @@ impl<'a> Iterator for LexItemsIter<'a> {
 impl<'a> LexItemsIter<'a> {
     pub fn new(s: &'a str) -> Self {
         Self { idx: 0, source: s }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn basic() {
+        assert_eq!(
+            vec![
+                Ok(LexItem::CommandName("echo")),
+                Ok(LexItem::CommandArg("Quoted together")),
+                Ok(LexItem::CommandArg("or")),
+                Ok(LexItem::CommandArg("separate"))
+            ],
+            LexItemsIter::new("echo \"Quoted together\" or separate ").collect::<Vec<_>>()
+        );
+    }
+}
+
+proptest! {
+    #[test]
+    fn does_not_crash(s in r#"[\w\s]*"#) {
+        let _ = LexItemsIter::new(&s).collect::<Vec<_>>();
+    }
+
+    #[test]
+    fn isolate_quoted(
+        //                   ╭ No control chars
+        //                   │    ╭ No quotes
+        command_name in r#"[^\pC\s"]+"#, // No whitespace in command name and free arg because
+        free_arg     in r#"[^\pC\s"]+"#, // whitespace can separate these.
+        quoted_arg1  in r#"[^\pC"]+"#,   // Whitespace, however, is allowed for quoted args because
+        quoted_arg2  in r#"[^\pC"]+"#,   // the quotes stop separation of the args.
+    ) {
+        let input = format!("{} \"{} {}\" {} ", command_name, quoted_arg1, quoted_arg2, free_arg);
+        let arg1and2 = format!("{} {}", quoted_arg1, quoted_arg2);
+
+        let lex_items = LexItemsIter::new(&input).collect::<Vec<_>>();
+
+        prop_assert_eq!(
+            vec![
+                Ok(LexItem::CommandName(&command_name)),
+                Ok(LexItem::CommandArg(&arg1and2)),
+                Ok(LexItem::CommandArg(&free_arg))
+            ],
+            lex_items
+        );
     }
 }
