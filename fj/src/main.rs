@@ -1,4 +1,4 @@
-use anyhow::Result;
+use {anyhow::Result, fj::LexItem, std::path::PathBuf};
 
 const PROMPT: &'static str = "→ ";
 
@@ -6,10 +6,11 @@ fn main() -> Result<()> {
     use {
         fj::LexItemsIter,
         rustyline::{error::ReadlineError, Editor},
-        std::process::Command,
+        std::{env, process::Command},
     };
 
     let mut rl = Editor::<()>::new();
+    let mut pwd = env::current_dir()?;
 
     loop {
         let input = rl.readline(PROMPT);
@@ -28,12 +29,18 @@ fn main() -> Result<()> {
 
                 let command = lex_items.next().unwrap();
 
-                let status = Command::new(command.as_ref())
-                    .args(lex_items.map(|s| s.as_ref()))
-                    .status()?;
+                match command.as_ref() {
+                    "cd" => cd(lex_items, &mut pwd),
+                    command => {
+                        let status = Command::new(command)
+                            .args(lex_items.map(|s| s.as_ref()))
+                            .current_dir(&pwd)
+                            .status()?;
 
-                if !status.success() {
-                    println!("{}: {}", command, status);
+                        if !status.success() {
+                            println!("{}: {}", command, status);
+                        }
+                    }
                 }
             }
             Err(ReadlineError::Interrupted) => {
@@ -50,4 +57,26 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn cd<'a>(mut args: impl Iterator<Item = &'a LexItem<'a>>, pwd: &mut PathBuf) {
+    let target_path =
+        args.next()
+            .map(|l| PathBuf::from(l.as_ref()))
+            .unwrap_or(match dirs::home_dir() {
+                Some(d) => d,
+                None => {
+                    eprintln!("cd: Home directory could not be determined.");
+                    return;
+                }
+            });
+
+    if target_path.exists() {
+        *pwd = target_path;
+    } else {
+        eprintln!(
+            "cd: Target path ‘{}’ does not exist.",
+            target_path.display()
+        );
+    }
 }
