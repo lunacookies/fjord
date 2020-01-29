@@ -1,6 +1,6 @@
 use {anyhow::Result, fj::LexItem, std::path::PathBuf};
 
-const PROMPT: &'static str = "→ ";
+const PROMPT_CHAR: &'static str = "→ ";
 
 fn main() -> Result<()> {
     use {
@@ -13,7 +13,8 @@ fn main() -> Result<()> {
     let mut pwd = env::current_dir()?;
 
     loop {
-        let input = rl.readline(PROMPT);
+        let prompt = format!("{} {}", pwd.display(), PROMPT_CHAR);
+        let input = rl.readline(&prompt);
 
         match input {
             Ok(i) => {
