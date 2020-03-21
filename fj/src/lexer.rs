@@ -48,7 +48,7 @@ impl<'a> Iterator for LexItemsIter<'a> {
         // NOTE: We separate out end_idx because quotes require the special case of the end of the
         // lex item being different from the part of the source string that needs to be removed.
         // (the end quote)
-        let (lex_item_contents, end_idx) = if self.source.chars().nth(0) == Some('"') {
+        let (lex_item_contents, end_idx) = if self.source.starts_with('"') {
             let closing_quote = match self.source[1..].find('"') {
                 Some(idx) => idx,
                 None => return Some(Err(LexItemParseError::UnmatchedQuote)),
