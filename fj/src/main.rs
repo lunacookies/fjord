@@ -1,6 +1,6 @@
 use {anyhow::Result, fj::LexItem, std::path::PathBuf};
 
-const PROMPT_CHAR: &'static str = "→ ";
+const PROMPT_CHAR: &str = "→ ";
 
 fn main() -> Result<()> {
     use {
