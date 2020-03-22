@@ -1,5 +1,5 @@
 pub(crate) trait Eval {
-    fn eval(self) -> Result<OutputExpr, Error>;
+    fn eval<'a>(self) -> Result<OutputExpr<'a>, Error>;
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -8,6 +8,7 @@ pub enum Error {
     FuncNotFound,
 }
 
-pub enum OutputExpr {
+pub enum OutputExpr<'a> {
     Number(crate::Number),
+    Str(&'a str),
 }

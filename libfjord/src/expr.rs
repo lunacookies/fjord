@@ -112,7 +112,7 @@ mod tests {
 }
 
 impl crate::eval::Eval for Expr<'_> {
-    fn eval(self) -> Result<crate::eval::OutputExpr, crate::eval::Error> {
+    fn eval<'a>(self) -> Result<crate::eval::OutputExpr<'a>, crate::eval::Error> {
         Ok(crate::eval::OutputExpr::Number(25))
     }
 }
