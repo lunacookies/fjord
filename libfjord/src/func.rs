@@ -7,7 +7,7 @@ pub(crate) struct Func<'a> {
 }
 
 impl<'a> Func<'a> {
-    fn new(s: &'a str) -> nom::IResult<&'a str, Self> {
+    pub(crate) fn new(s: &'a str) -> nom::IResult<&'a str, Self> {
         let (s, _) = tag("fn")(s)?;
         let (s, _) = crate::take_whitespace1(s)?;
 
@@ -71,10 +71,7 @@ fn param1 param2 {
 }
 
 impl<'a> crate::eval::Eval<'a> for Func<'a> {
-    fn eval(
-        self,
-        state: &'a crate::eval::State<'a>,
-    ) -> Result<crate::eval::OutputExpr<'a>, crate::eval::Error> {
+    fn eval(self, state: &'a crate::eval::State<'a>) -> crate::eval::EvalResult<'a> {
         self.body.eval(state)
     }
 }

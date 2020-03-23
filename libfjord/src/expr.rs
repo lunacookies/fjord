@@ -112,10 +112,7 @@ mod tests {
 }
 
 impl<'a> crate::eval::Eval<'a> for Expr<'a> {
-    fn eval(
-        self,
-        state: &'a crate::eval::State<'a>,
-    ) -> Result<crate::eval::OutputExpr<'a>, crate::eval::Error> {
+    fn eval(self, state: &'a crate::eval::State<'a>) -> crate::eval::EvalResult<'a> {
         match self {
             Self::Number(n) => Ok(crate::eval::OutputExpr::Number(n)),
             Self::Str(s) => Ok(crate::eval::OutputExpr::Str(s)),

@@ -1,10 +1,11 @@
-mod eval;
+pub mod eval;
 mod expr;
 mod func;
 mod ident_name;
+mod item;
 mod misc;
 
-use {expr::Expr, func::Func, ident_name::IdentName, misc::*};
+use {expr::Expr, func::Func, ident_name::IdentName, item::Item, misc::*};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
