@@ -9,6 +9,7 @@ use nom::{
 pub(crate) enum Expr<'a> {
     Number(crate::Number),
     Str(&'a str),
+    Var(crate::IdentName<'a>),
     FuncCall {
         name: crate::IdentName<'a>,
         params: Vec<Expr<'a>>,
@@ -19,6 +20,7 @@ impl<'a> Expr<'a> {
     pub(crate) fn new(s: &'a str) -> nom::IResult<&'a str, Self> {
         Self::new_number(s)
             .or_else(|_| Self::new_str(s))
+            .or_else(|_| Self::new_var(s))
             .or_else(|_| Self::new_func_call(s))
     }
 
@@ -34,6 +36,13 @@ impl<'a> Expr<'a> {
     fn new_str(s: &'a str) -> nom::IResult<&'a str, Self> {
         let (s, text) = delimited(char('"'), take_till(|c| c == '"'), char('"'))(s)?;
         Ok((s, Self::Str(text)))
+    }
+
+    fn new_var(s: &'a str) -> nom::IResult<&'a str, Self> {
+        let (s, _) = char('#')(s)?;
+        let (s, name) = crate::IdentName::new(s)?;
+
+        Ok((s, Self::Var(name)))
     }
 
     fn new_func_call(s: &'a str) -> nom::IResult<&'a str, Self> {
@@ -66,6 +75,18 @@ mod tests {
         );
         assert_eq!(Expr::new_str("\"🦀\""), Ok(("", Expr::Str("🦀"))));
         assert_eq!(Expr::new("\"foobar\""), Ok(("", Expr::Str("foobar"))));
+    }
+
+    #[test]
+    fn var() {
+        assert_eq!(
+            Expr::new_var("#myVar"),
+            Ok(("", Expr::Var(crate::IdentName::new("myVar").unwrap().1)))
+        );
+        assert_eq!(
+            Expr::new("#foobar"),
+            Ok(("", Expr::Var(crate::IdentName::new("foobar").unwrap().1)))
+        );
     }
 
     #[test]
@@ -116,6 +137,10 @@ impl<'a> crate::eval::Eval<'a> for Expr<'a> {
         match self {
             Self::Number(n) => Ok(crate::eval::OutputExpr::Number(n)),
             Self::Str(s) => Ok(crate::eval::OutputExpr::Str(s)),
+            Self::Var(name) => match state.get_var(name) {
+                Some(val) => val.clone().eval(state),
+                None => Err(crate::eval::Error::VarNotFound),
+            },
             Self::FuncCall { name, .. } => match state.get_func(name) {
                 Some(func) => func.clone().eval(state),
                 None => Err(crate::eval::Error::FuncNotFound),

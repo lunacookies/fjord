@@ -17,6 +17,10 @@ impl<'a> State<'a> {
         }
     }
 
+    pub(crate) fn get_var(&self, name: crate::IdentName<'a>) -> Option<&'a crate::Func> {
+        self.funcs.get(&name)
+    }
+
     pub(crate) fn get_func(&self, name: crate::IdentName<'a>) -> Option<&'a crate::Func> {
         self.funcs.get(&name)
     }
@@ -32,6 +36,8 @@ impl<'a> State<'a> {
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("could not find variable")]
+    VarNotFound,
     #[error("could not find function")]
     FuncNotFound,
 }
