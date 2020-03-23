@@ -5,7 +5,7 @@ use nom::{
     sequence::delimited,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub(crate) enum Expr<'a> {
     Number(crate::Number),
     Str(&'a str),
@@ -111,8 +111,18 @@ mod tests {
     }
 }
 
-impl crate::eval::Eval for Expr<'_> {
-    fn eval<'a>(self) -> Result<crate::eval::OutputExpr<'a>, crate::eval::Error> {
-        Ok(crate::eval::OutputExpr::Number(25))
+impl<'a> crate::eval::Eval<'a> for Expr<'a> {
+    fn eval(
+        self,
+        state: &'a crate::eval::State<'a>,
+    ) -> Result<crate::eval::OutputExpr<'a>, crate::eval::Error> {
+        match self {
+            Self::Number(n) => Ok(crate::eval::OutputExpr::Number(n)),
+            Self::Str(s) => Ok(crate::eval::OutputExpr::Str(s)),
+            Self::FuncCall { name, .. } => match state.get_func(name) {
+                Some(func) => func.clone().eval(state),
+                None => Err(crate::eval::Error::FuncNotFound),
+            },
+        }
     }
 }

@@ -1,6 +1,6 @@
 use nom::bytes::complete::take_while1;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub(crate) struct IdentName<'a>(&'a str);
 
 impl<'a> IdentName<'a> {

@@ -14,12 +14,13 @@ pub enum Error {
     Parse,
 }
 
-pub fn eval(s: &str) -> Result<eval::OutputExpr, Error> {
+pub fn eval<'a>(s: &'a str, state: &'a eval::State<'a>) -> Result<eval::OutputExpr<'a>, Error> {
     use eval::Eval;
 
     let (_, expr) = match Expr::new(s) {
         Ok(e) => e,
         _ => return Err(Error::Parse),
     };
-    Ok(expr.eval()?)
+
+    Ok(expr.eval(state)?)
 }

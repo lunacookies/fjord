@@ -1,6 +1,6 @@
 use nom::{bytes::complete::tag, character::complete::char, multi::many0};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Func<'a> {
     params: Vec<crate::IdentName<'a>>,
     body: crate::Expr<'a>,
@@ -67,5 +67,14 @@ fn param1 param2 {
                 }
             ))
         )
+    }
+}
+
+impl<'a> crate::eval::Eval<'a> for Func<'a> {
+    fn eval(
+        self,
+        state: &'a crate::eval::State<'a>,
+    ) -> Result<crate::eval::OutputExpr<'a>, crate::eval::Error> {
+        self.body.eval(state)
     }
 }
