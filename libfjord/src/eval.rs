@@ -4,6 +4,7 @@ pub(crate) trait Eval {
     fn eval(self, state: &State) -> EvalResult;
 }
 
+#[derive(Debug)]
 pub struct State {
     vars: HashMap<crate::IdentName, crate::Expr>,
     funcs: HashMap<crate::IdentName, crate::Func>,

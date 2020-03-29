@@ -47,7 +47,7 @@ impl Item {
         ))
     }
 
-    fn eval(self, state: &mut crate::eval::State) -> crate::eval::EvalResult {
+    pub(crate) fn eval(self, state: &mut crate::eval::State) -> crate::eval::EvalResult {
         use crate::eval::Eval;
 
         match self.kind {
