@@ -9,7 +9,7 @@ pub(crate) struct Item<'a> {
 enum ItemKind<'a> {
     Expr(crate::Expr<'a>),
     Binding {
-        name: crate::IdentName<'a>,
+        name: crate::IdentName,
         val: BindingVal<'a>,
     },
 }

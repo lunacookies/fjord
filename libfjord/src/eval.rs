@@ -5,8 +5,8 @@ pub(crate) trait Eval<'a> {
 }
 
 pub struct State<'a> {
-    vars: HashMap<crate::IdentName<'a>, crate::Expr<'a>>,
-    funcs: HashMap<crate::IdentName<'a>, crate::Func<'a>>,
+    vars: HashMap<crate::IdentName, crate::Expr<'a>>,
+    funcs: HashMap<crate::IdentName, crate::Func<'a>>,
 }
 
 impl<'a> State<'a> {
@@ -17,19 +17,19 @@ impl<'a> State<'a> {
         }
     }
 
-    pub(crate) fn get_var(&self, name: crate::IdentName<'a>) -> Option<&'a crate::Func> {
+    pub(crate) fn get_var(&self, name: crate::IdentName) -> Option<&'a crate::Func> {
         self.funcs.get(&name)
     }
 
-    pub(crate) fn get_func(&self, name: crate::IdentName<'a>) -> Option<&'a crate::Func> {
+    pub(crate) fn get_func(&self, name: crate::IdentName) -> Option<&'a crate::Func> {
         self.funcs.get(&name)
     }
 
-    pub(crate) fn set_var(&mut self, name: crate::IdentName<'a>, val: crate::Expr<'a>) {
+    pub(crate) fn set_var(&mut self, name: crate::IdentName, val: crate::Expr<'a>) {
         self.vars.insert(name, val);
     }
 
-    pub(crate) fn set_func(&mut self, name: crate::IdentName<'a>, func: crate::Func<'a>) {
+    pub(crate) fn set_func(&mut self, name: crate::IdentName, func: crate::Func<'a>) {
         self.funcs.insert(name, func);
     }
 }

@@ -2,7 +2,7 @@ use nom::{bytes::complete::tag, character::complete::char, multi::many0};
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Func<'a> {
-    params: Vec<crate::IdentName<'a>>,
+    params: Vec<crate::IdentName>,
     body: crate::Expr<'a>,
 }
 

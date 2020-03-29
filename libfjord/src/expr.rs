@@ -9,9 +9,9 @@ use nom::{
 pub(crate) enum Expr<'a> {
     Number(crate::Number),
     Str(&'a str),
-    Var(crate::IdentName<'a>),
+    Var(crate::IdentName),
     FuncCall {
-        name: crate::IdentName<'a>,
+        name: crate::IdentName,
         params: Vec<Expr<'a>>,
     },
 }
