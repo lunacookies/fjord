@@ -6,7 +6,7 @@ pub(crate) trait Eval {
 
 #[derive(Debug)]
 pub struct State<'a> {
-    vars: HashMap<crate::IdentName, crate::Expr>,
+    vars: HashMap<crate::IdentName, OutputExpr>,
     funcs: HashMap<crate::IdentName, crate::Func>,
     parent: ParentState<'a>,
 }
@@ -28,7 +28,7 @@ impl<'a> State<'a> {
         }
     }
 
-    pub(crate) fn get_var(&self, name: crate::IdentName) -> Option<&crate::Expr> {
+    pub(crate) fn get_var(&self, name: crate::IdentName) -> Option<&OutputExpr> {
         self.vars.get(&name)
     }
 
@@ -36,7 +36,7 @@ impl<'a> State<'a> {
         self.funcs.get(&name)
     }
 
-    pub(crate) fn set_var(&mut self, name: crate::IdentName, val: crate::Expr) {
+    pub(crate) fn set_var(&mut self, name: crate::IdentName, val: OutputExpr) {
         self.vars.insert(name, val);
     }
 
@@ -59,7 +59,7 @@ pub enum Error {
     FuncNotFound,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum OutputExpr {
     Number(crate::Number),
     Str(String),

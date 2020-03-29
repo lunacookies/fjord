@@ -54,7 +54,7 @@ impl Item {
             ItemKind::Expr(e) => e.eval(state),
             ItemKind::Binding { name, val } => {
                 match val {
-                    BindingVal::Var(e) => state.set_var(name, e),
+                    BindingVal::Var(e) => state.set_var(name, e.eval(state)?),
                     BindingVal::Func(f) => state.set_func(name, f),
                 };
                 Ok(crate::eval::OutputExpr::Unit)

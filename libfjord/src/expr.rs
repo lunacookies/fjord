@@ -141,7 +141,7 @@ impl crate::eval::Eval for Expr {
             Self::Number(n) => Ok(crate::eval::OutputExpr::Number(n)),
             Self::Str(s) => Ok(crate::eval::OutputExpr::Str(s)),
             Self::Var(name) => match state.get_var(name) {
-                Some(val) => val.clone().eval(state),
+                Some(val) => Ok(val.clone()),
                 None => Err(crate::eval::Error::VarNotFound),
             },
             Self::FuncCall {
@@ -159,7 +159,7 @@ impl crate::eval::Eval for Expr {
                 // definition are parameter names, not values (function definitions have nothing to
                 // do with the actual values of the paramters).
                 for (param_name, param_val) in func.params().iter().zip(param_vals) {
-                    func_state.set_var(param_name.clone(), param_val);
+                    func_state.set_var(param_name.clone(), param_val.eval(state)?);
                 }
 
                 for item in func.body() {
