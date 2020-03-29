@@ -5,16 +5,26 @@ pub(crate) trait Eval {
 }
 
 #[derive(Debug)]
-pub struct State {
+pub struct State<'a> {
     vars: HashMap<crate::IdentName, crate::Expr>,
     funcs: HashMap<crate::IdentName, crate::Func>,
+    parent: ParentState<'a>,
 }
 
-impl State {
-    pub fn new() -> Self {
+impl<'a> State<'a> {
+    pub fn new_root() -> Self {
         Self {
             vars: HashMap::new(),
             funcs: HashMap::new(),
+            parent: ParentState::Root,
+        }
+    }
+
+    pub fn new_child(&'a self) -> Self {
+        Self {
+            vars: HashMap::new(),
+            funcs: HashMap::new(),
+            parent: ParentState::NonRoot(self),
         }
     }
 
@@ -33,6 +43,12 @@ impl State {
     pub(crate) fn set_func(&mut self, name: crate::IdentName, func: crate::Func) {
         self.funcs.insert(name, func);
     }
+}
+
+#[derive(Debug)]
+enum ParentState<'a> {
+    Root,
+    NonRoot(&'a State<'a>),
 }
 
 #[derive(Debug, thiserror::Error)]
