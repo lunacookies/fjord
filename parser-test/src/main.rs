@@ -13,7 +13,7 @@ fn main() -> anyhow::Result<()> {
             Ok(s) => s,
             Err(e) => {
                 writeln!(stderr, "Error: {}", e)?;
-                return Ok(());
+                continue;
             }
         };
         user_inputs.push(input);
@@ -23,10 +23,9 @@ fn main() -> anyhow::Result<()> {
         match eval_result {
             Ok((s, output)) => {
                 states.push(s);
-                // dbg!(output);
+                dbg!(output);
             }
             Err(e) => {
-                // return Err(e);
                 dbg!(e);
             }
         }
