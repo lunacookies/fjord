@@ -16,8 +16,6 @@ pub enum Error {
 }
 
 pub fn eval(s: &str, state: &mut eval::State) -> Result<eval::OutputExpr, Error> {
-    use eval::Eval;
-
     let (_, expr) = match Item::new(s) {
         Ok(e) => e,
         _ => return Err(Error::Parse),
