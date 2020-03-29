@@ -144,10 +144,36 @@ impl crate::eval::Eval for Expr {
                 Some(val) => val.clone().eval(state),
                 None => Err(crate::eval::Error::VarNotFound),
             },
-            Self::FuncCall { name, .. } => match state.get_func(name) {
-                Some(func) => func.clone().eval(state),
-                None => Err(crate::eval::Error::FuncNotFound),
-            },
+            Self::FuncCall {
+                name,
+                params: param_vals,
+            } => {
+                let func = state
+                    .get_func(name)
+                    .ok_or(crate::eval::Error::FuncNotFound)?;
+
+                let mut func_state = state.new_child();
+
+                // The params of the function call are values (parsing a function call doesn’t have
+                // anything to do with the parameters’ names), while the params of the function
+                // definition are parameter names, not values (function definitions have nothing to
+                // do with the actual values of the paramters).
+                for (param_name, param_val) in func.params().iter().zip(param_vals) {
+                    func_state.set_var(param_name.clone(), param_val);
+                }
+
+                for item in func.body() {
+                    // Early return on any free expression that isn’t the unit.
+                    match item.clone().eval(&mut func_state)? {
+                        crate::eval::OutputExpr::Unit => (),
+                        expr => return Ok(expr),
+                    }
+                }
+
+                // At this point all items in the function have evaluated to the unit, so we return
+                // the unit.
+                Ok(crate::eval::OutputExpr::Unit)
+            }
         }
     }
 }

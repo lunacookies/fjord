@@ -1,11 +1,11 @@
 use nom::bytes::complete::tag;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Item {
     kind: ItemKind,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 enum ItemKind {
     Expr(crate::Expr),
     Binding {
@@ -112,7 +112,7 @@ mod item_tests {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 enum BindingVal {
     Var(crate::Expr),
     Func(crate::Func),
