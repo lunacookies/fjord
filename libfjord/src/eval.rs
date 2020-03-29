@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
-pub(crate) trait Eval<'a> {
-    fn eval(self, state: &'a State<'a>) -> EvalResult<'a>;
+pub(crate) trait Eval {
+    fn eval(self, state: &State) -> EvalResult;
 }
 
-pub struct State<'a> {
-    vars: HashMap<crate::IdentName, crate::Expr<'a>>,
-    funcs: HashMap<crate::IdentName, crate::Func<'a>>,
+pub struct State {
+    vars: HashMap<crate::IdentName, crate::Expr>,
+    funcs: HashMap<crate::IdentName, crate::Func>,
 }
 
-impl<'a> State<'a> {
+impl State {
     pub fn new() -> Self {
         Self {
             vars: HashMap::new(),
@@ -17,19 +17,19 @@ impl<'a> State<'a> {
         }
     }
 
-    pub(crate) fn get_var(&self, name: crate::IdentName) -> Option<&'a crate::Func> {
+    pub(crate) fn get_var(&self, name: crate::IdentName) -> Option<&crate::Func> {
         self.funcs.get(&name)
     }
 
-    pub(crate) fn get_func(&self, name: crate::IdentName) -> Option<&'a crate::Func> {
+    pub(crate) fn get_func(&self, name: crate::IdentName) -> Option<&crate::Func> {
         self.funcs.get(&name)
     }
 
-    pub(crate) fn set_var(&mut self, name: crate::IdentName, val: crate::Expr<'a>) {
+    pub(crate) fn set_var(&mut self, name: crate::IdentName, val: crate::Expr) {
         self.vars.insert(name, val);
     }
 
-    pub(crate) fn set_func(&mut self, name: crate::IdentName, func: crate::Func<'a>) {
+    pub(crate) fn set_func(&mut self, name: crate::IdentName, func: crate::Func) {
         self.funcs.insert(name, func);
     }
 }
@@ -43,10 +43,10 @@ pub enum Error {
 }
 
 #[derive(Debug)]
-pub enum OutputExpr<'a> {
+pub enum OutputExpr {
     Number(crate::Number),
-    Str(&'a str),
+    Str(String),
     Unit,
 }
 
-pub(crate) type EvalResult<'a> = Result<OutputExpr<'a>, Error>;
+pub(crate) type EvalResult = Result<OutputExpr, Error>;

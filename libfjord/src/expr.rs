@@ -6,18 +6,18 @@ use nom::{
 };
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) enum Expr<'a> {
+pub(crate) enum Expr {
     Number(crate::Number),
-    Str(&'a str),
+    Str(String),
     Var(crate::IdentName),
     FuncCall {
         name: crate::IdentName,
-        params: Vec<Expr<'a>>,
+        params: Vec<Expr>,
     },
 }
 
-impl<'a> Expr<'a> {
-    pub(crate) fn new(s: &'a str) -> nom::IResult<&'a str, Self> {
+impl Expr {
+    pub(crate) fn new(s: &str) -> nom::IResult<&str, Self> {
         Self::new_number(s)
             .or_else(|_| Self::new_str(s))
             .or_else(|_| Self::new_var(s))
@@ -33,19 +33,19 @@ impl<'a> Expr<'a> {
         Ok((s, Self::Number(n)))
     }
 
-    fn new_str(s: &'a str) -> nom::IResult<&'a str, Self> {
+    fn new_str(s: &str) -> nom::IResult<&str, Self> {
         let (s, text) = delimited(char('"'), take_till(|c| c == '"'), char('"'))(s)?;
-        Ok((s, Self::Str(text)))
+        Ok((s, Self::Str(text.into())))
     }
 
-    fn new_var(s: &'a str) -> nom::IResult<&'a str, Self> {
+    fn new_var(s: &str) -> nom::IResult<&str, Self> {
         let (s, _) = char('#')(s)?;
         let (s, name) = crate::IdentName::new(s)?;
 
         Ok((s, Self::Var(name)))
     }
 
-    fn new_func_call(s: &'a str) -> nom::IResult<&'a str, Self> {
+    fn new_func_call(s: &str) -> nom::IResult<&str, Self> {
         let (s, name) = crate::IdentName::new(s)?;
 
         let (s, params) = many0(|s| {
@@ -71,10 +71,13 @@ mod tests {
     fn str() {
         assert_eq!(
             Expr::new_str("\"Hello, World!\""),
-            Ok(("", Expr::Str("Hello, World!")))
+            Ok(("", Expr::Str("Hello, World!".into())))
         );
-        assert_eq!(Expr::new_str("\"🦀\""), Ok(("", Expr::Str("🦀"))));
-        assert_eq!(Expr::new("\"foobar\""), Ok(("", Expr::Str("foobar"))));
+        assert_eq!(Expr::new_str("\"🦀\""), Ok(("", Expr::Str("🦀".into()))));
+        assert_eq!(
+            Expr::new("\"foobar\""),
+            Ok(("", Expr::Str("foobar".into())))
+        );
     }
 
     #[test]
@@ -132,8 +135,8 @@ mod tests {
     }
 }
 
-impl<'a> crate::eval::Eval<'a> for Expr<'a> {
-    fn eval(self, state: &'a crate::eval::State<'a>) -> crate::eval::EvalResult<'a> {
+impl crate::eval::Eval for Expr {
+    fn eval(self, state: &crate::eval::State) -> crate::eval::EvalResult {
         match self {
             Self::Number(n) => Ok(crate::eval::OutputExpr::Number(n)),
             Self::Str(s) => Ok(crate::eval::OutputExpr::Str(s)),

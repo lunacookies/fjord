@@ -1,13 +1,13 @@
 use nom::{bytes::complete::tag, character::complete::char, multi::many0};
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct Func<'a> {
+pub(crate) struct Func {
     params: Vec<crate::IdentName>,
-    body: crate::Expr<'a>,
+    body: crate::Expr,
 }
 
-impl<'a> Func<'a> {
-    pub(crate) fn new(s: &'a str) -> nom::IResult<&'a str, Self> {
+impl Func {
+    pub(crate) fn new(s: &str) -> nom::IResult<&str, Self> {
         let (s, _) = tag("fn")(s)?;
         let (s, _) = crate::take_whitespace1(s)?;
 
@@ -63,15 +63,15 @@ fn param1 param2 {
                         crate::IdentName::new("param1").unwrap().1,
                         crate::IdentName::new("param2").unwrap().1
                     ],
-                    body: crate::Expr::Str("Hello, World!")
+                    body: crate::Expr::Str("Hello, World!".into())
                 }
             ))
         )
     }
 }
 
-impl<'a> crate::eval::Eval<'a> for Func<'a> {
-    fn eval(self, state: &'a crate::eval::State<'a>) -> crate::eval::EvalResult<'a> {
+impl crate::eval::Eval for Func {
+    fn eval(self, state: &crate::eval::State) -> crate::eval::EvalResult {
         self.body.eval(state)
     }
 }

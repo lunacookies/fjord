@@ -1,25 +1,25 @@
 use nom::bytes::complete::tag;
 
 #[derive(Debug, PartialEq)]
-pub(crate) struct Item<'a> {
-    kind: ItemKind<'a>,
+pub(crate) struct Item {
+    kind: ItemKind,
 }
 
 #[derive(Debug, PartialEq)]
-enum ItemKind<'a> {
-    Expr(crate::Expr<'a>),
+enum ItemKind {
+    Expr(crate::Expr),
     Binding {
         name: crate::IdentName,
-        val: BindingVal<'a>,
+        val: BindingVal,
     },
 }
 
-impl<'a> Item<'a> {
-    pub(crate) fn new(s: &'a str) -> nom::IResult<&str, Self> {
+impl Item {
+    pub(crate) fn new(s: &str) -> nom::IResult<&str, Self> {
         Self::new_binding(s).or_else(|_| Self::new_expr(s))
     }
 
-    fn new_expr(s: &'a str) -> nom::IResult<&str, Self> {
+    fn new_expr(s: &str) -> nom::IResult<&str, Self> {
         crate::Expr::new(s).map(|(s, e)| {
             (
                 s,
@@ -30,7 +30,7 @@ impl<'a> Item<'a> {
         })
     }
 
-    fn new_binding(s: &'a str) -> nom::IResult<&str, Self> {
+    fn new_binding(s: &str) -> nom::IResult<&str, Self> {
         let (s, _) = tag("let")(s)?;
         let (s, _) = crate::take_whitespace1(s)?;
 
@@ -47,7 +47,7 @@ impl<'a> Item<'a> {
         ))
     }
 
-    fn eval(self, state: &'a mut crate::eval::State<'a>) -> crate::eval::EvalResult<'a> {
+    fn eval(self, state: &mut crate::eval::State) -> crate::eval::EvalResult {
         use crate::eval::Eval;
 
         match self.kind {
@@ -113,21 +113,21 @@ mod item_tests {
 }
 
 #[derive(Debug, PartialEq)]
-enum BindingVal<'a> {
-    Var(crate::Expr<'a>),
-    Func(crate::Func<'a>),
+enum BindingVal {
+    Var(crate::Expr),
+    Func(crate::Func),
 }
 
-impl<'a> BindingVal<'a> {
-    fn new(s: &'a str) -> nom::IResult<&str, Self> {
+impl BindingVal {
+    fn new(s: &str) -> nom::IResult<&str, Self> {
         Self::new_func(s).or_else(|_| Self::new_var(s))
     }
 
-    fn new_func(s: &'a str) -> nom::IResult<&str, Self> {
+    fn new_func(s: &str) -> nom::IResult<&str, Self> {
         crate::Func::new(s).map(|(s, f)| (s, Self::Func(f)))
     }
 
-    fn new_var(s: &'a str) -> nom::IResult<&str, Self> {
+    fn new_var(s: &str) -> nom::IResult<&str, Self> {
         crate::Expr::new(s).map(|(s, e)| (s, Self::Var(e)))
     }
 }
@@ -144,7 +144,7 @@ mod binding_val_tests {
         );
         assert_eq!(
             BindingVal::new("\"foobar\""),
-            Ok(("", BindingVal::Var(crate::Expr::Str("foobar"))))
+            Ok(("", BindingVal::Var(crate::Expr::Str("foobar".into()))))
         );
     }
 

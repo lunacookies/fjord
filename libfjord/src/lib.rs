@@ -15,7 +15,7 @@ pub enum Error {
     Parse,
 }
 
-pub fn eval<'a>(s: &'a str, state: &'a eval::State<'a>) -> Result<eval::OutputExpr<'a>, Error> {
+pub fn eval(s: &str, state: &eval::State) -> Result<eval::OutputExpr, Error> {
     use eval::Eval;
 
     let (_, expr) = match Expr::new(s) {
