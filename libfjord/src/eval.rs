@@ -4,6 +4,7 @@ pub(crate) trait Eval<'a> {
     fn eval(self, state: &'a State<'a>) -> EvalResult<'a>;
 }
 
+#[derive(Clone, Debug)]
 pub struct State<'a> {
     vars: HashMap<crate::IdentName<'a>, crate::Expr<'a>>,
     funcs: HashMap<crate::IdentName<'a>, crate::Func<'a>>,
@@ -25,12 +26,14 @@ impl<'a> State<'a> {
         self.funcs.get(&name)
     }
 
-    pub(crate) fn set_var(&mut self, name: crate::IdentName<'a>, val: crate::Expr<'a>) {
+    pub(crate) fn set_var(mut self, name: crate::IdentName<'a>, val: crate::Expr<'a>) -> Self {
         self.vars.insert(name, val);
+        self
     }
 
-    pub(crate) fn set_func(&mut self, name: crate::IdentName<'a>, func: crate::Func<'a>) {
+    pub(crate) fn set_func(mut self, name: crate::IdentName<'a>, func: crate::Func<'a>) -> Self {
         self.funcs.insert(name, func);
+        self
     }
 }
 

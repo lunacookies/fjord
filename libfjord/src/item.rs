@@ -47,19 +47,26 @@ impl<'a> Item<'a> {
         ))
     }
 
-    fn eval(self, state: &'a mut crate::eval::State<'a>) -> crate::eval::EvalResult<'a> {
+    pub fn eval(
+        self,
+        state: &'a crate::eval::State<'a>,
+    ) -> Result<(crate::eval::State, crate::eval::OutputExpr<'a>), crate::eval::Error> {
         use crate::eval::Eval;
 
-        match self.kind {
-            ItemKind::Expr(e) => e.eval(state),
+        let mut new_state: crate::eval::State = (*state).clone();
+
+        let output = match self.kind {
+            ItemKind::Expr(e) => e.eval(&state)?,
             ItemKind::Binding { name, val } => {
-                match val {
-                    BindingVal::Var(e) => state.set_var(name, e),
-                    BindingVal::Func(f) => state.set_func(name, f),
+                new_state = match val {
+                    BindingVal::Var(e) => state.clone().set_var(name, e),
+                    BindingVal::Func(f) => state.clone().set_func(name, f),
                 };
-                Ok(crate::eval::OutputExpr::Unit)
+                crate::eval::OutputExpr::Unit
             }
-        }
+        };
+
+        Ok((new_state, output))
     }
 }
 

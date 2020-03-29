@@ -3,4 +3,5 @@
 members = [
     "fj",
     "libfjord",
+    "parser-test",
 ]
