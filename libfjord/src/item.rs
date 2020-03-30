@@ -96,6 +96,7 @@ mod item_tests {
         )
     }
 
+    #[test]
     fn func_binding() {
         assert_eq!(
             Item::new("let myFunc fn param1 { 4321 }"),
