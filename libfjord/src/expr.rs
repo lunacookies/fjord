@@ -1,7 +1,7 @@
 use nom::{
     bytes::complete::{take_till, take_while1},
     character::complete::char,
-    multi::many0,
+    multi::{many0, separated_list},
     sequence::delimited,
 };
 
@@ -9,6 +9,7 @@ use nom::{
 pub(crate) enum Expr {
     Number(crate::Number),
     Str(String),
+    Block(Vec<crate::Item>),
     Var(crate::IdentName),
     FuncCall {
         name: crate::IdentName,
@@ -20,6 +21,7 @@ impl Expr {
     pub(crate) fn new(s: &str) -> nom::IResult<&str, Self> {
         Self::new_number(s)
             .or_else(|_| Self::new_str(s))
+            .or_else(|_| Self::new_block(s))
             .or_else(|_| Self::new_var(s))
             .or_else(|_| Self::new_func_call(s))
     }
@@ -36,6 +38,28 @@ impl Expr {
     fn new_str(s: &str) -> nom::IResult<&str, Self> {
         let (s, text) = delimited(char('"'), take_till(|c| c == '"'), char('"'))(s)?;
         Ok((s, Self::Str(text.into())))
+    }
+
+    fn new_block(s: &str) -> nom::IResult<&str, Self> {
+        let (s, _) = char('{')(s)?;
+        let (s, _) = crate::take_whitespace(s)?;
+
+        let (s, items) = separated_list(
+            |s| {
+                // Items in a block are separated by newlines, plus zero or more whitespace (for
+                // indentation).
+                let (s, newline) = char('\n')(s)?;
+                let (s, _) = crate::take_whitespace(s)?;
+
+                Ok((s, newline))
+            },
+            crate::Item::new,
+        )(s)?;
+
+        let (s, _) = crate::take_whitespace(s)?;
+        let (s, _) = char('}')(s)?;
+
+        Ok((s, Self::Block(items)))
     }
 
     fn new_var(s: &str) -> nom::IResult<&str, Self> {
@@ -78,6 +102,49 @@ mod tests {
             Expr::new("\"foobar\""),
             Ok(("", Expr::Str("foobar".into())))
         );
+    }
+
+    mod block {
+        use super::*;
+
+        #[test]
+        fn basic() {
+            assert_eq!(
+                Expr::new_block("{ 25 }"),
+                Ok(("", Expr::Block(vec![crate::Item::new("25").unwrap().1])))
+            )
+        }
+
+        #[test]
+        fn variable_and_return() {
+            assert_eq!(
+                Expr::new(
+                    "\
+{
+    let foobar \"Hello, World!\"
+    #foobar
+}"
+                ),
+                Ok((
+                    "",
+                    Expr::Block(vec![
+                        crate::Item::new("let foobar \"Hello, World!\"").unwrap().1,
+                        crate::Item::new("#foobar").unwrap().1,
+                    ])
+                ))
+            );
+        }
+
+        #[test]
+        fn only_variable() {
+            assert_eq!(
+                Expr::new("{let myVar 5}"),
+                Ok((
+                    "",
+                    Expr::Block(vec![crate::Item::new("let myVar 5").unwrap().1])
+                ))
+            )
+        }
     }
 
     #[test]
@@ -140,6 +207,22 @@ impl crate::eval::Eval for Expr {
         match self {
             Self::Number(n) => Ok(crate::eval::OutputExpr::Number(n)),
             Self::Str(s) => Ok(crate::eval::OutputExpr::Str(s)),
+            Self::Block(b) => {
+                // The block gets a scope of its own to isolate its contents from the parent scope.
+                let mut block_scope = state.new_child();
+
+                for item in &b {
+                    // Early return on any free expression that isn’t the unit.
+                    match item.clone().eval(&mut block_scope)? {
+                        crate::eval::OutputExpr::Unit => (),
+                        expr => return Ok(expr),
+                    }
+                }
+
+                // At this point all items in the block have evaluated to the unit, so we return
+                // the unit.
+                Ok(crate::eval::OutputExpr::Unit)
+            }
             Self::Var(name) => match state.get_var(name) {
                 Some(val) => Ok(val.clone()),
                 None => Err(crate::eval::Error::VarNotFound),
