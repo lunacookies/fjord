@@ -245,17 +245,7 @@ impl crate::eval::Eval for Expr {
                     func_state.set_var(param_name.clone(), param_val.eval(state)?);
                 }
 
-                for item in func.body() {
-                    // Early return on any free expression that isn’t the unit.
-                    match item.clone().eval(&mut func_state)? {
-                        crate::eval::OutputExpr::Unit => (),
-                        expr => return Ok(expr),
-                    }
-                }
-
-                // At this point all items in the function have evaluated to the unit, so we return
-                // the unit.
-                Ok(crate::eval::OutputExpr::Unit)
+                func.body().clone().eval(&func_state)
             }
         }
     }

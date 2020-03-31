@@ -1,13 +1,9 @@
-use nom::{
-    bytes::complete::tag,
-    character::complete::char,
-    multi::{many0, separated_list},
-};
+use nom::{bytes::complete::tag, multi::many0};
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Func {
     params: Vec<crate::IdentName>,
-    body: Vec<crate::Item>,
+    body: crate::Expr,
 }
 
 impl Func {
@@ -21,23 +17,7 @@ impl Func {
             Ok((s, param))
         })(s)?;
 
-        let (s, _) = char('{')(s)?;
-        let (s, _) = crate::take_whitespace(s)?;
-
-        let (s, body) = separated_list(
-            |s| {
-                // Items in a function are separated by newlines, plus zero or more whitespace (for
-                // indentation).
-                let (s, newline) = char('\n')(s)?;
-                let (s, _) = crate::take_whitespace(s)?;
-
-                Ok((s, newline))
-            },
-            crate::Item::new,
-        )(s)?;
-
-        let (s, _) = crate::take_whitespace(s)?;
-        let (s, _) = char('}')(s)?;
+        let (s, body) = crate::Expr::new(s)?;
 
         Ok((s, Self { params, body }))
     }
@@ -46,7 +26,7 @@ impl Func {
         &self.params
     }
 
-    pub(crate) fn body(&self) -> &[crate::Item] {
+    pub(crate) fn body(&self) -> &crate::Expr {
         &self.body
     }
 }
@@ -63,7 +43,7 @@ mod tests {
                 "",
                 Func {
                     params: vec![],
-                    body: vec![crate::Item::new("123").unwrap().1],
+                    body: crate::Expr::Block(vec![crate::Item::new("123").unwrap().1]),
                 }
             )),
         )
@@ -85,7 +65,9 @@ fn param1 param2 {
                         crate::IdentName::new("param1").unwrap().1,
                         crate::IdentName::new("param2").unwrap().1
                     ],
-                    body: vec![crate::Item::new("\"Hello, World!\"").unwrap().1]
+                    body: crate::Expr::Block(vec![
+                        crate::Item::new("\"Hello, World!\"").unwrap().1
+                    ]),
                 }
             ))
         )
@@ -99,7 +81,7 @@ fn param1 param2 {
                 "",
                 Func {
                     params: vec![],
-                    body: vec![]
+                    body: crate::Expr::Block(vec![])
                 }
             ))
         )
@@ -119,10 +101,10 @@ fn x {
                 "",
                 Func {
                     params: vec![crate::IdentName::new("x").unwrap().1],
-                    body: vec![
+                    body: crate::Expr::Block(vec![
                         crate::Item::new("let otherName #x").unwrap().1,
                         crate::Item::new("#otherName").unwrap().1,
-                    ]
+                    ])
                 }
             ))
         )
