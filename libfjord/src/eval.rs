@@ -1,9 +1,5 @@
 use std::collections::HashMap;
 
-pub(crate) trait Eval {
-    fn eval(self, state: &State) -> EvalResult;
-}
-
 #[derive(Debug)]
 pub struct State<'a> {
     vars: HashMap<crate::IdentName, OutputExpr>,

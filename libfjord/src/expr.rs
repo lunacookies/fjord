@@ -202,8 +202,8 @@ mod tests {
     }
 }
 
-impl crate::eval::Eval for Expr {
-    fn eval(self, state: &crate::eval::State) -> crate::eval::EvalResult {
+impl Expr {
+    pub(crate) fn eval(self, state: &crate::eval::State) -> crate::eval::EvalResult {
         match self {
             Self::Number(n) => Ok(crate::eval::OutputExpr::Number(n)),
             Self::Str(s) => Ok(crate::eval::OutputExpr::Str(s)),
