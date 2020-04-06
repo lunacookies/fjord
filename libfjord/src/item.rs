@@ -31,11 +31,11 @@ impl Item {
     }
 
     fn new_binding(s: &str) -> nom::IResult<&str, Self> {
-        let (s, _) = tag("let")(s)?;
-        let (s, _) = crate::take_whitespace1(s)?;
-
         let (s, name) = crate::IdentName::new(s)?;
-        let (s, _) = crate::take_whitespace1(s)?;
+
+        let (s, _) = crate::take_whitespace(s)?;
+        let (s, _) = char('=')(s)?;
+        let (s, _) = crate::take_whitespace(s)?;
 
         let (s, val) = BindingVal::new(s)?;
 
@@ -81,7 +81,7 @@ mod item_tests {
     #[test]
     fn expr_binding() {
         assert_eq!(
-            Item::new("let myVar 25"),
+            Item::new("myVar = 25"),
             Ok((
                 "",
                 Item {
@@ -97,7 +97,7 @@ mod item_tests {
     #[test]
     fn func_binding() {
         assert_eq!(
-            Item::new("let myFunc param1 :: 4321"),
+            Item::new("myFunc = param1 :: 4321"),
             Ok((
                 "",
                 Item {

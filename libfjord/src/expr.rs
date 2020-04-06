@@ -194,7 +194,7 @@ mod tests {
                 Expr::new(
                     "\
 {
-    let foobar \"Hello, World!\"
+    foobar = \"Hello, World!\"
     .foobar
 }"
                 ),
@@ -213,11 +213,11 @@ mod tests {
         #[test]
         fn only_variable() {
             assert_eq!(
-                Expr::new("{let myVar 5}"),
+                Expr::new("{myVar = 5}"),
                 Ok((
                     "",
                     Expr {
-                        kind: ExprKind::Block(vec![crate::Item::new("let myVar 5").unwrap().1])
+                        kind: ExprKind::Block(vec![crate::Item::new("myVar = 5").unwrap().1])
                     }
                 ))
             )
