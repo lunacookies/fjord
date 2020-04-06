@@ -13,7 +13,7 @@ pub(crate) enum Expr {
     Var(crate::IdentName),
     FuncCall {
         name: crate::IdentName,
-        params: Vec<Expr>,
+        params: Vec<Param>,
     },
 }
 
@@ -74,7 +74,7 @@ impl Expr {
 
         let (s, params) = many0(|s| {
             let (s, _) = crate::take_whitespace1(s)?;
-            crate::Expr::new(s)
+            Param::new(s)
         })(s)?;
 
         Ok((s, Self::FuncCall { name, params }))
@@ -181,7 +181,11 @@ mod tests {
                 "",
                 Expr::FuncCall {
                     name: crate::IdentName::new("addThree").unwrap().1,
-                    params: vec![Expr::Number(1), Expr::Number(7), Expr::Number(4)]
+                    params: vec![
+                        Param::new("1").unwrap().1,
+                        Param::new("7").unwrap().1,
+                        Param::new("4").unwrap().1
+                    ]
                 }
             ))
         )
@@ -195,7 +199,7 @@ mod tests {
                 "",
                 Expr::FuncCall {
                     name: crate::IdentName::new("sqrt").unwrap().1,
-                    params: vec![Expr::Number(5)]
+                    params: vec![Param::new("5").unwrap().1]
                 }
             ))
         )
@@ -204,6 +208,8 @@ mod tests {
 
 impl Expr {
     pub(crate) fn eval(self, state: &crate::eval::State) -> crate::eval::EvalResult {
+        use std::cmp::Ordering;
+
         match self {
             Self::Number(n) => Ok(crate::eval::OutputExpr::Number(n)),
             Self::Str(s) => Ok(crate::eval::OutputExpr::Str(s)),
@@ -229,24 +235,198 @@ impl Expr {
             },
             Self::FuncCall {
                 name,
-                params: param_vals,
+                params: call_params,
             } => {
                 let func = state
                     .get_func(name)
                     .ok_or(crate::eval::Error::FuncNotFound)?;
 
+                let mut def_params = func.params().to_vec();
                 let mut func_state = state.new_child();
 
-                // The params of the function call are values (parsing a function call doesn’t have
-                // anything to do with the parameters’ names), while the params of the function
-                // definition are parameter names, not values (function definitions have nothing to
-                // do with the actual values of the paramters).
-                for (param_name, param_val) in func.params().iter().zip(param_vals) {
-                    func_state.set_var(param_name.clone(), param_val.eval(state)?);
+                // FIXME: these two bindings could use ‘.partition()’, but then we’d have to turn
+                // each back into an iterator and back to a Vec in order to unwrap the Param enum.
+                // For now we’ll just loop twice.
+                let named_params = call_params.iter().filter_map(|p| {
+                    if let Param::Named(np) = p {
+                        Some(np)
+                    } else {
+                        None
+                    }
+                });
+                let positional_params = call_params.iter().filter_map(|p| {
+                    if let Param::Positional(pp) = p {
+                        Some(pp)
+                    } else {
+                        None
+                    }
+                });
+
+                // Loop through all named function parameters. If the parameter actually exists,
+                // add it to the state and remove it from the list of function definition params
+                // (as we don’t need it anymore. If it doesn’t exist, then return an error.
+                for named_param in named_params {
+                    if let Some(def_param_idx) = def_params
+                        .iter()
+                        .position(|p| p.name() == &named_param.name)
+                    {
+                        func_state.set_var(
+                            named_param.name.clone(),
+                            named_param.val.clone().eval(&func_state)?,
+                        );
+                        def_params.remove(def_param_idx);
+                    } else {
+                        return Err(crate::eval::Error::FuncParamNotFound);
+                    }
+                }
+
+                let def_params_len = def_params.len();
+                let positional_params_len = positional_params.clone().count();
+
+                let ord = positional_params_len.cmp(&def_params_len);
+                match ord {
+                    // In these cases we have the same or greater number of remaining definition
+                    // arguments, compared to the number of input arguments.
+                    Ordering::Less | Ordering::Equal => {
+                        // Match up all the call parameters with as many definition parameters as
+                        // possible.
+                        for (call_param, def_param) in positional_params.zip(&def_params) {
+                            func_state.set_var(
+                                def_param.name().clone(),
+                                call_param.val.clone().eval(&func_state)?,
+                            );
+                        }
+
+                        // This branch also has the possibility that there are some definition
+                        // parameters left over.
+
+                        // In this case we have less parameters than required, so we apply all
+                        // parameters with default values.
+                        if ord == Ordering::Less {
+                            // Remove all the function definition parameters we just used as they
+                            // aren’t needed anymore. We only do this in this branch because it
+                            // doesn’t affect anything if all parameters have a value.
+                            (0..positional_params_len).for_each(|_| {
+                                def_params.remove(0);
+                            });
+
+                            // Use up as many of the definition parameters we have by using all
+                            // those that have default values.
+
+                            // Isolate.
+                            let default_params = def_params.iter().filter_map(|p| {
+                                if let crate::func::Param::WithDefault(d) = p {
+                                    Some(d)
+                                } else {
+                                    None
+                                }
+                            });
+
+                            // Apply.
+                            for default_param in default_params {
+                                func_state.set_var(
+                                    default_param.name().clone(),
+                                    default_param.val().clone().eval(&func_state)?,
+                                );
+                            }
+
+                            // Prune.
+                            def_params.retain(|p| {
+                                if let crate::func::Param::WithDefault(_) = p {
+                                    false
+                                } else {
+                                    true
+                                }
+                            });
+
+                            // If everything has gone well, there should be no definition
+                            // parameters left. However, if the caller has not specified enough
+                            // parameters, there will be some left over.
+                            if !def_params.is_empty() {
+                                return Err(crate::eval::Error::NotEnoughFuncParams);
+                            }
+                        }
+                    }
+                    // In this case we have more input arguments than are defined on the function.
+                    Ordering::Greater => {
+                        return Err(crate::eval::Error::TooManyFuncParams);
+                    }
                 }
 
                 func.body().clone().eval(&func_state)
             }
         }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum Param {
+    Named(NamedParam),
+    Positional(PositionalParam),
+}
+
+impl Param {
+    fn new(s: &str) -> nom::IResult<&str, Self> {
+        Self::new_named(s).or_else(|_| Self::new_positional(s))
+    }
+
+    fn new_named(s: &str) -> nom::IResult<&str, Self> {
+        NamedParam::new(s).map(|(s, p)| (s, Self::Named(p)))
+    }
+
+    fn new_positional(s: &str) -> nom::IResult<&str, Self> {
+        PositionalParam::new(s).map(|(s, p)| (s, Self::Positional(p)))
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct NamedParam {
+    val: Expr,
+    name: crate::IdentName,
+}
+
+impl NamedParam {
+    fn new(s: &str) -> nom::IResult<&str, Self> {
+        let (s, name) = crate::IdentName::new(s)?;
+        let (s, _) = char('=')(s)?;
+        let (s, val) = Expr::new(s)?;
+
+        Ok((s, Self { name, val }))
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct PositionalParam {
+    val: Expr,
+}
+
+impl PositionalParam {
+    fn new(s: &str) -> nom::IResult<&str, Self> {
+        let (s, val) = Expr::new(s)?;
+        Ok((s, Self { val }))
+    }
+}
+
+#[cfg(test)]
+mod param_tests {
+    use super::*;
+
+    #[test]
+    fn named() {
+        assert_eq!(
+            Param::new("paramName=10"),
+            Ok(("", Param::Named(NamedParam::new("paramName=10").unwrap().1)))
+        );
+
+        assert_eq!(
+            NamedParam::new("foobar=100"),
+            Ok((
+                "",
+                NamedParam {
+                    name: crate::IdentName::new("foobar").unwrap().1,
+                    val: Expr::new("100").unwrap().1
+                }
+            ))
+        )
     }
 }

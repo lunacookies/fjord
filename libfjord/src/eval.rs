@@ -53,6 +53,12 @@ pub enum Error {
     VarNotFound,
     #[error("could not find function")]
     FuncNotFound,
+    #[error("could not find function parameter")]
+    FuncParamNotFound,
+    #[error("too many function parameters were provided")]
+    TooManyFuncParams,
+    #[error("not enough function parameters were provided")]
+    NotEnoughFuncParams,
 }
 
 #[derive(Clone, Debug)]

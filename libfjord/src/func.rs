@@ -1,8 +1,8 @@
-use nom::{bytes::complete::tag, multi::many0};
+use nom::{bytes::complete::tag, character::complete::char, multi::many0};
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Func {
-    params: Vec<crate::IdentName>,
+    params: Vec<Param>,
     body: crate::Expr,
 }
 
@@ -12,7 +12,7 @@ impl Func {
         let (s, _) = crate::take_whitespace1(s)?;
 
         let (s, params) = many0(|s| {
-            let (s, param) = crate::IdentName::new(s)?;
+            let (s, param) = Param::new(s)?;
             let (s, _) = crate::take_whitespace1(s)?;
             Ok((s, param))
         })(s)?;
@@ -22,7 +22,7 @@ impl Func {
         Ok((s, Self { params, body }))
     }
 
-    pub(crate) fn params(&self) -> &[crate::IdentName] {
+    pub(crate) fn params(&self) -> &[Param] {
         &self.params
     }
 
@@ -62,8 +62,8 @@ fn param1 param2 {
                 "",
                 Func {
                     params: vec![
-                        crate::IdentName::new("param1").unwrap().1,
-                        crate::IdentName::new("param2").unwrap().1
+                        Param::new("param1").unwrap().1,
+                        Param::new("param2").unwrap().1
                     ],
                     body: crate::Expr::Block(vec![
                         crate::Item::new("\"Hello, World!\"").unwrap().1
@@ -100,7 +100,7 @@ fn x {
             Ok((
                 "",
                 Func {
-                    params: vec![crate::IdentName::new("x").unwrap().1],
+                    params: vec![Param::new("x").unwrap().1],
                     body: crate::Expr::Block(vec![
                         crate::Item::new("let otherName #x").unwrap().1,
                         crate::Item::new("#otherName").unwrap().1,
@@ -108,5 +108,116 @@ fn x {
                 }
             ))
         )
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum Param {
+    WithDefault(ParamWithDefault),
+    WithoutDefault(ParamWithoutDefault),
+}
+
+impl Param {
+    fn new(s: &str) -> nom::IResult<&str, Self> {
+        Self::new_with_default(s).or_else(|_| Self::new_without_default(s))
+    }
+
+    fn new_with_default(s: &str) -> nom::IResult<&str, Self> {
+        ParamWithDefault::new(s).map(|(s, p)| (s, Self::WithDefault(p)))
+    }
+
+    fn new_without_default(s: &str) -> nom::IResult<&str, Self> {
+        ParamWithoutDefault::new(s).map(|(s, p)| (s, Self::WithoutDefault(p)))
+    }
+
+    pub(crate) fn name(&self) -> &crate::IdentName {
+        match self {
+            Self::WithDefault(p) => &p.name,
+            Self::WithoutDefault(p) => &p.name,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ParamWithDefault {
+    name: crate::IdentName,
+    val: crate::Expr,
+}
+
+impl ParamWithDefault {
+    fn new(s: &str) -> nom::IResult<&str, Self> {
+        let (s, name) = crate::IdentName::new(s)?;
+        let (s, _) = char('=')(s)?;
+        let (s, val) = crate::Expr::new(s)?;
+
+        Ok((s, Self { name, val }))
+    }
+
+    pub(crate) fn name(&self) -> &crate::IdentName {
+        &self.name
+    }
+
+    pub(crate) fn val(&self) -> &crate::Expr {
+        &self.val
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ParamWithoutDefault {
+    name: crate::IdentName,
+}
+
+impl ParamWithoutDefault {
+    fn new(s: &str) -> nom::IResult<&str, Self> {
+        let (s, name) = crate::IdentName::new(s)?;
+        Ok((s, Self { name }))
+    }
+}
+
+#[cfg(test)]
+mod param_tests {
+    use super::*;
+
+    #[test]
+    fn with_default() {
+        assert_eq!(
+            Param::new("paramName=5"),
+            Ok((
+                "",
+                Param::WithDefault(ParamWithDefault::new("paramName=5").unwrap().1)
+            ))
+        );
+
+        assert_eq!(
+            ParamWithDefault::new("foobar=\"test\""),
+            Ok((
+                "",
+                ParamWithDefault {
+                    name: crate::IdentName::new("foobar").unwrap().1,
+                    val: crate::Expr::new("\"test\"").unwrap().1,
+                }
+            ))
+        );
+    }
+
+    #[test]
+    fn without_default() {
+        assert_eq!(
+            Param::new("paramName"),
+            Ok((
+                "",
+                Param::WithoutDefault(ParamWithoutDefault::new("paramName").unwrap().1)
+            ))
+        );
+
+        assert_eq!(
+            ParamWithoutDefault::new("foobar"),
+            Ok((
+                "",
+                ParamWithoutDefault {
+                    name: crate::IdentName::new("foobar").unwrap().1,
+                }
+            ))
+        );
     }
 }
