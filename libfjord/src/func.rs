@@ -74,7 +74,7 @@ mod tests {
                 "",
                 Func {
                     params: vec![],
-                    body: crate::Expr::Block(vec![])
+                    body: crate::Expr::new("{}").unwrap().1
                 }
             ))
         )
@@ -86,7 +86,7 @@ mod tests {
             Func::new(
                 "\
 x :: {
-    let otherName .x
+    otherName = .x
     .otherName
 }"
             ),
@@ -94,10 +94,15 @@ x :: {
                 "",
                 Func {
                     params: vec![Param::new("x").unwrap().1],
-                    body: crate::Expr::Block(vec![
-                        crate::Item::new("let otherName .x").unwrap().1,
-                        crate::Item::new(".otherName").unwrap().1,
-                    ])
+                    body: crate::Expr::new(
+                        "\
+{
+    otherName = .x
+    .otherName
+}"
+                    )
+                    .unwrap()
+                    .1
                 }
             ))
         )

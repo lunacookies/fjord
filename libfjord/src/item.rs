@@ -1,4 +1,4 @@
-use nom::bytes::complete::tag;
+use nom::character::complete::char;
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Item {
@@ -72,7 +72,7 @@ mod item_tests {
             Ok((
                 "",
                 Item {
-                    kind: ItemKind::Expr(crate::Expr::Number(123))
+                    kind: ItemKind::Expr(crate::Expr::new("123").unwrap().1)
                 }
             ))
         )
@@ -87,7 +87,7 @@ mod item_tests {
                 Item {
                     kind: ItemKind::Binding {
                         name: crate::IdentName::new("myVar").unwrap().1,
-                        val: BindingVal::Var(crate::Expr::Number(25))
+                        val: BindingVal::Var(crate::Expr::new("25").unwrap().1)
                     }
                 }
             ))
@@ -139,11 +139,11 @@ mod binding_val_tests {
     fn expr() {
         assert_eq!(
             BindingVal::new("123"),
-            Ok(("", BindingVal::Var(crate::Expr::Number(123))))
+            Ok(("", BindingVal::Var(crate::Expr::new("123").unwrap().1)))
         );
         assert_eq!(
             BindingVal::new("\"foobar\""),
-            Ok(("", BindingVal::Var(crate::Expr::Str("foobar".into()))))
+            Ok(("", BindingVal::Var(crate::Expr::new("\"foobar\"").unwrap().1)))
         );
     }
 
