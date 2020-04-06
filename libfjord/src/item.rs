@@ -97,13 +97,13 @@ mod item_tests {
     #[test]
     fn func_binding() {
         assert_eq!(
-            Item::new("let myFunc fn param1 { 4321 }"),
+            Item::new("let myFunc param1 :: 4321"),
             Ok((
                 "",
                 Item {
                     kind: ItemKind::Binding {
                         name: crate::IdentName::new("myFunc").unwrap().1,
-                        val: BindingVal::Func(crate::Func::new("fn param1 { 4321 }").unwrap().1)
+                        val: BindingVal::Func(crate::Func::new("param1 :: 4321").unwrap().1)
                     }
                 }
             ))
@@ -150,18 +150,15 @@ mod binding_val_tests {
     #[test]
     fn func() {
         assert_eq!(
-            BindingVal::new("fn { 9876 }"),
-            Ok((
-                "",
-                BindingVal::Func(crate::Func::new("fn { 9876 }").unwrap().1)
-            ))
+            BindingVal::new(":: 9876"),
+            Ok(("", BindingVal::Func(crate::Func::new(":: 9876").unwrap().1)))
         );
         assert_eq!(
-            BindingVal::new("fn param1 param2 { \"some text\" }"),
+            BindingVal::new("param1 param2 :: \"some text\""),
             Ok((
                 "",
                 BindingVal::Func(
-                    crate::Func::new("fn param1 param2 { \"some text\" }")
+                    crate::Func::new("param1 param2 :: \"some text\"")
                         .unwrap()
                         .1
                 )

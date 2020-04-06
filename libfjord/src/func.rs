@@ -8,14 +8,14 @@ pub(crate) struct Func {
 
 impl Func {
     pub(crate) fn new(s: &str) -> nom::IResult<&str, Self> {
-        let (s, _) = tag("fn")(s)?;
-        let (s, _) = crate::take_whitespace1(s)?;
-
         let (s, params) = many0(|s| {
             let (s, param) = Param::new(s)?;
             let (s, _) = crate::take_whitespace1(s)?;
             Ok((s, param))
         })(s)?;
+
+        let (s, _) = tag("::")(s)?;
+        let (s, _) = crate::take_whitespace(s)?;
 
         let (s, body) = crate::Expr::new(s)?;
 
@@ -38,12 +38,12 @@ mod tests {
     #[test]
     fn no_params() {
         assert_eq!(
-            Func::new("fn { 123 }",),
+            Func::new(":: 123",),
             Ok((
                 "",
                 Func {
                     params: vec![],
-                    body: crate::Expr::Block(vec![crate::Item::new("123").unwrap().1]),
+                    body: crate::Expr::new("123").unwrap().1,
                 }
             )),
         )
@@ -52,12 +52,7 @@ mod tests {
     #[test]
     fn some_params() {
         assert_eq!(
-            Func::new(
-                "\
-fn param1 param2 {
-    \"Hello, World!\"
-}"
-            ),
+            Func::new("param1 param2 :: \"Hello, World!\""),
             Ok((
                 "",
                 Func {
@@ -65,9 +60,7 @@ fn param1 param2 {
                         Param::new("param1").unwrap().1,
                         Param::new("param2").unwrap().1
                     ],
-                    body: crate::Expr::Block(vec![
-                        crate::Item::new("\"Hello, World!\"").unwrap().1
-                    ]),
+                    body: crate::Expr::new("\"Hello, World!\"").unwrap().1
                 }
             ))
         )
@@ -76,7 +69,7 @@ fn param1 param2 {
     #[test]
     fn no_body() {
         assert_eq!(
-            Func::new("fn {}"),
+            Func::new(":: {}"),
             Ok((
                 "",
                 Func {
@@ -92,7 +85,7 @@ fn param1 param2 {
         assert_eq!(
             Func::new(
                 "\
-fn x {
+x :: {
     let otherName .x
     .otherName
 }"
