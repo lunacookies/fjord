@@ -63,7 +63,7 @@ impl Expr {
     }
 
     fn new_var(s: &str) -> nom::IResult<&str, Self> {
-        let (s, _) = char('#')(s)?;
+        let (s, _) = char('.')(s)?;
         let (s, name) = crate::IdentName::new(s)?;
 
         Ok((s, Self::Var(name)))
@@ -122,14 +122,14 @@ mod tests {
                     "\
 {
     let foobar \"Hello, World!\"
-    #foobar
+    .foobar
 }"
                 ),
                 Ok((
                     "",
                     Expr::Block(vec![
                         crate::Item::new("let foobar \"Hello, World!\"").unwrap().1,
-                        crate::Item::new("#foobar").unwrap().1,
+                        crate::Item::new(".foobar").unwrap().1,
                     ])
                 ))
             );
@@ -150,11 +150,11 @@ mod tests {
     #[test]
     fn var() {
         assert_eq!(
-            Expr::new_var("#myVar"),
+            Expr::new_var(".myVar"),
             Ok(("", Expr::Var(crate::IdentName::new("myVar").unwrap().1)))
         );
         assert_eq!(
-            Expr::new("#foobar"),
+            Expr::new(".foobar"),
             Ok(("", Expr::Var(crate::IdentName::new("foobar").unwrap().1)))
         );
     }

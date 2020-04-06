@@ -93,8 +93,8 @@ fn param1 param2 {
             Func::new(
                 "\
 fn x {
-    let otherName #x
-    #otherName
+    let otherName .x
+    .otherName
 }"
             ),
             Ok((
@@ -102,8 +102,8 @@ fn x {
                 Func {
                     params: vec![Param::new("x").unwrap().1],
                     body: crate::Expr::Block(vec![
-                        crate::Item::new("let otherName #x").unwrap().1,
-                        crate::Item::new("#otherName").unwrap().1,
+                        crate::Item::new("let otherName .x").unwrap().1,
+                        crate::Item::new(".otherName").unwrap().1,
                     ])
                 }
             ))
