@@ -1,5 +1,5 @@
 use {
-    crate::params::{def, CompleteParam},
+    crate::params::{call, def},
     nom::{bytes::complete::tag, multi::many0},
 };
 
@@ -25,22 +25,21 @@ impl Func {
         Ok((s, Self { params, body }))
     }
 
-    pub(crate) fn params(&self) -> &[def::Param] {
-        &self.params
-    }
-
     pub(crate) fn eval(
-        &self,
-        params: &[CompleteParam],
+        self,
+        call_params: Vec<call::Param>,
         state: &crate::eval::State,
     ) -> crate::eval::EvalResult {
+        let def_params = self.params;
+        let complete_params = crate::params::eval(call_params, def_params)?;
+
         let mut func_state = state.new_child();
 
-        for param in params {
+        for param in complete_params {
             func_state.set_var(param.name().clone(), param.val().clone().eval(&func_state)?)
         }
 
-        self.body.clone().eval(&func_state)
+        self.body.eval(&func_state)
     }
 }
 

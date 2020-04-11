@@ -334,10 +334,7 @@ impl Expr {
                     .get_func(name)
                     .ok_or(crate::eval::Error::FuncNotFound)?;
 
-                let def_params = func.params().to_vec();
-                let complete_params = crate::params::eval(call_params, def_params)?;
-
-                func.eval(&complete_params, state)
+                func.clone().eval(call_params, state)
             }
         }
     }
