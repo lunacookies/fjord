@@ -82,4 +82,27 @@ mod param_tests {
             ))
         )
     }
+
+    #[test]
+    fn positional() {
+        assert_eq!(
+            Param::new("123"),
+            Ok((
+                "",
+                Param::Positional(PositionalParam {
+                    val: crate::Expr::new("123").unwrap().1
+                })
+            ))
+        );
+
+        assert_eq!(
+            PositionalParam::new("\"Test\""),
+            Ok((
+                "",
+                PositionalParam {
+                    val: crate::Expr::new("\"Test\"").unwrap().1,
+                }
+            ))
+        )
+    }
 }
