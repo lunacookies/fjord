@@ -143,7 +143,10 @@ mod binding_val_tests {
         );
         assert_eq!(
             BindingVal::new("\"foobar\""),
-            Ok(("", BindingVal::Var(crate::Expr::new("\"foobar\"").unwrap().1)))
+            Ok((
+                "",
+                BindingVal::Var(crate::Expr::new("\"foobar\"").unwrap().1)
+            ))
         );
     }
 
