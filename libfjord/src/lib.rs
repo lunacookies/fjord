@@ -4,6 +4,7 @@ mod func;
 mod ident_name;
 mod item;
 mod misc;
+mod params;
 
 use {expr::Expr, func::Func, ident_name::IdentName, item::Item, misc::*};
 
