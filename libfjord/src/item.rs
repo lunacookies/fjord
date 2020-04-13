@@ -1,12 +1,7 @@
 use nom::character::complete::char;
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct Item {
-    kind: ItemKind,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-enum ItemKind {
+pub(crate) enum Item {
     Expr(crate::Expr),
     Binding {
         name: crate::IdentName,
@@ -20,14 +15,7 @@ impl Item {
     }
 
     fn new_expr(s: &str) -> nom::IResult<&str, Self> {
-        crate::Expr::new(s).map(|(s, e)| {
-            (
-                s,
-                Self {
-                    kind: ItemKind::Expr(e),
-                },
-            )
-        })
+        crate::Expr::new(s).map(|(s, e)| (s, Self::Expr(e)))
     }
 
     fn new_binding(s: &str) -> nom::IResult<&str, Self> {
@@ -39,18 +27,13 @@ impl Item {
 
         let (s, val) = BindingVal::new(s)?;
 
-        Ok((
-            s,
-            Self {
-                kind: ItemKind::Binding { name, val },
-            },
-        ))
+        Ok((s, Self::Binding { name, val }))
     }
 
     pub(crate) fn eval(self, state: &mut crate::eval::State) -> crate::eval::EvalResult {
-        match self.kind {
-            ItemKind::Expr(e) => e.eval(state),
-            ItemKind::Binding { name, val } => {
+        match self {
+            Self::Expr(e) => e.eval(state),
+            Self::Binding { name, val } => {
                 match val {
                     BindingVal::Var(e) => state.set_var(name, e.eval(state)?),
                     BindingVal::Func(f) => state.set_func(name, f),
@@ -69,12 +52,7 @@ mod item_tests {
     fn expr() {
         assert_eq!(
             Item::new("123"),
-            Ok((
-                "",
-                Item {
-                    kind: ItemKind::Expr(crate::Expr::new("123").unwrap().1)
-                }
-            ))
+            Ok(("", Item::Expr(crate::Expr::new("123").unwrap().1)))
         )
     }
 
@@ -84,11 +62,9 @@ mod item_tests {
             Item::new("myVar = 25"),
             Ok((
                 "",
-                Item {
-                    kind: ItemKind::Binding {
-                        name: crate::IdentName::new("myVar").unwrap().1,
-                        val: BindingVal::Var(crate::Expr::new("25").unwrap().1)
-                    }
+                Item::Binding {
+                    name: crate::IdentName::new("myVar").unwrap().1,
+                    val: BindingVal::Var(crate::Expr::new("25").unwrap().1)
                 }
             ))
         )
@@ -100,11 +76,9 @@ mod item_tests {
             Item::new("myFunc = param1 :: 4321"),
             Ok((
                 "",
-                Item {
-                    kind: ItemKind::Binding {
-                        name: crate::IdentName::new("myFunc").unwrap().1,
-                        val: BindingVal::Func(crate::Func::new("param1 :: 4321").unwrap().1)
-                    }
+                Item::Binding {
+                    name: crate::IdentName::new("myFunc").unwrap().1,
+                    val: BindingVal::Func(crate::Func::new("param1 :: 4321").unwrap().1)
                 }
             ))
         )
