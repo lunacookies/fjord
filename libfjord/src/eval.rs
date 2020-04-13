@@ -1,25 +1,30 @@
-use std::collections::HashMap;
+use {crate::ffi::ForeignFjordFunc, std::collections::HashMap};
 
 #[derive(Debug)]
 pub struct State<'a> {
     vars: HashMap<crate::IdentName, OutputExpr>,
     funcs: HashMap<crate::IdentName, crate::Func>,
+    foreign_funcs: HashMap<crate::IdentName, Box<dyn ForeignFjordFunc>>,
     parent: Option<&'a Self>,
 }
 
 impl<'a> State<'a> {
-    pub fn new_root() -> Self {
+    pub fn new_root(foreign_funcs: Vec<(crate::IdentName, Box<dyn ForeignFjordFunc>)>) -> Self {
+        use std::iter::FromIterator;
+
         Self {
             vars: HashMap::new(),
             funcs: HashMap::new(),
+            foreign_funcs: HashMap::from_iter(foreign_funcs),
             parent: None,
         }
     }
 
-    pub fn new_child(&'a self) -> Self {
+    pub(crate) fn new_child(&'a self) -> Self {
         Self {
             vars: HashMap::new(),
             funcs: HashMap::new(),
+            foreign_funcs: HashMap::new(),
             parent: Some(self),
         }
     }
@@ -34,6 +39,17 @@ impl<'a> State<'a> {
     pub(crate) fn get_func(&self, name: crate::IdentName) -> Option<&crate::Func> {
         self.funcs.get(&name).or_else(|| match self.parent {
             Some(parent_state) => parent_state.get_func(name),
+            _ => None,
+        })
+    }
+
+    #[allow(clippy::borrowed_box)]
+    pub(crate) fn get_foreign_func(
+        &self,
+        name: crate::IdentName,
+    ) -> Option<&Box<dyn ForeignFjordFunc>> {
+        self.foreign_funcs.get(&name).or_else(|| match self.parent {
+            Some(parent_state) => parent_state.get_foreign_func(name),
             _ => None,
         })
     }

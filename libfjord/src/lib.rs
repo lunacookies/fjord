@@ -1,5 +1,6 @@
 pub mod eval;
 mod expr;
+pub mod ffi;
 mod func;
 mod ident_name;
 mod item;

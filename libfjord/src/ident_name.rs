@@ -10,6 +10,14 @@ impl IdentName {
 
         Ok((s, Self(name.into())))
     }
+
+    /// Creates a new `IdentName`, panicking if the input does not perfectly parse.
+    pub fn new_panicking(s: &str) -> Self {
+        let (s, ident_name) = Self::new(s).unwrap();
+        assert!(s == "");
+
+        ident_name
+    }
 }
 
 #[cfg(test)]

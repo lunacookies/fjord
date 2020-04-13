@@ -241,11 +241,22 @@ impl Expr {
                 name,
                 params: call_params,
             } => {
-                let func = state
-                    .get_func(name)
-                    .ok_or(crate::eval::Error::FuncNotFound)?;
+                // First attempt to obtain a ‘native’ Fjord function. If one doesn’t exist, attempt
+                // to obtain a foreign function that was declared through the FFI. If both of these
+                // cases fail, then finally return a ‘function not found’ error.
+                if let Some(func) = state.get_func(name.clone()) {
+                    func.clone().eval(call_params, state)
+                } else if let Some(func) = state.get_foreign_func(name) {
+                    let params = crate::params::eval(call_params, func.params().into())?;
+                    let params: Vec<_> = params
+                        .into_iter()
+                        .map(|p| crate::ffi::Param::from_complete_param(p, state))
+                        .collect::<Result<_, _>>()?;
 
-                func.clone().eval(call_params, state)
+                    Ok(func.run(params))
+                } else {
+                    Err(crate::eval::Error::FuncNotFound)
+                }
             }
         }
     }
