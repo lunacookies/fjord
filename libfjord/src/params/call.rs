@@ -1,7 +1,7 @@
 use nom::character::complete::char;
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) enum Param {
+pub enum Param {
     Named(NamedParam),
     Positional(PositionalParam),
 }
@@ -21,9 +21,9 @@ impl Param {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct NamedParam {
-    val: crate::Expr,
-    name: crate::IdentName,
+pub struct NamedParam {
+    pub val: crate::Expr,
+    pub name: crate::IdentName,
 }
 
 impl NamedParam {
@@ -45,8 +45,8 @@ impl NamedParam {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct PositionalParam {
-    val: crate::Expr,
+pub struct PositionalParam {
+    pub val: crate::Expr,
 }
 
 impl PositionalParam {

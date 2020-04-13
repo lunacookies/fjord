@@ -4,9 +4,9 @@ use {
 };
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct Func {
-    params: Vec<def::Param>,
-    body: crate::Expr,
+pub struct Func {
+    pub params: Vec<def::Param>,
+    pub body: crate::Expr,
 }
 
 impl Func {

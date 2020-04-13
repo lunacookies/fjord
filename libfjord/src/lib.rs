@@ -4,9 +4,15 @@ mod func;
 mod ident_name;
 mod item;
 mod misc;
-mod params;
+pub mod params;
 
-use {expr::Expr, func::Func, ident_name::IdentName, item::Item, misc::*};
+use misc::*;
+pub use {
+    expr::Expr,
+    func::Func,
+    ident_name::IdentName,
+    item::{BindingVal, Item},
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

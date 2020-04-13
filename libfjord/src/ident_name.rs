@@ -1,7 +1,7 @@
 use nom::bytes::complete::take_while1;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub(crate) struct IdentName(String);
+pub struct IdentName(String);
 
 impl IdentName {
     pub(crate) fn new(s: &str) -> nom::IResult<&str, Self> {

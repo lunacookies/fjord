@@ -1,7 +1,7 @@
 use nom::character::complete::char;
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) enum Param {
+pub enum Param {
     WithDefault(ParamWithDefault),
     WithoutDefault(ParamWithoutDefault),
 }
@@ -28,9 +28,9 @@ impl Param {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct ParamWithDefault {
-    name: crate::IdentName,
-    val: crate::Expr,
+pub struct ParamWithDefault {
+    pub name: crate::IdentName,
+    pub val: crate::Expr,
 }
 
 impl ParamWithDefault {
@@ -52,8 +52,8 @@ impl ParamWithDefault {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct ParamWithoutDefault {
-    name: crate::IdentName,
+pub struct ParamWithoutDefault {
+    pub name: crate::IdentName,
 }
 
 impl ParamWithoutDefault {

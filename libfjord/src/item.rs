@@ -1,7 +1,7 @@
 use nom::character::complete::char;
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) enum Item {
+pub enum Item {
     Expr(crate::Expr),
     Binding {
         name: crate::IdentName,
@@ -86,7 +86,7 @@ mod item_tests {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-enum BindingVal {
+pub enum BindingVal {
     Var(crate::Expr),
     Func(crate::Func),
 }
