@@ -1,8 +1,13 @@
+//! Data structures for representing function parameters at their definitions.
+
 use nom::character::complete::char;
 
+/// Any kind of parameter on a function definition.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Param {
+    /// with a default value
     WithDefault(ParamWithDefault),
+    /// without a default value
     WithoutDefault(ParamWithoutDefault),
 }
 
@@ -27,9 +32,12 @@ impl Param {
     }
 }
 
+/// A parameter on a function definition that has a default value.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ParamWithDefault {
+    /// the parameter’s name
     pub name: crate::IdentName,
+    /// the parameter’s value
     pub val: crate::Expr,
 }
 
@@ -51,8 +59,10 @@ impl ParamWithDefault {
     }
 }
 
+/// A parameter on a function definition that does not posess a default value.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ParamWithoutDefault {
+    /// the parameter’s name
     pub name: crate::IdentName,
 }
 

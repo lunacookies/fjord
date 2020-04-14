@@ -7,14 +7,22 @@ use nom::{
 
 use crate::params::call;
 
+/// An expression.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
+    /// a number literal
     Number(crate::Number),
+    /// a string literal
     Str(String),
+    /// a [block expression](https://doc.rust-lang.org/reference/expressions/block-expr.html)
     Block(Vec<crate::Item>),
+    /// a variable usage (not definition)
     Var(crate::IdentName),
+    /// a function call
     FuncCall {
+        /// the name of the function being called
         name: crate::IdentName,
+        /// the parameters given to the function
         params: Vec<call::Param>,
     },
 }

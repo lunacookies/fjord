@@ -1,5 +1,7 @@
 use nom::bytes::complete::take_while1;
 
+/// An identifier (e.g. variable name, function name). Currently, all `IdentName`s have to follow
+/// camelCase. They can be matched by the regex `[a-z][a-zA-Z0-9]*`.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct IdentName(String);
 

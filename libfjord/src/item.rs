@@ -1,10 +1,18 @@
 use nom::character::complete::char;
 
+/// An `Item` is either a expression or a binding. This is separate from [`Expr`](enum.Expr.html)
+/// because it would be undesirable to use a binding as a value. Imagine calling a function, with
+/// one of the parameters being a variable binding! This should not only fail to run, it should
+/// fail to parse.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Item {
+    /// an expression
     Expr(crate::Expr),
+    /// a binding
     Binding {
+        /// its name (left-hand side)
         name: crate::IdentName,
+        /// its value (right-hand side)
         val: BindingVal,
     },
 }
@@ -85,9 +93,12 @@ mod item_tests {
     }
 }
 
+/// The value (right-hand side) of a binding.
 #[derive(Clone, Debug, PartialEq)]
 pub enum BindingVal {
+    /// when the right-hand side is an expression, a variable is created
     Var(crate::Expr),
+    /// when the right-hand side is a function literal, a function is defined
     Func(crate::Func),
 }
 

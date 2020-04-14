@@ -1,3 +1,6 @@
+//! Data structures for representing function parameters, both at definition and call sites of
+//! functions.
+
 pub mod call;
 pub mod def;
 
@@ -17,12 +20,17 @@ impl CompleteParam {
     }
 }
 
+/// The errors that can occur when matching up function definition parameters with function call
+/// parameters.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    /// when a named function parameter is specified, but it actually does not exist
     #[error("could not find function parameter")]
     FuncParamNotFound,
+    /// when too many function parameters are specified
     #[error("too many function parameters were provided")]
     TooManyFuncParams,
+    /// when not enough function parameters are specified
     #[error("not enough function parameters were provided")]
     NotEnoughFuncParams,
 }

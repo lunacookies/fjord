@@ -3,9 +3,13 @@ use {
     nom::{bytes::complete::tag, multi::many0},
 };
 
+/// A function literal. Note that this isn’t a ‘real’ function literal, as it is not part of
+/// [`Expr`](enum.Expr.html), and therefore can only be used when defining a function.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Func {
+    /// its parameters
     pub params: Vec<def::Param>,
+    /// its body is simply an expression
     pub body: crate::Expr,
 }
 

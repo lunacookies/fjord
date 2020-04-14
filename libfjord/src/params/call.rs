@@ -1,8 +1,13 @@
+//! Various data structures for representing function call parameters.
+
 use nom::character::complete::char;
 
+/// Any kind of parameter of a function call.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Param {
+    /// which function definition parameter it is setting the value of is based on given name
     Named(NamedParam),
+    /// which function definition parameter it is setting the value of is based on position
     Positional(PositionalParam),
 }
 
@@ -20,9 +25,12 @@ impl Param {
     }
 }
 
+/// A function call parameter whose name is mentioned upon settings its value.
 #[derive(Clone, Debug, PartialEq)]
 pub struct NamedParam {
+    /// the parameter’s value
     pub val: crate::Expr,
+    /// the parameter’s name
     pub name: crate::IdentName,
 }
 
@@ -44,8 +52,11 @@ impl NamedParam {
     }
 }
 
+/// A function call parameter that is positional, i.e. the function definition parameter it is
+/// setting the value of is based solely on its order in the list of function call parameters.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PositionalParam {
+    /// the parameter’s value
     pub val: crate::Expr,
 }
 
