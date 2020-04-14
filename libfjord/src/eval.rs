@@ -95,4 +95,14 @@ pub enum OutputExpr {
     Unit,
 }
 
+impl From<OutputExpr> for String {
+    fn from(e: OutputExpr) -> Self {
+        match e {
+            OutputExpr::Number(n) => n.to_string(),
+            OutputExpr::Str(s) => s,
+            OutputExpr::Unit => "()".into(),
+        }
+    }
+}
+
 pub(crate) type EvalResult = Result<OutputExpr, Error>;

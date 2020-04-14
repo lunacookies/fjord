@@ -1,5 +1,5 @@
 use nom::{
-    bytes::complete::{take_till, take_while1},
+    bytes::complete::{tag, take_till, take_while1},
     character::complete::char,
     multi::{many0, separated_list},
     sequence::delimited,
@@ -14,6 +14,8 @@ pub enum Expr {
     Number(crate::Number),
     /// a string literal
     Str(String),
+    /// a format string
+    FStr(String, Vec<(Expr, String)>),
     /// a [block expression](https://doc.rust-lang.org/reference/expressions/block-expr.html)
     Block(Vec<crate::Item>),
     /// a variable usage (not definition)
@@ -30,6 +32,7 @@ pub enum Expr {
 impl Expr {
     pub(crate) fn new(s: &str) -> nom::IResult<&str, Self> {
         Self::new_number(s)
+            .or_else(|_| Self::new_fstr(s))
             .or_else(|_| Self::new_str(s))
             .or_else(|_| Self::new_block(s))
             .or_else(|_| Self::new_var(s))
@@ -49,6 +52,31 @@ impl Expr {
         let (s, text) = delimited(char('"'), take_till(|c| c == '"'), char('"'))(s)?;
 
         Ok((s, Self::Str(text.into())))
+    }
+
+    fn new_fstr(s: &str) -> nom::IResult<&str, Self> {
+        let (s, _) = tag("f\"")(s)?;
+
+        let literal_parser = take_till(|c| c == '{' || c == '"');
+
+        let (s, before_first_interpolation) = literal_parser(s)?;
+
+        let (s, interpolations_and_literals) = many0(|s| {
+            let (s, interpolation) = delimited(char('{'), Self::new, char('}'))(s)?;
+            let (s, literal) = literal_parser(s)?;
+
+            Ok((s, (interpolation, literal.into())))
+        })(s)?;
+
+        let (s, _) = char('"')(s)?;
+
+        Ok((
+            s,
+            Self::FStr(
+                before_first_interpolation.into(),
+                interpolations_and_literals,
+            ),
+        ))
     }
 
     fn new_block(s: &str) -> nom::IResult<&str, Self> {
@@ -116,6 +144,128 @@ mod tests {
             Expr::new("\"foobar\""),
             Ok(("", Expr::Str("foobar".into())))
         );
+    }
+
+    mod fstr {
+        use super::*;
+
+        #[test]
+        fn no_interpolations() {
+            assert_eq!(
+                Expr::new_fstr("f\"some text\""),
+                Ok(("", Expr::FStr("some text".into(), vec![])))
+            );
+
+            assert_eq!(
+                Expr::new("f\"test\""),
+                Ok(("", Expr::FStr("test".into(), vec![])))
+            );
+        }
+
+        #[test]
+        fn interpolation_surrounded_by_literals() {
+            assert_eq!(
+                Expr::new_fstr("f\"Hello, {.person}!\""),
+                Ok((
+                    "",
+                    Expr::FStr(
+                        "Hello, ".into(),
+                        vec![(
+                            Expr::Var(crate::IdentName::new("person").unwrap().1),
+                            "!".into()
+                        )]
+                    )
+                ))
+            );
+
+            assert_eq!(
+                Expr::new("f\"Your user, {.username}, has {.remainingDays} free days left.\""),
+                Ok((
+                    "",
+                    Expr::FStr(
+                        "Your user, ".into(),
+                        vec![
+                            (
+                                Expr::Var(crate::IdentName::new("username").unwrap().1),
+                                ", has ".into()
+                            ),
+                            (
+                                Expr::Var(crate::IdentName::new("remainingDays").unwrap().1),
+                                " free days left.".into()
+                            )
+                        ]
+                    )
+                ))
+            );
+        }
+
+        #[test]
+        fn interpolation_followed_by_literal() {
+            assert_eq!(
+                Expr::new_fstr("f\"{.randWord} is the word of the day\""),
+                Ok((
+                    "",
+                    Expr::FStr(
+                        "".into(),
+                        vec![(
+                            Expr::Var(crate::IdentName::new("randWord").unwrap().1),
+                            " is the word of the day".into()
+                        )]
+                    )
+                ))
+            );
+
+            assert_eq!(
+                Expr::new("f\"{.latestMovie}: in cinemas now\""),
+                Ok((
+                    "",
+                    Expr::FStr(
+                        "".into(),
+                        vec![(
+                            Expr::Var(crate::IdentName::new("latestMovie").unwrap().1),
+                            ": in cinemas now".into()
+                        )]
+                    )
+                ))
+            );
+        }
+
+        #[test]
+        fn interpolation_preceded_by_literal() {
+            assert_eq!(
+                Expr::new_fstr("f\"Good day, {.user}\""),
+                Ok((
+                    "",
+                    Expr::FStr(
+                        "Good day, ".into(),
+                        vec![(
+                            Expr::Var(crate::IdentName::new("user").unwrap().1),
+                            "".into()
+                        )]
+                    )
+                ))
+            );
+
+            assert_eq!(
+                Expr::new_fstr("f\"Error in module {.moduleName}: {.error}\""),
+                Ok((
+                    "",
+                    Expr::FStr(
+                        "Error in module ".into(),
+                        vec![
+                            (
+                                Expr::Var(crate::IdentName::new("moduleName").unwrap().1),
+                                ": ".into()
+                            ),
+                            (
+                                Expr::Var(crate::IdentName::new("error").unwrap().1),
+                                "".into()
+                            )
+                        ]
+                    )
+                ))
+            );
+        }
     }
 
     mod block {
@@ -225,6 +375,40 @@ impl Expr {
         match self {
             Self::Number(n) => Ok(crate::eval::OutputExpr::Number(n)),
             Self::Str(s) => Ok(crate::eval::OutputExpr::Str(s)),
+            Self::FStr(before_first_interpolation, interpolations_and_literals) => {
+                let mut len = before_first_interpolation.len();
+
+                // Evaluate each of the interpolations, and turn the result of these interpolations
+                // into Strings.
+                let interpolations_and_literals: Vec<_> = interpolations_and_literals
+                    .into_iter()
+                    .map::<Result<_, crate::eval::Error>, _>(|(interpolation, s)| {
+                        let interpolation = String::from(interpolation.eval(state)?);
+
+                        // HACK: It’s kind of hacky to mutate state inside of a call to .map, but
+                        // this is the easiest way.
+                        len += interpolation.len();
+                        len += s.len();
+
+                        Ok((interpolation, s))
+                    })
+                    .collect::<Result<_, _>>()?;
+
+                // Create a string to hold the f-string’s output with the length we’ve kept track
+                // of.
+                let mut output = String::with_capacity(len);
+
+                // Push all of the strings we now have onto the output String.
+
+                output.push_str(&before_first_interpolation);
+
+                for (interpolation, s) in &interpolations_and_literals {
+                    output.push_str(interpolation);
+                    output.push_str(s);
+                }
+
+                Ok(crate::eval::OutputExpr::Str(output))
+            }
             Self::Block(b) => {
                 // The block gets a scope of its own to isolate its contents from the parent scope.
                 let mut block_scope = state.new_child();
