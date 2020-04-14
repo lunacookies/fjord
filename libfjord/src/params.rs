@@ -57,11 +57,11 @@ pub(crate) fn eval(
     for named_param in named_params {
         if let Some(def_param_idx) = def_params
             .iter()
-            .position(|p| p.name() == named_param.name())
+            .position(|p| p.name() == &named_param.name)
         {
             complete_params.push(CompleteParam {
-                name: named_param.name().clone(),
-                val: named_param.val().clone(),
+                name: named_param.name.clone(),
+                val: named_param.val.clone(),
             });
             def_params.remove(def_param_idx);
         } else {
@@ -84,7 +84,7 @@ pub(crate) fn eval(
             for (call_param, def_param) in positional_params.zip(&def_params) {
                 complete_params.push(CompleteParam {
                     name: def_param.name().clone(),
-                    val: call_param.val().clone(),
+                    val: call_param.val.clone(),
                 });
             }
 
@@ -112,8 +112,8 @@ pub(crate) fn eval(
 
                 for default_param in default_params {
                     complete_params.push(CompleteParam {
-                        name: default_param.name().clone(),
-                        val: default_param.val().clone(),
+                        name: default_param.name.clone(),
+                        val: default_param.val.clone(),
                     });
                 }
 

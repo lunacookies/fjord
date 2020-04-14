@@ -49,14 +49,6 @@ impl ParamWithDefault {
 
         Ok((s, Self { name, val }))
     }
-
-    pub(crate) fn name(&self) -> &crate::IdentName {
-        &self.name
-    }
-
-    pub(crate) fn val(&self) -> &crate::Expr {
-        &self.val
-    }
 }
 
 /// A parameter on a function definition that does not posess a default value.

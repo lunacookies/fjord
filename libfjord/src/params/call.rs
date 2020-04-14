@@ -42,14 +42,6 @@ impl NamedParam {
 
         Ok((s, Self { name, val }))
     }
-
-    pub(crate) fn val(&self) -> &crate::Expr {
-        &self.val
-    }
-
-    pub(crate) fn name(&self) -> &crate::IdentName {
-        &self.name
-    }
 }
 
 /// A function call parameter that is positional, i.e. the function definition parameter it is
@@ -64,10 +56,6 @@ impl PositionalParam {
     fn new(s: &str) -> nom::IResult<&str, Self> {
         let (s, val) = crate::Expr::new(s)?;
         Ok((s, Self { val }))
-    }
-
-    pub(crate) fn val(&self) -> &crate::Expr {
-        &self.val
     }
 }
 
