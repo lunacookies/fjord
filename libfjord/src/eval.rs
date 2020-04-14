@@ -82,6 +82,9 @@ pub enum Error {
     /// definition parameters
     #[error("failed evaluating function parameters")]
     FuncParamError(#[from] crate::params::Error),
+    /// when a non-boolean expression is used as the condition of an if expression
+    #[error("a non-boolean expression was used as the condition of an if expression")]
+    NonBoolCond,
 }
 
 /// The output of evaluating something.

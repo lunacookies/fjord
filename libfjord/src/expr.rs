@@ -23,6 +23,15 @@ pub enum Expr {
     Block(Vec<crate::Item>),
     /// a variable usage (not definition)
     Var(crate::IdentName),
+    /// an if expression
+    If {
+        /// the condition for the true case to take place
+        condition: Box<Self>,
+        /// the if expression evaluates to this if the condition is true
+        true_case: Box<Self>,
+        /// the if expression evaluates to this if the condition is false
+        false_case: Box<Self>,
+    },
     /// a function call
     FuncCall {
         /// the name of the function being called
@@ -36,10 +45,11 @@ impl Expr {
     pub(crate) fn new(s: &str) -> nom::IResult<&str, Self> {
         Self::new_bool(s)
             .or_else(|_| Self::new_number(s))
-            .or_else(|_| Self::new_fstr(s))
             .or_else(|_| Self::new_str(s))
+            .or_else(|_| Self::new_fstr(s))
             .or_else(|_| Self::new_block(s))
             .or_else(|_| Self::new_var(s))
+            .or_else(|_| Self::new_if(s))
             .or_else(|_| Self::new_func_call(s))
     }
 
@@ -121,6 +131,34 @@ impl Expr {
         let (s, name) = crate::IdentName::new(s)?;
 
         Ok((s, Self::Var(name)))
+    }
+
+    fn new_if(s: &str) -> nom::IResult<&str, Self> {
+        let (s, _) = tag("if")(s)?;
+        let (s, _) = crate::take_whitespace1(s)?;
+
+        let (s, condition) = Self::new(s)?;
+        let (s, _) = crate::take_whitespace1(s)?;
+
+        let (s, _) = tag("then")(s)?;
+        let (s, _) = crate::take_whitespace1(s)?;
+
+        let (s, true_case) = Self::new(s)?;
+        let (s, _) = crate::take_whitespace1(s)?;
+
+        let (s, _) = tag("else")(s)?;
+        let (s, _) = crate::take_whitespace1(s)?;
+
+        let (s, false_case) = Self::new(s)?;
+
+        Ok((
+            s,
+            Self::If {
+                condition: Box::new(condition),
+                true_case: Box::new(true_case),
+                false_case: Box::new(false_case),
+            },
+        ))
     }
 
     fn new_func_call(s: &str) -> nom::IResult<&str, Self> {
@@ -344,6 +382,33 @@ mod tests {
     }
 
     #[test]
+    fn if_expr() {
+        assert_eq!(
+            Expr::new_if("if true then 1 else 0"),
+            Ok((
+                "",
+                Expr::If {
+                    condition: Box::new(Expr::Bool(true)),
+                    true_case: Box::new(Expr::Number(1)),
+                    false_case: Box::new(Expr::Number(0))
+                }
+            ))
+        );
+
+        assert_eq!(
+            Expr::new("if .b then false else true"),
+            Ok((
+                "",
+                Expr::If {
+                    condition: Box::new(Expr::Var(crate::IdentName::new("b").unwrap().1)),
+                    true_case: Box::new(Expr::Bool(false)),
+                    false_case: Box::new(Expr::Bool(true))
+                }
+            ))
+        )
+    }
+
+    #[test]
     fn no_args() {
         assert_eq!(
             Expr::new_func_call("funcName"),
@@ -450,6 +515,15 @@ impl Expr {
                 Some(val) => Ok(val.clone()),
                 None => Err(crate::eval::Error::VarNotFound),
             },
+            Self::If {
+                condition,
+                true_case,
+                false_case,
+            } => match condition.eval(state)? {
+                crate::eval::OutputExpr::Bool(true) => true_case.eval(state),
+                crate::eval::OutputExpr::Bool(false) => false_case.eval(state),
+                _ => Err(crate::eval::Error::NonBoolCond),
+            },
             Self::FuncCall {
                 name,
                 params: call_params,
@@ -551,6 +625,21 @@ mod eval_tests {
         assert_eq!(
             Expr::Var(crate::IdentName::new("name").unwrap().1).eval(&state),
             Ok(crate::eval::OutputExpr::Str("John Smith".into()))
+        );
+    }
+
+    #[test]
+    fn if_expr() {
+        let state = crate::eval::State::new_root(vec![]);
+
+        assert_eq!(
+            Expr::If {
+                condition: Box::new(Expr::Bool(true)),
+                true_case: Box::new(Expr::Number(25)),
+                false_case: Box::new(Expr::Number(50)),
+            }
+            .eval(&state),
+            Ok(crate::eval::OutputExpr::Number(25))
         );
     }
 
