@@ -49,7 +49,7 @@ mod tests {
 
     #[test]
     fn snake_case() {
-        assert_ne!(IdentName::new("kebab-case").unwrap().0, "");
+        assert_ne!(IdentName::new("snake_case").unwrap().0, "");
     }
 
     #[test]
