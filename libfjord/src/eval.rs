@@ -70,7 +70,7 @@ impl<'a> State<'a> {
 }
 
 /// All kinds of errors that can occur while evaluating code.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, PartialEq)]
 pub enum Error {
     /// when a variable is used that does not exist
     #[error("could not find variable")]
@@ -85,7 +85,7 @@ pub enum Error {
 }
 
 /// The output of evaluating something.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum OutputExpr {
     /// a number
     Number(crate::Number),

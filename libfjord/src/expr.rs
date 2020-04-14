@@ -453,3 +453,100 @@ impl Expr {
         }
     }
 }
+
+#[cfg(test)]
+mod eval_tests {
+    use super::*;
+
+    #[test]
+    fn number() {
+        let state = crate::eval::State::new_root(vec![]);
+
+        assert_eq!(
+            Expr::Number(100).eval(&state),
+            Ok(crate::eval::OutputExpr::Number(100))
+        );
+    }
+
+    #[test]
+    fn str() {
+        let state = crate::eval::State::new_root(vec![]);
+
+        assert_eq!(
+            Expr::Str("Hello, World!".into()).eval(&state),
+            Ok(crate::eval::OutputExpr::Str("Hello, World!".into()))
+        );
+    }
+
+    #[test]
+    fn fstr() {
+        let state = crate::eval::State::new_root(vec![]);
+
+        assert_eq!(
+            Expr::FStr(
+                "The number is ".into(),
+                vec![(Expr::Number(100), "!".into())]
+            )
+            .eval(&state),
+            Ok(crate::eval::OutputExpr::Str("The number is 100!".into()))
+        );
+    }
+
+    #[test]
+    fn block() {
+        let state = crate::eval::State::new_root(vec![]);
+
+        assert_eq!(
+            Expr::Block(vec![
+                crate::Item::Binding {
+                    name: crate::IdentName::new("foo").unwrap().1,
+                    val: crate::BindingVal::Var(Expr::Number(5))
+                },
+                crate::Item::Expr(Expr::Var(crate::IdentName::new("foo").unwrap().1))
+            ])
+            .eval(&state),
+            Ok(crate::eval::OutputExpr::Number(5))
+        );
+    }
+
+    #[test]
+    fn var() {
+        let mut state = crate::eval::State::new_root(vec![]);
+        state.set_var(
+            crate::IdentName::new("name").unwrap().1,
+            crate::eval::OutputExpr::Str("John Smith".into()),
+        );
+
+        assert_eq!(
+            Expr::Var(crate::IdentName::new("name").unwrap().1).eval(&state),
+            Ok(crate::eval::OutputExpr::Str("John Smith".into()))
+        );
+    }
+
+    #[test]
+    fn func_call() {
+        use crate::params::def::{Param, ParamWithoutDefault};
+
+        let mut state = crate::eval::State::new_root(vec![]);
+        state.set_func(
+            crate::IdentName::new("identity").unwrap().1,
+            crate::Func {
+                params: vec![Param::WithoutDefault(ParamWithoutDefault {
+                    name: crate::IdentName::new("x").unwrap().1,
+                })],
+                body: Expr::Var(crate::IdentName::new("x").unwrap().1),
+            },
+        );
+
+        assert_eq!(
+            Expr::FuncCall {
+                name: crate::IdentName::new("identity").unwrap().1,
+                params: vec![call::Param::Positional(call::PositionalParam {
+                    val: Expr::Str("✅".into())
+                })]
+            }
+            .eval(&state),
+            Ok(crate::eval::OutputExpr::Str("✅".into()))
+        );
+    }
+}
