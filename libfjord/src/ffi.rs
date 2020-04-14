@@ -21,15 +21,13 @@ pub trait ForeignFjordFunc: std::fmt::Debug {
 /// \*you won’t find those, they aren’t in Fjord’s public interface.
 #[derive(Clone, Debug)]
 pub struct Param {
-    name: crate::IdentName,
-    val: crate::eval::OutputExpr,
+    /// its name
+    pub name: crate::IdentName,
+    /// its value
+    pub val: crate::eval::OutputExpr,
 }
 
 impl Param {
-    pub fn val(&self) -> &crate::eval::OutputExpr {
-        &self.val
-    }
-
     pub(crate) fn from_complete_param(
         complete_param: crate::params::CompleteParam,
         state: &crate::eval::State,
