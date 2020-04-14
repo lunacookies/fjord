@@ -40,7 +40,7 @@ impl Func {
         let mut func_state = state.new_child();
 
         for param in complete_params {
-            func_state.set_var(param.name().clone(), param.val().clone().eval(&func_state)?)
+            func_state.set_var(param.name, param.val.eval(&func_state)?)
         }
 
         self.body.eval(&func_state)

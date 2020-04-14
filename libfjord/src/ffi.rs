@@ -35,8 +35,8 @@ impl Param {
         state: &crate::eval::State,
     ) -> Result<Self, crate::eval::Error> {
         Ok(Self {
-            name: complete_param.name().clone(),
-            val: complete_param.val().clone().eval(state)?,
+            name: complete_param.name,
+            val: complete_param.val.eval(state)?,
         })
     }
 }

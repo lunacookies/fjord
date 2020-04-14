@@ -6,18 +6,8 @@ pub mod def;
 
 #[derive(Debug)]
 pub(crate) struct CompleteParam {
-    name: crate::IdentName,
-    val: crate::Expr,
-}
-
-impl CompleteParam {
-    pub(crate) fn name(&self) -> &crate::IdentName {
-        &self.name
-    }
-
-    pub(crate) fn val(&self) -> &crate::Expr {
-        &self.val
-    }
+    pub name: crate::IdentName,
+    pub val: crate::Expr,
 }
 
 /// The errors that can occur when matching up function definition parameters with function call
