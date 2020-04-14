@@ -91,6 +91,8 @@ pub enum OutputExpr {
     Number(crate::Number),
     /// a string
     Str(String),
+    /// a boolean,
+    Bool(bool),
     /// the ‘unit type’, equivalent to Rust’s `()`
     Unit,
 }
@@ -98,6 +100,8 @@ pub enum OutputExpr {
 impl From<OutputExpr> for String {
     fn from(e: OutputExpr) -> Self {
         match e {
+            OutputExpr::Bool(true) => "true".into(),
+            OutputExpr::Bool(false) => "false".into(),
             OutputExpr::Number(n) => n.to_string(),
             OutputExpr::Str(s) => s,
             OutputExpr::Unit => "()".into(),

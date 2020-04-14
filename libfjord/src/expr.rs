@@ -1,4 +1,5 @@
 use nom::{
+    branch::alt,
     bytes::complete::{tag, take_till, take_while1},
     character::complete::char,
     multi::{many0, separated_list},
@@ -10,6 +11,8 @@ use crate::params::call;
 /// An expression.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
+    /// a boolean literal
+    Bool(bool),
     /// a number literal
     Number(crate::Number),
     /// a string literal
@@ -31,12 +34,24 @@ pub enum Expr {
 
 impl Expr {
     pub(crate) fn new(s: &str) -> nom::IResult<&str, Self> {
-        Self::new_number(s)
+        Self::new_bool(s)
+            .or_else(|_| Self::new_number(s))
             .or_else(|_| Self::new_fstr(s))
             .or_else(|_| Self::new_str(s))
             .or_else(|_| Self::new_block(s))
             .or_else(|_| Self::new_var(s))
             .or_else(|_| Self::new_func_call(s))
+    }
+
+    fn new_bool(s: &str) -> nom::IResult<&str, Self> {
+        let (s, boolean) = alt((tag("true"), tag("false")))(s)?;
+
+        let boolean = match boolean {
+            "true" => true,
+            _ => false,
+        };
+
+        Ok((s, Self::Bool(boolean)))
     }
 
     fn new_number(s: &str) -> nom::IResult<&str, Self> {
@@ -125,9 +140,14 @@ mod tests {
     use super::*;
 
     #[test]
+    fn bool() {
+        assert_eq!(Expr::new_bool("true"), Ok(("", Expr::Bool(true))));
+        assert_eq!(Expr::new("false"), Ok(("", Expr::Bool(false))));
+    }
+
+    #[test]
     fn number() {
         assert_eq!(Expr::new_number("123"), Ok(("", Expr::Number(123))));
-
         assert_eq!(Expr::new("123"), Ok(("", Expr::Number(123))));
     }
 
@@ -373,6 +393,7 @@ mod tests {
 impl Expr {
     pub(crate) fn eval(self, state: &crate::eval::State) -> crate::eval::EvalResult {
         match self {
+            Self::Bool(b) => Ok(crate::eval::OutputExpr::Bool(b)),
             Self::Number(n) => Ok(crate::eval::OutputExpr::Number(n)),
             Self::Str(s) => Ok(crate::eval::OutputExpr::Str(s)),
             Self::FStr(before_first_interpolation, interpolations_and_literals) => {
@@ -457,6 +478,16 @@ impl Expr {
 #[cfg(test)]
 mod eval_tests {
     use super::*;
+
+    #[test]
+    fn bool() {
+        let state = crate::eval::State::new_root(vec![]);
+
+        assert_eq!(
+            Expr::Bool(false).eval(&state),
+            Ok(crate::eval::OutputExpr::Bool(false))
+        );
+    }
 
     #[test]
     fn number() {
