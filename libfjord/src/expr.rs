@@ -39,6 +39,8 @@ pub enum Expr {
         /// the parameters given to the function
         params: Vec<call::Param>,
     },
+    /// an expression surrounded by parentheses
+    Parens(Box<Self>),
 }
 
 impl Expr {
@@ -51,6 +53,7 @@ impl Expr {
             .or_else(|_| Self::new_var(s))
             .or_else(|_| Self::new_if(s))
             .or_else(|_| Self::new_func_call(s))
+            .or_else(|_| Self::new_parens(s))
     }
 
     fn new_bool(s: &str) -> nom::IResult<&str, Self> {
@@ -170,6 +173,12 @@ impl Expr {
         })(s)?;
 
         Ok((s, Self::FuncCall { name, params }))
+    }
+
+    fn new_parens(s: &str) -> nom::IResult<&str, Self> {
+        let (s, expr) = delimited(char('('), Self::new, char(')'))(s)?;
+
+        Ok((s, Self::Parens(Box::new(expr))))
     }
 }
 
@@ -453,6 +462,27 @@ mod tests {
             ))
         )
     }
+
+    #[test]
+    fn parens() {
+        assert_eq!(
+            Expr::new_parens("(1000)"),
+            Ok(("", Expr::Parens(Box::new(Expr::Number(1000)))))
+        );
+
+        assert_eq!(
+            Expr::new("(getUserInput .stdout)"),
+            Ok((
+                "",
+                Expr::Parens(Box::new(Expr::FuncCall {
+                    name: crate::IdentName::new("getUserInput").unwrap().1,
+                    params: vec![call::Param::Positional(call::PositionalParam {
+                        val: Expr::Var(crate::IdentName::new("stdout").unwrap().1)
+                    })]
+                }))
+            ))
+        );
+    }
 }
 
 impl Expr {
@@ -545,6 +575,7 @@ impl Expr {
                     Err(crate::eval::Error::FuncNotFound)
                 }
             }
+            Self::Parens(e) => e.eval(state),
         }
     }
 }
@@ -667,6 +698,16 @@ mod eval_tests {
             }
             .eval(&state),
             Ok(crate::eval::OutputExpr::Str("✅".into()))
+        );
+    }
+
+    #[test]
+    fn parens() {
+        let state = crate::eval::State::new_root(vec![]);
+
+        assert_eq!(
+            Expr::Parens(Box::new(Expr::Number(100))).eval(&state),
+            Ok(crate::eval::OutputExpr::Number(100))
         );
     }
 }
