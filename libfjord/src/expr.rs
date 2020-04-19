@@ -476,9 +476,10 @@ mod tests {
                 "",
                 Expr::Parens(Box::new(Expr::FuncCall {
                     name: crate::IdentName::new("getUserInput").unwrap().1,
-                    params: vec![call::Param::Positional(call::PositionalParam {
-                        val: Expr::Var(crate::IdentName::new("stdout").unwrap().1)
-                    })]
+                    params: vec![call::Param {
+                        val: Expr::Var(crate::IdentName::new("stdout").unwrap().1),
+                        name: None,
+                    }]
                 }))
             ))
         );
@@ -693,9 +694,10 @@ mod eval_tests {
         assert_eq!(
             Expr::FuncCall {
                 name: crate::IdentName::new("identity").unwrap().1,
-                params: vec![call::Param::Positional(call::PositionalParam {
-                    val: Expr::Str("✅".into())
-                })]
+                params: vec![call::Param {
+                    val: Expr::Str("✅".into()),
+                    name: None,
+                }]
             }
             .eval(&state),
             Ok(crate::eval::OutputExpr::Str("✅".into()))

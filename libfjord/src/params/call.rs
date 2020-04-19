@@ -4,11 +4,12 @@ use nom::character::complete::char;
 
 /// Any kind of parameter of a function call.
 #[derive(Clone, Debug, PartialEq)]
-pub enum Param {
-    /// which function definition parameter it is setting the value of is based on given name
-    Named(NamedParam),
-    /// which function definition parameter it is setting the value of is based on position
-    Positional(PositionalParam),
+pub struct Param {
+    /// the parameter’s value
+    pub val: crate::Expr,
+    /// the parameter’s name (optional because not all parameters in a function call have to be
+    /// named)
+    pub name: Option<crate::IdentName>,
 }
 
 impl Param {
@@ -17,45 +18,26 @@ impl Param {
     }
 
     fn new_named(s: &str) -> nom::IResult<&str, Self> {
-        NamedParam::new(s).map(|(s, p)| (s, Self::Named(p)))
-    }
-
-    fn new_positional(s: &str) -> nom::IResult<&str, Self> {
-        PositionalParam::new(s).map(|(s, p)| (s, Self::Positional(p)))
-    }
-}
-
-/// A function call parameter whose name is mentioned upon settings its value.
-#[derive(Clone, Debug, PartialEq)]
-pub struct NamedParam {
-    /// the parameter’s value
-    pub val: crate::Expr,
-    /// the parameter’s name
-    pub name: crate::IdentName,
-}
-
-impl NamedParam {
-    fn new(s: &str) -> nom::IResult<&str, Self> {
         let (s, name) = crate::IdentName::new(s)?;
         let (s, _) = char('=')(s)?;
         let (s, val) = crate::Expr::new(s)?;
 
-        Ok((s, Self { name, val }))
+        Ok((
+            s,
+            Self {
+                val,
+                name: Some(name),
+            },
+        ))
     }
-}
 
-/// A function call parameter that is positional, i.e. the function definition parameter it is
-/// setting the value of is based solely on its order in the list of function call parameters.
-#[derive(Clone, Debug, PartialEq)]
-pub struct PositionalParam {
-    /// the parameter’s value
-    pub val: crate::Expr,
-}
-
-impl PositionalParam {
-    fn new(s: &str) -> nom::IResult<&str, Self> {
+    fn new_positional(s: &str) -> nom::IResult<&str, Self> {
         let (s, val) = crate::Expr::new(s)?;
-        Ok((s, Self { val }))
+        Ok((s, Self { val, name: None }))
+    }
+
+    pub(crate) fn is_named(&self) -> bool {
+        self.name.is_some()
     }
 }
 
@@ -66,17 +48,23 @@ mod param_tests {
     #[test]
     fn named() {
         assert_eq!(
-            Param::new("paramName=10"),
-            Ok(("", Param::Named(NamedParam::new("paramName=10").unwrap().1)))
+            Param::new_named("paramName=10"),
+            Ok((
+                "",
+                Param {
+                    val: crate::Expr::Number(10),
+                    name: Some(crate::IdentName::new("paramName=10").unwrap().1),
+                }
+            ))
         );
 
         assert_eq!(
-            NamedParam::new("foobar=100"),
+            Param::new("foobar=100"),
             Ok((
                 "",
-                NamedParam {
-                    name: crate::IdentName::new("foobar").unwrap().1,
-                    val: crate::Expr::new("100").unwrap().1
+                Param {
+                    val: crate::Expr::Number(100),
+                    name: Some(crate::IdentName::new("foobar").unwrap().1),
                 }
             ))
         )
@@ -85,21 +73,23 @@ mod param_tests {
     #[test]
     fn positional() {
         assert_eq!(
-            Param::new("123"),
+            Param::new_positional("123"),
             Ok((
                 "",
-                Param::Positional(PositionalParam {
-                    val: crate::Expr::new("123").unwrap().1
-                })
+                Param {
+                    val: crate::Expr::Number(123),
+                    name: None,
+                }
             ))
         );
 
         assert_eq!(
-            PositionalParam::new("\"Test\""),
+            Param::new("\"Test\""),
             Ok((
                 "",
-                PositionalParam {
-                    val: crate::Expr::new("\"Test\"").unwrap().1,
+                Param {
+                    val: crate::Expr::Str("Test".into()),
+                    name: None,
                 }
             ))
         )

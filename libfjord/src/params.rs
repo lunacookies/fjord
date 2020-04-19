@@ -33,32 +33,20 @@ pub(crate) fn eval(
 
     let mut complete_params = Vec::new();
 
-    // FIXME: these two bindings could use ‘.partition()’, but then we’d have to turn each back
-    // into an iterator and back to a Vec in order to get to the contents of call::Param. For now
-    // we’ll just loop twice.
-    let named_params = call_params.iter().filter_map(|p| {
-        if let call::Param::Named(np) = p {
-            Some(np)
-        } else {
-            None
-        }
-    });
-    let positional_params = call_params.iter().filter_map(|p| {
-        if let call::Param::Positional(pp) = p {
-            Some(pp)
-        } else {
-            None
-        }
-    });
+    let (named_params, positional_params): (Vec<_>, Vec<_>) =
+        call_params.into_iter().partition(|p| p.is_named());
 
     // Loop through all named function parameters. If the parameter actually exists, add it to the
     // vector of completed parameters and remove it from the list of function definition params (as
     // we don’t need it anymore). If it doesn’t exist, then return an error.
     for named_param in named_params {
-        if let Some(def_param_idx) = def_params.iter().position(|p| p.name == named_param.name) {
+        // At this point we know that the parametere is named, so we know that name is Some.
+        let param_name = named_param.name.unwrap();
+
+        if let Some(def_param_idx) = def_params.iter().position(|p| p.name == param_name) {
             complete_params.push(CompleteParam {
-                name: named_param.name.clone(),
-                val: named_param.val.clone(),
+                name: param_name,
+                val: named_param.val,
             });
             def_params.remove(def_param_idx);
         } else {
@@ -67,7 +55,7 @@ pub(crate) fn eval(
     }
 
     let def_params_len = def_params.len();
-    let positional_params_len = positional_params.clone().count();
+    let positional_params_len = positional_params.len();
 
     let ord = positional_params_len.cmp(&def_params_len);
     match ord {
@@ -78,10 +66,10 @@ pub(crate) fn eval(
             //
             // zip stops yielding elements when one of the iterators returns None, thereby limiting
             // the length of the iterator to the shortest of the two inputs.
-            for (call_param, def_param) in positional_params.zip(&def_params) {
+            for (call_param, def_param) in positional_params.into_iter().zip(&def_params) {
                 complete_params.push(CompleteParam {
                     name: def_param.name.clone(),
-                    val: call_param.val.clone(),
+                    val: call_param.val,
                 });
             }
 
