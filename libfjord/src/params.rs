@@ -94,7 +94,7 @@ pub(crate) fn eval(
                         name: default_param.name.clone(),
                         // At this point we know the parameter has a default value, so we can
                         // safely unwrap here.
-                        val: default_param.val.as_ref().unwrap().clone(),
+                        val: default_param.default_val.as_ref().unwrap().clone(),
                     });
                 }
 

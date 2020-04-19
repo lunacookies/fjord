@@ -8,7 +8,7 @@ pub struct Param {
     /// the parameter’s name
     pub name: crate::IdentName,
     /// the parameter’s default value (not all parameters have default values, necessarily)
-    pub val: Option<crate::Expr>,
+    pub default_val: Option<crate::Expr>,
 }
 
 impl Param {
@@ -19,24 +19,31 @@ impl Param {
     fn new_with_default(s: &str) -> nom::IResult<&str, Self> {
         let (s, name) = crate::IdentName::new(s)?;
         let (s, _) = char('=')(s)?;
-        let (s, val) = crate::Expr::new(s)?;
+        let (s, default_val) = crate::Expr::new(s)?;
 
         Ok((
             s,
             Self {
                 name,
-                val: Some(val),
+                default_val: Some(default_val),
             },
         ))
     }
 
     fn new_without_default(s: &str) -> nom::IResult<&str, Self> {
         let (s, name) = crate::IdentName::new(s)?;
-        Ok((s, Self { name, val: None }))
+
+        Ok((
+            s,
+            Self {
+                name,
+                default_val: None,
+            },
+        ))
     }
 
     pub(crate) fn has_default(&self) -> bool {
-        self.val.is_some()
+        self.default_val.is_some()
     }
 }
 
@@ -52,7 +59,7 @@ mod param_tests {
                 "",
                 Param {
                     name: crate::IdentName::new("paramName=5").unwrap().1,
-                    val: Some(crate::Expr::Number(5))
+                    default_val: Some(crate::Expr::Number(5))
                 }
             ))
         );
@@ -63,7 +70,7 @@ mod param_tests {
                 "",
                 Param {
                     name: crate::IdentName::new("foobar").unwrap().1,
-                    val: Some(crate::Expr::Str("test".into())),
+                    default_val: Some(crate::Expr::Str("test".into())),
                 }
             ))
         );
@@ -77,7 +84,7 @@ mod param_tests {
                 "",
                 Param {
                     name: crate::IdentName::new("paramName").unwrap().1,
-                    val: None
+                    default_val: None
                 }
             ))
         );
@@ -88,7 +95,7 @@ mod param_tests {
                 "",
                 Param {
                     name: crate::IdentName::new("foobar").unwrap().1,
-                    val: None,
+                    default_val: None,
                 }
             ))
         );

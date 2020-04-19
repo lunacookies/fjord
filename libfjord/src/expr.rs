@@ -685,7 +685,7 @@ mod eval_tests {
             crate::Func {
                 params: vec![Param {
                     name: crate::IdentName::new("x").unwrap().1,
-                    val: None,
+                    default_val: None,
                 }],
                 body: Expr::Var(crate::IdentName::new("x").unwrap().1),
             },
