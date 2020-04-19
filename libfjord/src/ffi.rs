@@ -10,7 +10,8 @@ pub trait ForeignFjordFunc: std::fmt::Debug {
 
     /// This is called when the foreign function is called. Like any other function in Fjord, the
     /// foreign function takes in parameters that consist of names and values, and outputs an
-    /// expression.
+    /// expression. The input vector of parameters is guaranteed to be in the order that the
+    /// parameters from [`params`](#method.params) are.
     fn run(&self, params: Vec<Param>) -> crate::eval::OutputExpr;
 }
 
