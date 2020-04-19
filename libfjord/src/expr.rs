@@ -500,7 +500,7 @@ impl Expr {
                 let interpolations_and_literals: Vec<_> = interpolations_and_literals
                     .into_iter()
                     .map::<Result<_, crate::eval::Error>, _>(|(interpolation, s)| {
-                        let interpolation = String::from(interpolation.eval(state)?);
+                        let interpolation = interpolation.eval(state)?.format();
 
                         // HACK: It’s kind of hacky to mutate state inside of a call to .map, but
                         // this is the easiest way.

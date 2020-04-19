@@ -100,9 +100,9 @@ pub enum OutputExpr {
     Unit,
 }
 
-impl From<OutputExpr> for String {
-    fn from(e: OutputExpr) -> Self {
-        match e {
+impl OutputExpr {
+    pub(crate) fn format(self) -> String {
+        match self {
             OutputExpr::Bool(true) => "true".into(),
             OutputExpr::Bool(false) => "false".into(),
             OutputExpr::Number(n) => n.to_string(),
