@@ -112,4 +112,18 @@ impl OutputExpr {
     }
 }
 
+impl std::fmt::Display for OutputExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            OutputExpr::Bool(true) => f.write_str("true")?,
+            OutputExpr::Bool(false) => f.write_str("false")?,
+            OutputExpr::Number(n) => write!(f, "{}", n)?,
+            OutputExpr::Str(s) => write!(f, "\"{}\"", s)?,
+            OutputExpr::Unit => (),
+        }
+
+        Ok(())
+    }
+}
+
 pub(crate) type EvalResult = Result<OutputExpr, Error>;
