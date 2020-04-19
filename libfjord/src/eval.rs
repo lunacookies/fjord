@@ -126,4 +126,28 @@ impl std::fmt::Display for OutputExpr {
     }
 }
 
+/// This error occurs when a conversion from an OutputExpr to a type that isn’t contained by the
+/// OutputExpr is attempted.
+#[derive(Debug)]
+pub struct TypeError;
+
+macro_rules! impl_try_from {
+    ($variant:ident, $contained_ty:ty) => {
+        impl std::convert::TryFrom<OutputExpr> for $contained_ty {
+            type Error = TypeError;
+
+            fn try_from(e: OutputExpr) -> Result<Self, Self::Error> {
+                match e {
+                    OutputExpr::$variant(x) => Ok(x),
+                    _ => Err(TypeError),
+                }
+            }
+        }
+    };
+}
+
+impl_try_from!(Number, i32);
+impl_try_from!(Str, String);
+impl_try_from!(Bool, bool);
+
 pub(crate) type EvalResult = Result<OutputExpr, Error>;
