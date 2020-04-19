@@ -10,6 +10,16 @@ impl IdentName {
         let _ = take_while1(|c: char| c.is_ascii_lowercase())(s)?;
         let (s, name) = take_while1(|c: char| c.is_ascii_alphanumeric())(s)?;
 
+        // Identifier names cannot contain keywords.
+        if name.contains("if")
+            || name.contains("then")
+            || name.contains("else")
+            || name.contains("true")
+            || name.contains("false")
+        {
+            return Err(nom::Err::Error((s, nom::error::ErrorKind::Not)));
+        }
+
         Ok((s, Self(name.into())))
     }
 
