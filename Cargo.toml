@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "fj",
+    "fjord",
     "foreignfjordfunc-derive",
     "libfjord",
 ]
