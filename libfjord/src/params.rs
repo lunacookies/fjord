@@ -55,10 +55,7 @@ pub(crate) fn eval(
     // vector of completed parameters and remove it from the list of function definition params (as
     // we don’t need it anymore). If it doesn’t exist, then return an error.
     for named_param in named_params {
-        if let Some(def_param_idx) = def_params
-            .iter()
-            .position(|p| p.name() == &named_param.name)
-        {
+        if let Some(def_param_idx) = def_params.iter().position(|p| p.name == named_param.name) {
             complete_params.push(CompleteParam {
                 name: named_param.name.clone(),
                 val: named_param.val.clone(),
@@ -83,7 +80,7 @@ pub(crate) fn eval(
             // the length of the iterator to the shortest of the two inputs.
             for (call_param, def_param) in positional_params.zip(&def_params) {
                 complete_params.push(CompleteParam {
-                    name: def_param.name().clone(),
+                    name: def_param.name.clone(),
                     val: call_param.val.clone(),
                 });
             }
@@ -102,29 +99,19 @@ pub(crate) fn eval(
                 // The first thing we can do to try to fill in some of the missing parameters is to
                 // use all the remaining definition parameters’ default values (if they have any).
 
-                let default_params = def_params.iter().filter_map(|p| {
-                    if let def::Param::WithDefault(d) = p {
-                        Some(d)
-                    } else {
-                        None
-                    }
-                });
+                let default_params = def_params.iter().filter(|p| p.has_default());
 
                 for default_param in default_params {
                     complete_params.push(CompleteParam {
                         name: default_param.name.clone(),
-                        val: default_param.val.clone(),
+                        // At this point we know the parameter has a default value, so we can
+                        // safely unwrap here.
+                        val: default_param.val.as_ref().unwrap().clone(),
                     });
                 }
 
                 // We don’t need these any more.
-                def_params.retain(|p| {
-                    if let def::Param::WithDefault(_) = p {
-                        false
-                    } else {
-                        true
-                    }
-                });
+                def_params.retain(|p| !p.has_default());
 
                 // If everything has gone well, there should be no definition parameters left.
                 // However, if the caller has not specified enough parameters, there will be some

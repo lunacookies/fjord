@@ -4,11 +4,11 @@ use nom::character::complete::char;
 
 /// Any kind of parameter on a function definition.
 #[derive(Clone, Debug, PartialEq)]
-pub enum Param {
-    /// with a default value
-    WithDefault(ParamWithDefault),
-    /// without a default value
-    WithoutDefault(ParamWithoutDefault),
+pub struct Param {
+    /// the parameter’s name
+    pub name: crate::IdentName,
+    /// the parameter’s default value (not all parameters have default values, necessarily)
+    pub val: Option<crate::Expr>,
 }
 
 impl Param {
@@ -17,51 +17,26 @@ impl Param {
     }
 
     fn new_with_default(s: &str) -> nom::IResult<&str, Self> {
-        ParamWithDefault::new(s).map(|(s, p)| (s, Self::WithDefault(p)))
-    }
-
-    fn new_without_default(s: &str) -> nom::IResult<&str, Self> {
-        ParamWithoutDefault::new(s).map(|(s, p)| (s, Self::WithoutDefault(p)))
-    }
-
-    pub(crate) fn name(&self) -> &crate::IdentName {
-        match self {
-            Self::WithDefault(p) => &p.name,
-            Self::WithoutDefault(p) => &p.name,
-        }
-    }
-}
-
-/// A parameter on a function definition that has a default value.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ParamWithDefault {
-    /// the parameter’s name
-    pub name: crate::IdentName,
-    /// the parameter’s value
-    pub val: crate::Expr,
-}
-
-impl ParamWithDefault {
-    fn new(s: &str) -> nom::IResult<&str, Self> {
         let (s, name) = crate::IdentName::new(s)?;
         let (s, _) = char('=')(s)?;
         let (s, val) = crate::Expr::new(s)?;
 
-        Ok((s, Self { name, val }))
+        Ok((
+            s,
+            Self {
+                name,
+                val: Some(val),
+            },
+        ))
     }
-}
 
-/// A parameter on a function definition that does not posess a default value.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ParamWithoutDefault {
-    /// the parameter’s name
-    pub name: crate::IdentName,
-}
-
-impl ParamWithoutDefault {
-    fn new(s: &str) -> nom::IResult<&str, Self> {
+    fn new_without_default(s: &str) -> nom::IResult<&str, Self> {
         let (s, name) = crate::IdentName::new(s)?;
-        Ok((s, Self { name }))
+        Ok((s, Self { name, val: None }))
+    }
+
+    pub(crate) fn has_default(&self) -> bool {
+        self.val.is_some()
     }
 }
 
@@ -72,20 +47,23 @@ mod param_tests {
     #[test]
     fn with_default() {
         assert_eq!(
-            Param::new("paramName=5"),
+            Param::new_with_default("paramName=5"),
             Ok((
                 "",
-                Param::WithDefault(ParamWithDefault::new("paramName=5").unwrap().1)
+                Param {
+                    name: crate::IdentName::new("paramName=5").unwrap().1,
+                    val: Some(crate::Expr::Number(5))
+                }
             ))
         );
 
         assert_eq!(
-            ParamWithDefault::new("foobar=\"test\""),
+            Param::new("foobar=\"test\""),
             Ok((
                 "",
-                ParamWithDefault {
+                Param {
                     name: crate::IdentName::new("foobar").unwrap().1,
-                    val: crate::Expr::new("\"test\"").unwrap().1,
+                    val: Some(crate::Expr::Str("test".into())),
                 }
             ))
         );
@@ -94,19 +72,23 @@ mod param_tests {
     #[test]
     fn without_default() {
         assert_eq!(
-            Param::new("paramName"),
+            Param::new_without_default("paramName"),
             Ok((
                 "",
-                Param::WithoutDefault(ParamWithoutDefault::new("paramName").unwrap().1)
+                Param {
+                    name: crate::IdentName::new("paramName").unwrap().1,
+                    val: None
+                }
             ))
         );
 
         assert_eq!(
-            ParamWithoutDefault::new("foobar"),
+            Param::new("foobar"),
             Ok((
                 "",
-                ParamWithoutDefault {
+                Param {
                     name: crate::IdentName::new("foobar").unwrap().1,
+                    val: None,
                 }
             ))
         );

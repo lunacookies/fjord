@@ -676,15 +676,16 @@ mod eval_tests {
 
     #[test]
     fn func_call() {
-        use crate::params::def::{Param, ParamWithoutDefault};
+        use crate::params::def::Param;
 
         let mut state = crate::eval::State::new_root(vec![]);
         state.set_func(
             crate::IdentName::new("identity").unwrap().1,
             crate::Func {
-                params: vec![Param::WithoutDefault(ParamWithoutDefault {
+                params: vec![Param {
                     name: crate::IdentName::new("x").unwrap().1,
-                })],
+                    val: None,
+                }],
                 body: Expr::Var(crate::IdentName::new("x").unwrap().1),
             },
         );
