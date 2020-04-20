@@ -1,5 +1,5 @@
 [package]
-name = "fjord"
+name = "fjordstd"
 version = "0.1.0"
 authors = ["Aramis Razzaghipour <aramisnoah@gmail.com>"]
 edition = "2018"
@@ -7,7 +7,4 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1"
-foreignfjordfunc-derive = { path = "../foreignfjordfunc-derive" }
-libfjord = { path = "../libfjord" }
-fjordstd = { path = "../fjordstd" }
+editor = { path = "../editor" }
