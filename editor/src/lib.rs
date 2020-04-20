@@ -49,11 +49,8 @@ fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
                     KeyCode::Right => buffer.move_cursor(1, 0),
                     KeyCode::Up => buffer.move_cursor(0, -1),
                     KeyCode::Down => buffer.move_cursor(0, 1),
-                    KeyCode::Char(c) => {
-                        // Insert the given character and then move the cursor over.
-                        buffer.insert_char(c);
-                        buffer.move_cursor(1, 0);
-                    }
+                    KeyCode::Backspace => buffer.backspace(),
+                    KeyCode::Char(c) => buffer.insert_char(c),
                     _ => (),
                 },
                 // Quit on C-q
@@ -78,6 +75,7 @@ struct Buffer {
     top_line: usize,
     line_nr: u16,
     col_nr: u16,
+    idx: usize,
 }
 
 impl Buffer {
@@ -88,7 +86,15 @@ impl Buffer {
             top_line: 0,
             line_nr: 0,
             col_nr: 0,
+            idx: 0,
         })
+    }
+
+    fn recalculate_idx(&mut self) {
+        self.idx = self
+            .file_contents
+            .line_to_char(self.line_nr.try_into().unwrap())
+            + usize::try_from(self.col_nr).unwrap();
     }
 
     fn move_cursor(&mut self, x: i32, y: i32) {
@@ -100,6 +106,10 @@ impl Buffer {
         // We know the conversion cannot fail, as clamp prevents negative values.
         self.col_nr = clamp(col_nr).try_into().unwrap();
         self.line_nr = clamp(line_nr).try_into().unwrap();
+
+        // We’ve potentially changed the column and line number, so we need to recalculate the
+        // character index.
+        self.recalculate_idx();
     }
 
     fn insert_char(&mut self, c: char) {
@@ -109,6 +119,15 @@ impl Buffer {
             + usize::try_from(self.col_nr).unwrap();
 
         self.file_contents.insert_char(idx, c);
+
+        self.move_cursor(1, 0);
+    }
+
+    fn backspace(&mut self) {
+        // Remove the character the cursor is at.
+        self.file_contents.remove(self.idx - 1..self.idx);
+
+        self.move_cursor(-1, 0);
     }
 
     fn redraw(&self, stdout: &mut io::Stdout) -> anyhow::Result<()> {
@@ -117,8 +136,12 @@ impl Buffer {
             itertools::Itertools,
         };
 
-        // Hiding the cursor makes redrawing less distracting.
-        execute!(stdout, cursor::Hide, cursor::MoveTo(0, 0))?;
+        execute!(
+            stdout,
+            cursor::Hide, // Hiding the cursor makes redrawing less distracting.
+            cursor::MoveTo(0, 0),
+            terminal::Clear(terminal::ClearType::All),
+        )?;
 
         let (cols, rows) = terminal::size()?;
 
