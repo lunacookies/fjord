@@ -1,6 +1,7 @@
 use {
     foreignfjordfunc_derive::ForeignFjordFunc,
     std::{
+        convert::TryInto,
         io::{self, Write},
         path::Path,
     },
@@ -77,7 +78,7 @@ impl Buffer {
         execute!(stdout, cursor::Hide, cursor::MoveTo(0, 0))?;
 
         let (cols, rows) = terminal::size()?;
-        let (cols, rows) = (cols as usize, rows as usize);
+        let (cols, rows): (usize, usize) = (cols.try_into().unwrap(), rows.try_into().unwrap());
 
         let displayed_portion = self
             .file_contents
