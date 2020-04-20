@@ -228,7 +228,7 @@ impl Buffer {
             .file_contents
             .lines()
             .skip(self.top_line) // Start drawing the file at the line at the top of the screen.
-            .take(rows) // Only draw enough rows to fill the terminal.
+            .take(rows - 1) // Only draw enough rows to fill the terminal.
             .map(|rope_slice| {
                 // Truncate lines if they don’t fit on the screen.
                 if rope_slice.len_chars() > cols {
