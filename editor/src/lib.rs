@@ -45,10 +45,10 @@ fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
         if let event::Event::Key(k) = event::read()? {
             match (k.code, k.modifiers) {
                 (c, KeyModifiers::NONE) => match c {
-                    KeyCode::Left => buffer.move_cursor(-1, 0),
-                    KeyCode::Right => buffer.move_cursor(1, 0),
-                    KeyCode::Up => buffer.move_cursor(0, -1),
-                    KeyCode::Down => buffer.move_cursor(0, 1),
+                    KeyCode::Up => buffer.move_cursor(Direction::Up),
+                    KeyCode::Down => buffer.move_cursor(Direction::Down),
+                    KeyCode::Left => buffer.move_cursor(Direction::Left),
+                    KeyCode::Right => buffer.move_cursor(Direction::Right),
                     KeyCode::Backspace => buffer.backspace(),
                     KeyCode::Char(c) => buffer.insert_char(c),
                     _ => (),
@@ -78,6 +78,13 @@ struct Buffer {
     idx: usize,
 }
 
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
 impl Buffer {
     fn new(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         // Open new files at the top, with the cursor on the first column of the first line.
@@ -90,6 +97,44 @@ impl Buffer {
         })
     }
 
+    fn current_line_len(&self) -> usize {
+        let len = self.file_contents.line(self.line_nr).len_chars();
+
+        // Counteract newline.
+        if len > 0 {
+            len - 1
+        } else {
+            len
+        }
+    }
+
+    fn last_col_nr_of_current_line(&self) -> usize {
+        let len = self.file_contents.line(self.line_nr).len_chars();
+
+        // Correct for zero indexing.
+        if len > 0 {
+            len - 1
+        } else {
+            len
+        }
+    }
+
+    fn is_on_first_line(&self) -> bool {
+        self.line_nr == 0
+    }
+
+    fn is_on_last_line(&self) -> bool {
+        self.line_nr == self.file_contents.len_lines() - 1
+    }
+
+    fn is_on_first_col(&self) -> bool {
+        self.col_nr == 0
+    }
+
+    fn is_on_last_col(&self) -> bool {
+        self.col_nr == self.last_col_nr_of_current_line()
+    }
+
     fn recalculate_idx(&mut self) {
         self.idx = self
             .file_contents
@@ -97,25 +142,50 @@ impl Buffer {
             + usize::try_from(self.col_nr).unwrap();
     }
 
-    fn move_cursor(&mut self, x: isize, y: isize) {
-        let clamp = |x| if x < 0 { 0 } else { x };
+    fn move_cursor(&mut self, direction: Direction) {
+        match direction {
+            Direction::Up => {
+                if !self.is_on_first_line() {
+                    self.line_nr -= 1;
+                    self.snap_cursor_to_eol();
+                }
+            }
 
-        let col_nr = isize::try_from(self.col_nr).unwrap() + x;
-        let line_nr = isize::try_from(self.line_nr).unwrap() + y;
+            Direction::Down => {
+                if !self.is_on_last_line() {
+                    self.line_nr += 1;
+                    self.snap_cursor_to_eol();
+                }
+            }
 
-        self.col_nr = clamp(col_nr).try_into().unwrap();
-        self.line_nr = clamp(line_nr).try_into().unwrap();
+            Direction::Left => {
+                if !self.is_on_first_col() {
+                    self.col_nr -= 1;
+                } else if !self.is_on_first_line() {
+                    self.line_nr -= 1;
+                    self.col_nr = self.last_col_nr_of_current_line();
+                }
+            }
 
-        // Subtract one to correct for newline.
-        let len_of_line = self.file_contents.line(self.line_nr).len_chars() - 1;
-
-        if self.col_nr > len_of_line {
-            self.col_nr = len_of_line;
+            Direction::Right => {
+                if !self.is_on_last_col() {
+                    self.col_nr += 1;
+                } else if !self.is_on_last_line() {
+                    self.line_nr += 1;
+                    self.col_nr = 0;
+                }
+            }
         }
 
-        // We’ve potentially changed the column and line number, so we need to recalculate the
-        // character index.
         self.recalculate_idx();
+    }
+
+    fn snap_cursor_to_eol(&mut self) {
+        let current_line_len = self.current_line_len();
+
+        if self.col_nr > current_line_len {
+            self.col_nr = current_line_len;
+        }
     }
 
     fn insert_char(&mut self, c: char) {
@@ -126,14 +196,13 @@ impl Buffer {
 
         self.file_contents.insert_char(idx, c);
 
-        self.move_cursor(1, 0);
+        self.move_cursor(Direction::Right);
     }
 
     fn backspace(&mut self) {
         // Remove the character the cursor is at.
-        self.file_contents.remove(self.idx - 1..self.idx);
-
-        self.move_cursor(-1, 0);
+        self.move_cursor(Direction::Left);
+        self.file_contents.remove(self.idx..self.idx + 1);
     }
 
     fn redraw(&self, stdout: &mut io::Stdout) -> anyhow::Result<()> {
