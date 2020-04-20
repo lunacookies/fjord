@@ -73,8 +73,8 @@ fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
 struct Buffer {
     file_contents: ropey::Rope,
     top_line: usize,
-    line_nr: u16,
-    col_nr: u16,
+    line_nr: usize,
+    col_nr: usize,
     idx: usize,
 }
 
@@ -97,15 +97,21 @@ impl Buffer {
             + usize::try_from(self.col_nr).unwrap();
     }
 
-    fn move_cursor(&mut self, x: i32, y: i32) {
+    fn move_cursor(&mut self, x: isize, y: isize) {
         let clamp = |x| if x < 0 { 0 } else { x };
 
-        let col_nr = i32::from(self.col_nr) + x;
-        let line_nr = i32::from(self.line_nr) + y;
+        let col_nr = isize::try_from(self.col_nr).unwrap() + x;
+        let line_nr = isize::try_from(self.line_nr).unwrap() + y;
 
-        // We know the conversion cannot fail, as clamp prevents negative values.
         self.col_nr = clamp(col_nr).try_into().unwrap();
         self.line_nr = clamp(line_nr).try_into().unwrap();
+
+        // Subtract one to correct for newline.
+        let len_of_line = self.file_contents.line(self.line_nr).len_chars() - 1;
+
+        if self.col_nr > len_of_line {
+            self.col_nr = len_of_line;
+        }
 
         // We’ve potentially changed the column and line number, so we need to recalculate the
         // character index.
@@ -170,7 +176,10 @@ impl Buffer {
         // Move the cursor to its position, and show it again so the user knows where it is.
         queue!(
             stdout,
-            cursor::MoveTo(self.col_nr, self.line_nr),
+            cursor::MoveTo(
+                self.col_nr.try_into().unwrap(),
+                self.line_nr.try_into().unwrap()
+            ),
             cursor::Show
         )?;
         stdout.flush()?;
