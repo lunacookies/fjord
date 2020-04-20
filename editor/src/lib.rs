@@ -26,7 +26,7 @@ impl Editor {
 
 fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
     use crossterm::{
-        event::{self, KeyCode},
+        event::{self, KeyCode, KeyModifiers},
         queue, terminal,
     };
 
@@ -43,14 +43,16 @@ fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
 
     loop {
         if let event::Event::Key(k) = event::read()? {
-            match k.code {
-                KeyCode::Left => buffer.move_cursor(-1, 0),
-                KeyCode::Right => buffer.move_cursor(1, 0),
-                KeyCode::Up => buffer.move_cursor(0, -1),
-                KeyCode::Down => buffer.move_cursor(0, 1),
-
-                // Quit if ‘q’ is pressed.
-                KeyCode::Char('q') => break,
+            match (k.code, k.modifiers) {
+                (c, KeyModifiers::NONE) => match c {
+                    KeyCode::Left => buffer.move_cursor(-1, 0),
+                    KeyCode::Right => buffer.move_cursor(1, 0),
+                    KeyCode::Up => buffer.move_cursor(0, -1),
+                    KeyCode::Down => buffer.move_cursor(0, 1),
+                    _ => (),
+                },
+                // Quit on C-q
+                (KeyCode::Char('q'), KeyModifiers::CONTROL) => break,
                 _ => (),
             }
         }
