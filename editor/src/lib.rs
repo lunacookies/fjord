@@ -19,7 +19,7 @@ impl Editor {
             eprintln!("Error: {}", e);
         }
 
-        // The editor doesn’t return anything
+        // The editor doesn’t return anything.
         libfjord::eval::OutputExpr::Unit
     }
 }
@@ -105,6 +105,8 @@ impl Buffer {
         execute!(stdout, cursor::Hide, cursor::MoveTo(0, 0))?;
 
         let (cols, rows) = terminal::size()?;
+
+        // TODO: Early-return a Result here instead of unwrapping.
         let (cols, rows): (usize, usize) = (cols.try_into().unwrap(), rows.try_into().unwrap());
 
         let displayed_portion = self
