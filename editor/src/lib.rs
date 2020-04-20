@@ -50,6 +50,7 @@ fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
                     KeyCode::Left => buffer.move_cursor(Direction::Left),
                     KeyCode::Right => buffer.move_cursor(Direction::Right),
                     KeyCode::Backspace => buffer.backspace(),
+                    KeyCode::Enter => buffer.insert_char('\n'),
                     KeyCode::Char(c) => buffer.insert_char(c),
                     _ => (),
                 },
