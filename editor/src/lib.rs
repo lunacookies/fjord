@@ -1,7 +1,7 @@
 use {
     foreignfjordfunc_derive::ForeignFjordFunc,
     std::{
-        convert::TryInto,
+        convert::{TryFrom, TryInto},
         io::{self, Write},
         path::Path,
     },
@@ -49,6 +49,11 @@ fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
                     KeyCode::Right => buffer.move_cursor(1, 0),
                     KeyCode::Up => buffer.move_cursor(0, -1),
                     KeyCode::Down => buffer.move_cursor(0, 1),
+                    KeyCode::Char(c) => {
+                        // Insert the given character and then move the cursor over.
+                        buffer.insert_char(c);
+                        buffer.move_cursor(1, 0);
+                    }
                     _ => (),
                 },
                 // Quit on C-q
@@ -95,6 +100,15 @@ impl Buffer {
         // We know the conversion cannot fail, as clamp prevents negative values.
         self.col_nr = clamp(col_nr).try_into().unwrap();
         self.line_nr = clamp(line_nr).try_into().unwrap();
+    }
+
+    fn insert_char(&mut self, c: char) {
+        let idx = self
+            .file_contents
+            .line_to_char(self.line_nr.try_into().unwrap())
+            + usize::try_from(self.col_nr).unwrap();
+
+        self.file_contents.insert_char(idx, c);
     }
 
     fn redraw(&self, stdout: &mut io::Stdout) -> anyhow::Result<()> {
