@@ -25,10 +25,13 @@ impl Editor {
 }
 
 fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
-    use crossterm::{queue, terminal};
+    use crossterm::{
+        event::{self, KeyCode},
+        queue, terminal,
+    };
 
     // Attempt to load the given file before doing anything else.
-    let buffer = Buffer::new(path)?;
+    let mut buffer = Buffer::new(path)?;
 
     let mut stdout = io::stdout();
 
@@ -38,9 +41,22 @@ fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
 
     buffer.redraw(&mut stdout)?;
 
-    // Sleep for a few seconds so I can check if everything is working as expected. This is only
-    // for debugging purposes, and can be removed once proper handling of keystrokes is added.
-    std::thread::sleep(std::time::Duration::from_secs(5));
+    loop {
+        if let event::Event::Key(k) = event::read()? {
+            match k.code {
+                KeyCode::Left => buffer.move_cursor(-1, 0),
+                KeyCode::Right => buffer.move_cursor(1, 0),
+                KeyCode::Up => buffer.move_cursor(0, -1),
+                KeyCode::Down => buffer.move_cursor(0, 1),
+
+                // Quit if ‘q’ is pressed.
+                KeyCode::Char('q') => break,
+                _ => (),
+            }
+        }
+
+        buffer.redraw(&mut stdout)?;
+    }
 
     terminal::disable_raw_mode()?;
     queue!(stdout, terminal::LeaveAlternateScreen)?;
@@ -66,6 +82,17 @@ impl Buffer {
             line_nr: 0,
             col_nr: 0,
         })
+    }
+
+    fn move_cursor(&mut self, x: i32, y: i32) {
+        let clamp = |x| if x < 0 { 0 } else { x };
+
+        let col_nr = i32::from(self.col_nr) + x;
+        let line_nr = i32::from(self.line_nr) + y;
+
+        // We know the conversion cannot fail, as clamp prevents negative values.
+        self.col_nr = clamp(col_nr).try_into().unwrap();
+        self.line_nr = clamp(line_nr).try_into().unwrap();
     }
 
     fn redraw(&self, stdout: &mut io::Stdout) -> anyhow::Result<()> {
