@@ -50,7 +50,7 @@ fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
 
 #[derive(Debug)]
 struct Buffer {
-    file_contents: String,
+    file_contents: ropey::Rope,
     top_line: usize,
     line_nr: u16,
     col_nr: u16,
@@ -60,7 +60,7 @@ impl Buffer {
     fn new(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         // Open new files at the top, with the cursor on the first column of the first line.
         Ok(Self {
-            file_contents: std::fs::read_to_string(path)?,
+            file_contents: ropey::Rope::from_reader(std::fs::File::open(path)?)?,
             top_line: 0,
             line_nr: 0,
             col_nr: 0,
@@ -68,7 +68,10 @@ impl Buffer {
     }
 
     fn redraw(&self, stdout: &mut io::Stdout) -> anyhow::Result<()> {
-        use crossterm::{cursor, execute, queue, terminal};
+        use {
+            crossterm::{cursor, execute, queue, terminal},
+            itertools::Itertools,
+        };
 
         // Hiding the cursor makes redrawing less distracting.
         execute!(stdout, cursor::Hide, cursor::MoveTo(0, 0))?;
@@ -81,18 +84,19 @@ impl Buffer {
             .lines()
             .skip(self.top_line) // Start drawing the file at the line at the top of the screen.
             .take(rows) // Only draw enough rows to fill the terminal.
-            .map(|line| {
+            .map(|rope_slice| {
                 // Truncate lines if they don’t fit on the screen.
-                if line.len() > cols {
-                    &line[..cols]
+                if rope_slice.len_chars() > cols {
+                    rope_slice.slice(..cols).bytes().collect::<Vec<_>>()
                 } else {
-                    line
+                    rope_slice.bytes().collect::<Vec<_>>()
                 }
             })
-            .collect::<Vec<_>>()
-            .join("\r\n");
+            .intersperse(b"\r".to_vec())
+            .flatten()
+            .collect::<Vec<_>>();
 
-        stdout.write_all(displayed_portion.as_bytes())?;
+        stdout.write_all(&displayed_portion)?;
 
         // Move the cursor to its position, and show it again so the user knows where it is.
         queue!(
