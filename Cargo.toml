@@ -3,7 +3,8 @@
 members = [
     "editor",
     "fjord",
+    "fjordstd",
     "foreignfjordfunc-derive",
     "libfjord",
-    "fjordstd",
+    "syntax",
 ]
