@@ -247,7 +247,6 @@ impl Buffer {
             stdout,
             cursor::Hide, // Hiding the cursor makes redrawing less distracting.
             cursor::MoveTo(0, 0),
-            terminal::Clear(terminal::ClearType::All),
         )?;
 
         // Update the window dimensions each refresh.
@@ -260,13 +259,24 @@ impl Buffer {
             .skip(self.top_line) // Start drawing the file at the line at the top of the screen.
             .take(self.window_lines) // Only draw enough rows to fill the terminal.
             .map(|line| {
-                // Truncate lines if they don’t fit on the screen.
-                if line.len() > self.window_cols {
-                    line[..self.window_cols].as_bytes().to_vec()
-                } else {
-                    line.into_bytes()
-                }
+                let line = {
+                    // Truncate lines if they don’t fit on the screen.
+                    if line.len() > self.window_cols {
+                        &line[..self.window_cols]
+                    } else {
+                        &line
+                    }
+                };
+
+                // Clear each line before displaying it.
+                format!(
+                    "{}{}",
+                    terminal::Clear(terminal::ClearType::UntilNewLine),
+                    line
+                )
+                .into_bytes()
             })
+            // We intersperse line endings here to avoid an empty line at the bototm of the window.
             .intersperse(b"\r\n".to_vec())
             .flatten()
             .collect::<Vec<_>>();
