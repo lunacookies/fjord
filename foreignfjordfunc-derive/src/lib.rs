@@ -70,12 +70,14 @@ pub fn derive(tokens: TokenStream) -> TokenStream {
             }
         }
 
+        #[allow(missing_docs)]
         #[derive(Debug)]
         pub struct #func_ident {
             def_params: ::std::vec::Vec<::libfjord::params::def::Param>,
         }
 
         impl #func_ident {
+            #[allow(missing_docs)]
             pub fn new() -> Self {
                 Self {
                     def_params: ::std::vec![#(#def_params),*],
