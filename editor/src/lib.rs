@@ -74,6 +74,7 @@ fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
 struct Buffer {
     rows: Vec<String>,
     top_line: usize,
+    left_col: usize,
     line_nr: usize,
     col_nr: usize,
     window_lines: usize,
@@ -100,6 +101,7 @@ impl Buffer {
                 .map(ToString::to_string)
                 .collect(),
             top_line: 0,
+            left_col: 0,
             line_nr: 0,
             col_nr: 0,
             window_lines: lines.try_into()?,
@@ -127,11 +129,19 @@ impl Buffer {
         self.col_nr == self.current_line_len()
     }
 
-    fn scroll(&mut self) {
+    fn scroll_lines(&mut self) {
         if self.line_nr < self.top_line {
             self.top_line = self.line_nr;
         } else if self.line_nr >= self.top_line + self.window_lines {
             self.top_line = self.line_nr - self.window_lines + 1;
+        }
+    }
+
+    fn scroll_cols(&mut self) {
+        if self.col_nr < self.left_col {
+            self.left_col = self.col_nr;
+        } else if self.col_nr >= self.left_col + self.window_cols {
+            self.left_col = self.col_nr - self.window_cols + 1;
         }
     }
 
@@ -170,7 +180,8 @@ impl Buffer {
             }
         }
 
-        self.scroll();
+        self.scroll_lines();
+        self.scroll_cols();
     }
 
     fn snap_cursor_to_eol(&mut self) {
@@ -260,11 +271,20 @@ impl Buffer {
             .take(self.window_lines) // Only draw enough rows to fill the terminal.
             .map(|line| {
                 let line = {
-                    // Truncate lines if they don’t fit on the screen.
-                    if line.len() > self.window_cols {
-                        &line[..self.window_cols]
+                    // Start drawing lines at the leftmost column number that is currently being
+                    // displayed. If this were to run past the end of the line, just use an empty
+                    // one.
+                    if line.len() > self.left_col {
+                        let line = &line[self.left_col..];
+
+                        // Truncate lines if they don’t fit on the screen.
+                        if line.len() > self.window_cols {
+                            &line[..self.window_cols]
+                        } else {
+                            &line
+                        }
                     } else {
-                        &line
+                        ""
                     }
                 };
 
@@ -287,7 +307,7 @@ impl Buffer {
         queue!(
             stdout,
             cursor::MoveTo(
-                self.col_nr.try_into().unwrap(),
+                (self.col_nr - self.left_col).try_into().unwrap(),
                 (self.line_nr - self.top_line).try_into().unwrap()
             ),
             cursor::Show
