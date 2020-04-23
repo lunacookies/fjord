@@ -1,7 +1,7 @@
 use {
     foreignfjordfunc_derive::ForeignFjordFunc,
     std::{
-        convert::{TryFrom, TryInto},
+        convert::TryInto,
         io::{self, Write},
         path::Path,
     },
@@ -50,7 +50,7 @@ fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
                     KeyCode::Left => buffer.move_cursor(Direction::Left),
                     KeyCode::Right => buffer.move_cursor(Direction::Right),
                     KeyCode::Backspace => buffer.backspace(),
-                    KeyCode::Enter => buffer.insert_char('\n'),
+                    KeyCode::Enter => buffer.insert_newline(),
                     KeyCode::Char(c) => buffer.insert_char(c),
                     _ => (),
                 },
@@ -72,11 +72,10 @@ fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
 
 #[derive(Debug)]
 struct Buffer {
-    file_contents: ropey::Rope,
+    rows: Vec<String>,
     top_line: usize,
     line_nr: usize,
     col_nr: usize,
-    idx: usize,
 }
 
 enum Direction {
@@ -90,34 +89,18 @@ impl Buffer {
     fn new(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         // Open new files at the top, with the cursor on the first column of the first line.
         Ok(Self {
-            file_contents: ropey::Rope::from_reader(std::fs::File::open(path)?)?,
+            rows: std::fs::read_to_string(path)?
+                .lines()
+                .map(ToString::to_string)
+                .collect(),
             top_line: 0,
             line_nr: 0,
             col_nr: 0,
-            idx: 0,
         })
     }
 
     fn current_line_len(&self) -> usize {
-        let len = self.file_contents.line(self.line_nr).len_chars();
-
-        // Counteract newline.
-        if len > 0 {
-            len - 1
-        } else {
-            len
-        }
-    }
-
-    fn last_col_nr_of_current_line(&self) -> usize {
-        let len = self.file_contents.line(self.line_nr).len_chars();
-
-        // Correct for zero indexing.
-        if len > 0 {
-            len - 1
-        } else {
-            len
-        }
+        self.rows[self.line_nr].len()
     }
 
     fn is_on_first_line(&self) -> bool {
@@ -125,7 +108,7 @@ impl Buffer {
     }
 
     fn is_on_last_line(&self) -> bool {
-        self.line_nr == self.file_contents.len_lines() - 1
+        self.line_nr == self.rows.len() - 1
     }
 
     fn is_on_first_col(&self) -> bool {
@@ -133,14 +116,7 @@ impl Buffer {
     }
 
     fn is_on_last_col(&self) -> bool {
-        self.col_nr == self.last_col_nr_of_current_line()
-    }
-
-    fn recalculate_idx(&mut self) {
-        self.idx = self
-            .file_contents
-            .line_to_char(self.line_nr.try_into().unwrap())
-            + usize::try_from(self.col_nr).unwrap();
+        self.col_nr == self.current_line_len()
     }
 
     fn move_cursor(&mut self, direction: Direction) {
@@ -164,7 +140,7 @@ impl Buffer {
                     self.col_nr -= 1;
                 } else if !self.is_on_first_line() {
                     self.line_nr -= 1;
-                    self.col_nr = self.last_col_nr_of_current_line();
+                    self.col_nr = self.current_line_len();
                 }
             }
 
@@ -177,33 +153,59 @@ impl Buffer {
                 }
             }
         }
-
-        self.recalculate_idx();
     }
 
     fn snap_cursor_to_eol(&mut self) {
         let current_line_len = self.current_line_len();
 
-        if self.col_nr > current_line_len {
+        if self.col_nr >= current_line_len {
             self.col_nr = current_line_len;
         }
     }
 
     fn insert_char(&mut self, c: char) {
-        let idx = self
-            .file_contents
-            .line_to_char(self.line_nr.try_into().unwrap())
-            + usize::try_from(self.col_nr).unwrap();
-
-        self.file_contents.insert_char(idx, c);
-
+        self.rows[self.line_nr].insert(self.col_nr, c);
         self.move_cursor(Direction::Right);
     }
 
+    fn insert_newline(&mut self) {
+        // If we’re on the first or last column then we can simply add a new line. Otherwise, we
+        // split the current line at the cursor’s position.
+        if self.is_on_first_col() {
+            self.rows.insert(self.line_nr, String::new());
+        } else if self.is_on_last_col() {
+            self.rows.insert(self.line_nr + 1, String::new());
+        } else {
+            let ending_segment = self.rows[self.line_nr].split_off(self.col_nr);
+            self.rows.insert(self.line_nr + 1, ending_segment);
+        }
+
+        // Once we insert the new line we snap to the first column, and go down one line so that the
+        // cursor is positioned on the new line.
+        self.col_nr = 0;
+        self.move_cursor(Direction::Down);
+    }
+
     fn backspace(&mut self) {
-        // Remove the character the cursor is at.
+        let was_on_first_col = self.is_on_first_col();
+
+        // TODO: it would be cleaner if this was moved to the end of this function.
+        //
+        // Moving left now places us either before the character we want to delete (this corrects
+        // for zero indexing) if we’re not on the first column, or brings us to the end of the line
+        // before the one we’re on if we’re on the first column.
         self.move_cursor(Direction::Left);
-        self.file_contents.remove(self.idx..self.idx + 1);
+
+        // Join the line we’re on and the line below it if we were on the first column before
+        // moving, or just delete the character the cursor is on otherwise.
+        if was_on_first_col {
+            let joined_line = self.rows[self.line_nr + 1].clone();
+            self.rows[self.line_nr].push_str(&joined_line);
+
+            self.rows.remove(self.line_nr + 1);
+        } else {
+            self.rows[self.line_nr].remove(self.col_nr);
+        }
     }
 
     fn redraw(&self, stdout: &mut io::Stdout) -> anyhow::Result<()> {
@@ -225,19 +227,20 @@ impl Buffer {
         let (cols, rows): (usize, usize) = (cols.try_into().unwrap(), rows.try_into().unwrap());
 
         let displayed_portion = self
-            .file_contents
-            .lines()
+            .rows
+            .clone()
+            .into_iter()
             .skip(self.top_line) // Start drawing the file at the line at the top of the screen.
-            .take(rows - 1) // Only draw enough rows to fill the terminal.
-            .map(|rope_slice| {
+            .take(rows) // Only draw enough rows to fill the terminal.
+            .map(|row| {
                 // Truncate lines if they don’t fit on the screen.
-                if rope_slice.len_chars() > cols {
-                    rope_slice.slice(..cols).bytes().collect::<Vec<_>>()
+                if row.len() > cols {
+                    row[..cols].as_bytes().to_vec()
                 } else {
-                    rope_slice.bytes().collect::<Vec<_>>()
+                    row.into_bytes()
                 }
             })
-            .intersperse(b"\r".to_vec())
+            .intersperse(b"\r\n".to_vec())
             .flatten()
             .collect::<Vec<_>>();
 
