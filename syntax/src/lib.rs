@@ -60,5 +60,5 @@ pub trait Theme {
     /// Provides a mapping from `HighlightGroup`s to `Style`s. As `HighlightGroup`s contain a
     /// variant for unhighlighted text, this thereby defines the appearance of the whole text
     /// field.
-    fn style(group: HighlightGroup) -> Style;
+    fn style(&self, group: HighlightGroup) -> Style;
 }
