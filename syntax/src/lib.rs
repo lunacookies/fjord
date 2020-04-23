@@ -12,7 +12,7 @@ pub trait Highlight {
 }
 
 /// An individual fragment of highlighted text.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Span<'text> {
     /// the text being highlighted
     pub text: &'text str,
@@ -29,14 +29,14 @@ pub struct Span<'text> {
 /// that unhighlighted text gets.
 #[non_exhaustive]
 #[allow(missing_docs)]
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, strum_macros::EnumIter)]
 pub enum HighlightGroup {
     Unhighlighted,
     Keyword,
 }
 
 /// An RGB color.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Rgb {
     /// red
     pub r: u8,
@@ -47,7 +47,7 @@ pub struct Rgb {
 }
 
 /// The styling applied to a given [`HighlightGroup`](enum.HighlightGroup.html).
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Style {
     /// its foreground color
     pub fg_color: Rgb,
