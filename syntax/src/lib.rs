@@ -62,3 +62,27 @@ pub trait Theme {
     /// field.
     fn style(&self, group: HighlightGroup) -> Style;
 }
+
+/// A convenience function that renders a given input text using a given highlighter and theme,
+/// returning a vector of string slices and the styles to apply to them.
+pub fn render<'input, H, T>(
+    input: &'input str,
+    highlighter: H,
+    theme: T,
+) -> Vec<(&'input str, Style)>
+where
+    H: Highlight,
+    T: Theme,
+{
+    use {std::collections::HashMap, strum::IntoEnumIterator};
+
+    let styles: HashMap<_, _> = HighlightGroup::iter()
+        .map(|group| (group, theme.style(group)))
+        .collect();
+
+    highlighter
+        .highlight(input)
+        .into_iter()
+        .map(|span| (span.text, styles[&span.group]))
+        .collect()
+}
