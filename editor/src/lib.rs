@@ -76,6 +76,8 @@ struct Buffer {
     top_line: usize,
     line_nr: usize,
     col_nr: usize,
+    window_lines: usize,
+    window_cols: usize,
 }
 
 enum Direction {
@@ -87,6 +89,10 @@ enum Direction {
 
 impl Buffer {
     fn new(path: impl AsRef<Path>) -> anyhow::Result<Self> {
+        use crossterm::terminal;
+
+        let (cols, lines) = terminal::size()?;
+
         // Open new files at the top, with the cursor on the first column of the first line.
         Ok(Self {
             rows: std::fs::read_to_string(path)?
@@ -96,6 +102,8 @@ impl Buffer {
             top_line: 0,
             line_nr: 0,
             col_nr: 0,
+            window_lines: lines.try_into()?,
+            window_cols: cols.try_into()?,
         })
     }
 
@@ -208,7 +216,18 @@ impl Buffer {
         }
     }
 
-    fn redraw(&self, stdout: &mut io::Stdout) -> anyhow::Result<()> {
+    fn update_window_dimens(&mut self) -> anyhow::Result<()> {
+        use crossterm::terminal;
+
+        let (cols, lines) = terminal::size()?;
+
+        self.window_lines = lines.try_into()?;
+        self.window_cols = cols.try_into()?;
+
+        Ok(())
+    }
+
+    fn redraw(&mut self, stdout: &mut io::Stdout) -> anyhow::Result<()> {
         use {
             crossterm::{cursor, execute, queue, terminal},
             itertools::Itertools,
@@ -221,23 +240,21 @@ impl Buffer {
             terminal::Clear(terminal::ClearType::All),
         )?;
 
-        let (cols, rows) = terminal::size()?;
-
-        // TODO: Early-return a Result here instead of unwrapping.
-        let (cols, rows): (usize, usize) = (cols.try_into().unwrap(), rows.try_into().unwrap());
+        // Update the window dimensions each refresh.
+        self.update_window_dimens()?;
 
         let displayed_portion = self
             .rows
             .clone()
             .into_iter()
             .skip(self.top_line) // Start drawing the file at the line at the top of the screen.
-            .take(rows) // Only draw enough rows to fill the terminal.
-            .map(|row| {
+            .take(self.window_lines) // Only draw enough rows to fill the terminal.
+            .map(|line| {
                 // Truncate lines if they don’t fit on the screen.
-                if row.len() > cols {
-                    row[..cols].as_bytes().to_vec()
+                if line.len() > self.window_cols {
+                    line[..self.window_cols].as_bytes().to_vec()
                 } else {
-                    row.into_bytes()
+                    line.into_bytes()
                 }
             })
             .intersperse(b"\r\n".to_vec())
