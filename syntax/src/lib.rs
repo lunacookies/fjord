@@ -51,8 +51,8 @@ pub struct Rgb {
 pub struct Style {
     /// its foreground color
     pub fg_color: Rgb,
-    /// its background color
-    pub bg_color: Rgb,
+    /// its (optional) background color
+    pub bg_color: Option<Rgb>,
 }
 
 /// A trait for defining syntax highlighting themes.
