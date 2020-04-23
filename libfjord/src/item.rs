@@ -38,7 +38,7 @@ impl Item {
         Ok((s, Self::Binding { name, val }))
     }
 
-    pub(crate) fn eval(self, state: &mut crate::eval::State) -> crate::eval::EvalResult {
+    pub(crate) fn eval(self, state: &mut crate::eval::State<'_>) -> crate::eval::EvalResult {
         match self {
             Self::Expr(e) => e.eval(state),
             Self::Binding { name, val } => {

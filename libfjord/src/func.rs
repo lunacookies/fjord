@@ -32,7 +32,7 @@ impl Func {
     pub(crate) fn eval(
         self,
         call_params: Vec<call::Param>,
-        state: &crate::eval::State,
+        state: &crate::eval::State<'_>,
     ) -> crate::eval::EvalResult {
         let def_params = self.params;
         let complete_params = crate::params::eval(call_params, def_params)?;

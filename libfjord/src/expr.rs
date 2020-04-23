@@ -487,7 +487,7 @@ mod tests {
 }
 
 impl Expr {
-    pub(crate) fn eval(self, state: &crate::eval::State) -> crate::eval::EvalResult {
+    pub(crate) fn eval(self, state: &crate::eval::State<'_>) -> crate::eval::EvalResult {
         match self {
             Self::Bool(b) => Ok(crate::eval::OutputExpr::Bool(b)),
             Self::Number(n) => Ok(crate::eval::OutputExpr::Number(n)),

@@ -1,7 +1,7 @@
 //! A library that parses and evaluates Fjord code. Through [an FFI](ffi), Rust code can be called
 //! from Fjord.
 
-#![warn(missing_docs)]
+#![warn(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 pub mod eval;
 mod expr;
 pub mod ffi;
@@ -31,7 +31,7 @@ pub enum Error {
 }
 
 /// A simple wrapper that parses some source code, and returns the result of evaluating it.
-pub fn eval(s: &str, state: &mut eval::State) -> Result<eval::OutputExpr, Error> {
+pub fn eval(s: &str, state: &mut eval::State<'_>) -> Result<eval::OutputExpr, Error> {
     let (_, expr) = match Item::new(s) {
         Ok(e) => e,
         _ => return Err(Error::Parse),

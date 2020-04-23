@@ -31,7 +31,7 @@ pub struct Param {
 impl Param {
     pub(crate) fn from_complete_param(
         complete_param: crate::params::CompleteParam,
-        state: &crate::eval::State,
+        state: &crate::eval::State<'_>,
     ) -> Result<Self, crate::eval::Error> {
         Ok(Self {
             name: complete_param.name,
