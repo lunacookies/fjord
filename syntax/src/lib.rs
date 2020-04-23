@@ -8,7 +8,7 @@
 pub trait Highlight {
     /// Ensure that all input text is also contained in the `text` fields of the outputted `Span`s
     /// – in other words, this function must be lossless.
-    fn highlight<'input>(input: &'input str) -> Vec<Span<'input>>;
+    fn highlight<'input>(&self, input: &'input str) -> Vec<Span<'input>>;
 }
 
 /// An individual fragment of highlighted text.
