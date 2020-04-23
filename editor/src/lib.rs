@@ -127,6 +127,14 @@ impl Buffer {
         self.col_nr == self.current_line_len()
     }
 
+    fn scroll(&mut self) {
+        if self.line_nr < self.top_line {
+            self.top_line = self.line_nr;
+        } else if self.line_nr >= self.top_line + self.window_lines {
+            self.top_line = self.line_nr - self.window_lines + 1;
+        }
+    }
+
     fn move_cursor(&mut self, direction: Direction) {
         match direction {
             Direction::Up => {
@@ -161,6 +169,8 @@ impl Buffer {
                 }
             }
         }
+
+        self.scroll();
     }
 
     fn snap_cursor_to_eol(&mut self) {
@@ -268,7 +278,7 @@ impl Buffer {
             stdout,
             cursor::MoveTo(
                 self.col_nr.try_into().unwrap(),
-                self.line_nr.try_into().unwrap()
+                (self.line_nr - self.top_line).try_into().unwrap()
             ),
             cursor::Show
         )?;
