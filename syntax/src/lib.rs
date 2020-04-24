@@ -31,6 +31,15 @@ pub enum HighlightGroup {
     Keyword,
 }
 
+/// An individual fragment of styled text.
+#[derive(Clone, Copy, Debug)]
+pub struct StyledSpan<'text> {
+    /// the text being styled
+    pub text: &'text str,
+    /// the style it has been given
+    pub style: ResolvedStyle,
+}
+
 /// An RGB color.
 #[derive(Clone, Copy, Debug)]
 pub struct Rgb {
@@ -101,18 +110,15 @@ pub trait Theme {
 }
 
 /// A convenience function that renders a given input text using a given highlighter and theme,
-/// returning a vector of string slices and the (fully resolved) styles to apply to them.
-pub fn render<'input, H, T>(
-    input: &'input str,
-    highlighter: H,
-    theme: T,
-) -> Vec<(&'input str, ResolvedStyle)>
+/// returning a vector of `StyledSpan`s.
+pub fn render<'input, H, T>(input: &'input str, highlighter: H, theme: T) -> Vec<StyledSpan<'input>>
 where
     H: Highlight,
     T: Theme,
 {
     use {std::collections::HashMap, strum::IntoEnumIterator};
 
+    // The key is the highlight group, the value is the style the theme gives to this group.
     let styles: HashMap<_, _> = HighlightGroup::iter()
         .map(|group| (group, theme.style(group)))
         .collect();
@@ -121,13 +127,19 @@ where
         .highlight(input)
         .into_iter()
         .map(|span| {
+            // If the span has a group assigned to it, then we use the resolved version of its
+            // style. If the span does not have a highlight group, however, then we just use the
+            // theme’s default style.
             let resolved_style = if let Some(group) = span.group {
                 styles[&group].resolve(theme.default_style())
             } else {
                 theme.default_style()
             };
 
-            (span.text, resolved_style)
+            StyledSpan {
+                text: span.text,
+                style: resolved_style,
+            }
         })
         .collect()
 }
