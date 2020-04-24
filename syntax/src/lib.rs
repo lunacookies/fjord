@@ -43,26 +43,27 @@ pub struct Rgb {
 }
 
 /// The styling applied to a given [`HighlightGroup`](enum.HighlightGroup.html).
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Style {
-    /// its foreground color
-    pub fg_color: Rgb,
+    /// its (optional) foreground color
+    pub fg_color: Option<Rgb>,
     /// its (optional) background color
     pub bg_color: Option<Rgb>,
 }
 
 impl Style {
+    /// Creates a new Style without a foreground or background colour.
+    pub fn new() -> Self {
+        Self {
+            fg_color: None,
+            bg_color: None,
+        }
+    }
+
     fn resolve(self, resolved: ResolvedStyle) -> ResolvedStyle {
-        if let Some(bg_color) = self.bg_color {
-            ResolvedStyle {
-                fg_color: self.fg_color,
-                bg_color,
-            }
-        } else {
-            ResolvedStyle {
-                fg_color: self.fg_color,
-                bg_color: resolved.bg_color,
-            }
+        ResolvedStyle {
+            fg_color: self.fg_color.unwrap_or(resolved.fg_color),
+            bg_color: self.bg_color.unwrap_or(resolved.bg_color),
         }
     }
 }
