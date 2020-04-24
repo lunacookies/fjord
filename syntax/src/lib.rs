@@ -4,16 +4,16 @@
 
 /// This trait is to be implemented by any type that syntax highlights source code for a particular
 /// language. This is done by taking in a string slice and outputting a vector of
-/// [`Span`](struct.Span.html)s.
+/// [`HighlightedSpan`](struct.HighlightedSpan.html)s.
 pub trait Highlight {
-    /// Ensure that all input text is also contained in the `text` fields of the outputted `Span`s
-    /// – in other words, this function must be lossless.
-    fn highlight<'input>(&self, input: &'input str) -> Vec<Span<'input>>;
+    /// Ensure that all input text is also contained in the `text` fields of the outputted
+    /// `HighlightedSpan`s – in other words, this function must be lossless.
+    fn highlight<'input>(&self, input: &'input str) -> Vec<HighlightedSpan<'input>>;
 }
 
-/// An individual fragment of highlighted text.
+/// An individual fragment of possibly highlighted text.
 #[derive(Clone, Copy, Debug)]
-pub struct Span<'text> {
+pub struct HighlightedSpan<'text> {
     /// the text being highlighted
     pub text: &'text str,
     /// the highlight group it may have been assigned
@@ -84,11 +84,11 @@ pub trait Theme {
     /// The style for unhighlighted text. To understand why this must be a fully resolved style,
     /// consider the following example:
     ///
-    /// - `default_style` returns a [`Style`](struct.Style.html) which omits a foreground color
-    /// - at some point a [highlighter](trait.Highlight.html) returns a [`Span`](struct.Span.html)
-    ///   without a highlight group
+    /// - `default_style` returns a [`Style`](struct.Style.html) which omits a foreground color -
+    /// at some point a [highlighter](trait.Highlight.html) returns a
+    /// [`HighlightedSpan`](struct.HighlightedSpan.html) without a highlight group
     /// - when [`render`](fn.render.html) is called, what is the foreground color of this
-    ///   unhighlighted span?
+    ///   unhighlighted HighlightedSpan?
     ///
     /// To prevent situations like this, `default_style` acts as a fallback for all cases by
     /// forcing the implementor to define all of the style’s fields.
