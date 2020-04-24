@@ -16,22 +16,18 @@ pub trait Highlight {
 pub struct Span<'text> {
     /// the text being highlighted
     pub text: &'text str,
-    /// the highlight group it has been assigned
-    pub group: HighlightGroup,
+    /// the highlight group it may have been assigned
+    pub group: Option<HighlightGroup>,
 }
 
 /// The set of possible syntactical forms text can be assigned.
 ///
 /// As it is certain that more variants will be added in future, this enum has been marked as
-/// non-exhaustive. It is recommended that the wildcard that this implies catches not only any
-/// future new variants, but also the `Unhighlighted` variant – this way you conveniently specify
-/// that highlight groups you haven’t defined styles for yet get the same (lack of) highlighting
-/// that unhighlighted text gets.
+/// non-exhaustive.
 #[non_exhaustive]
 #[allow(missing_docs)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, strum_macros::EnumIter)]
 pub enum HighlightGroup {
-    Unhighlighted,
     Keyword,
 }
 
@@ -55,8 +51,48 @@ pub struct Style {
     pub bg_color: Option<Rgb>,
 }
 
+impl Style {
+    fn resolve(self, resolved: ResolvedStyle) -> ResolvedStyle {
+        if let Some(bg_color) = self.bg_color {
+            ResolvedStyle {
+                fg_color: self.fg_color,
+                bg_color,
+            }
+        } else {
+            ResolvedStyle {
+                fg_color: self.fg_color,
+                bg_color: resolved.bg_color,
+            }
+        }
+    }
+}
+
+/// Identical to a [`Style`](struct.Style.html), except that it must have a background color. This
+/// is outputted by (`render`)(fn.render.html), which resolves the background colour of every
+/// [`Style`](struct.Style.html) it encounters.
+#[derive(Clone, Copy, Debug)]
+pub struct ResolvedStyle {
+    /// its foreground color
+    pub fg_color: Rgb,
+    /// its background color
+    pub bg_color: Rgb,
+}
+
 /// A trait for defining syntax highlighting themes.
 pub trait Theme {
+    /// The style for unhighlighted text. To understand why this must be a fully resolved style,
+    /// consider the following example:
+    ///
+    /// - `default_style` returns a [`Style`](struct.Style.html) which omits a foreground color
+    /// - at some point a [highlighter](trait.Highlight.html) returns a [`Span`](struct.Span.html)
+    ///   without a highlight group
+    /// - when [`render`](fn.render.html) is called, what is the foreground color of this
+    ///   unhighlighted span?
+    ///
+    /// To prevent situations like this, `default_style` acts as a fallback for all cases by
+    /// forcing the implementor to define all of the style’s fields.
+    fn default_style(&self) -> ResolvedStyle;
+
     /// Provides a mapping from `HighlightGroup`s to `Style`s. As `HighlightGroup`s contain a
     /// variant for unhighlighted text, this thereby defines the appearance of the whole text
     /// field.
@@ -64,12 +100,12 @@ pub trait Theme {
 }
 
 /// A convenience function that renders a given input text using a given highlighter and theme,
-/// returning a vector of string slices and the styles to apply to them.
+/// returning a vector of string slices and the (fully resolved) styles to apply to them.
 pub fn render<'input, H, T>(
     input: &'input str,
     highlighter: H,
     theme: T,
-) -> Vec<(&'input str, Style)>
+) -> Vec<(&'input str, ResolvedStyle)>
 where
     H: Highlight,
     T: Theme,
@@ -83,6 +119,14 @@ where
     highlighter
         .highlight(input)
         .into_iter()
-        .map(|span| (span.text, styles[&span.group]))
+        .map(|span| {
+            let resolved_style = if let Some(group) = span.group {
+                styles[&group].resolve(theme.default_style())
+            } else {
+                theme.default_style()
+            };
+
+            (span.text, resolved_style)
+        })
         .collect()
 }
