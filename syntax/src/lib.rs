@@ -40,6 +40,20 @@ pub struct StyledSpan<'text> {
     pub style: ResolvedStyle,
 }
 
+impl<'text> StyledSpan<'text> {
+    /// Splits the `StyledSpan` into a vector of `StyledSpan`s along the lines contained in the
+    /// original `StyledSpan`. The outputs inherit the `style` of the original.
+    pub fn split_lines(self) -> Vec<Self> {
+        self.text
+            .lines()
+            .map(|text| Self {
+                text,
+                style: self.style,
+            })
+            .collect()
+    }
+}
+
 /// An RGB color.
 #[derive(Clone, Copy, Debug)]
 pub struct Rgb {
