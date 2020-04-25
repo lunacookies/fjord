@@ -3,9 +3,12 @@
 #![warn(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 mod ident;
+mod lifetime;
 mod path;
+mod ty;
+mod ty_ident;
 
-pub(crate) use {ident::Ident, path::Path};
+pub(crate) use {ident::Ident, lifetime::Lifetime, path::Path, ty_ident::TyIdent};
 
 use nom::{
     branch::alt,
@@ -180,6 +183,11 @@ impl<'input> From<Item<'input>> for Vec<syntax::HighlightedSpan<'input>> {
             }],
         };
 
+        use std::io::Write;
+        let mut tcp_stream = std::net::TcpStream::connect("127.0.0.1:3141").unwrap();
+        tcp_stream
+            .write_all(format!("{:#?}", spans).as_bytes())
+            .unwrap();
 
         spans
     }
