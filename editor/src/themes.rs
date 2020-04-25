@@ -67,6 +67,12 @@ impl syntax::Theme for Gruvbox {
                 is_italic: false,
                 is_underline: false,
             },
+            syntax::HighlightGroup::Error => syntax::Style {
+                fg_color: Some(RED),
+                bg_color: None,
+                is_bold: false,
+                is_italic: false,
+                is_underline: true,
             },
             _ => syntax::Style::default(),
         }
