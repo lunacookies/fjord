@@ -116,6 +116,7 @@ impl<'input> Item<'input> {
     }
 
     fn new_error(s: &'input str) -> nom::IResult<&'input str, Self> {
+        // ‘Reset’ errors after any of these characters.
         map(
             take_till1(|c| c == '}' || c == ')' || c == ',' || c == ';'),
             |s| Self::Error { text: s },
