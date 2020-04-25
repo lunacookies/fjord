@@ -36,6 +36,8 @@ pub enum HighlightGroup {
     /// an operator that accesses the members of something, whether this is some kind of ‘object’
     /// or a module, e.g. ‘.’ and ‘::’ in Rust
     MemberOper,
+    /// an error
+    Error,
 }
 
 /// An individual fragment of styled text.
