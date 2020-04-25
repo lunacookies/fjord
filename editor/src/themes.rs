@@ -42,7 +42,7 @@ impl syntax::Theme for Gruvbox {
             syntax::HighlightGroup::Keyword => syntax::Style {
                 fg_color: Some(RED),
                 bg_color: None,
-                is_bold: false,
+                is_bold: true,
                 is_italic: false,
                 is_underline: false,
             },
