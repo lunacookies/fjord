@@ -63,7 +63,7 @@ impl<'text> StyledSpan<'text> {
     }
 }
 
-/// An RGB color.
+/// An RGB colour.
 #[derive(Clone, Copy, Debug)]
 pub struct Rgb {
     /// red
@@ -93,20 +93,35 @@ macro_rules! rgb {
 }
 
 /// The styling applied to a given [`HighlightGroup`](enum.HighlightGroup.html).
+///
+/// When a field is given a `None` value, then that field’s value defaults to that of the theme’s
+/// default style. It was decided that only colours are to be optional, because it is exceedingly
+/// rare that an entire theme wishes to be bold, italic or underlined.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Style {
-    /// its (optional) foreground color
+    /// its foreground colour
     pub fg_color: Option<Rgb>,
-    /// its (optional) background color
+    /// its background colour
     pub bg_color: Option<Rgb>,
+    /// whether to bolden
+    pub is_bold: bool,
+    /// whether to italicise
+    pub is_italic: bool,
+    /// whether to underline
+    pub is_underline: bool,
 }
 
 impl Style {
-    /// Creates a new Style without a foreground or background colour.
+    /// Creates a new Style with all colour fields set to `None` and all boolean fields set to
+    /// false, thereby creating a style whose value is identical to that of the theme’s default
+    /// style (assuming that the theme’s default style also uses false for all boolean options).
     pub fn new() -> Self {
         Self {
             fg_color: None,
             bg_color: None,
+            is_bold: false,
+            is_italic: false,
+            is_underline: false,
         }
     }
 
@@ -114,27 +129,48 @@ impl Style {
         ResolvedStyle {
             fg_color: self.fg_color.unwrap_or(resolved.fg_color),
             bg_color: self.bg_color.unwrap_or(resolved.bg_color),
+            is_bold: self.is_bold,
+            is_italic: self.is_italic,
+            is_underline: self.is_underline,
         }
     }
 }
 
-/// Identical to a [`Style`](struct.Style.html), except that it must have a background color. This
-/// is outputted by (`render`)(fn.render.html), which resolves the background colour of every
-/// [`Style`](struct.Style.html) it encounters.
+/// Identical to a [`Style`](struct.Style.html), except that all its fields are mandatory.
 #[derive(Clone, Copy, Debug)]
 pub struct ResolvedStyle {
-    /// its foreground color
+    /// its foreground colour
     pub fg_color: Rgb,
-    /// its background color
+    /// its background colour
     pub bg_color: Rgb,
+    /// whether to bolden
+    pub is_bold: bool,
+    /// whether to italicise
+    pub is_italic: bool,
+    /// whether to underline
+    pub is_underline: bool,
 }
 
 impl From<ResolvedStyle> for ansi_term::Style {
     fn from(style: ResolvedStyle) -> Self {
-        let fg_color: ansi_term::Colour = style.fg_color.into();
-        let bg_color: ansi_term::Colour = style.bg_color.into();
+        Self {
+            foreground: Some(style.fg_color.into()),
+            background: Some(style.bg_color.into()),
+            is_bold: style.is_bold,
+            is_italic: style.is_italic,
+            is_underline: style.is_underline,
 
-        fg_color.on(bg_color)
+            // These fields aren’t useful in the context of syntax highlighting, with the exception
+            // of ‘is_dimmed’. The reason why ‘is_dimmed’ cannot be used by theme authors is that
+            // its appearance depends on what colour the terminal picks, which can vary. This also
+            // ensure consistency, thereby minimising support requests on themes (‘Why does it look
+            // different to the screenshot?’).
+            is_dimmed: false,
+            is_blink: false,
+            is_reverse: false,
+            is_hidden: false,
+            is_strikethrough: false,
+        }
     }
 }
 
@@ -143,10 +179,10 @@ pub trait Theme {
     /// The style for unhighlighted text. To understand why this must be a fully resolved style,
     /// consider the following example:
     ///
-    /// - `default_style` returns a [`Style`](struct.Style.html) which omits a foreground color -
+    /// - `default_style` returns a [`Style`](struct.Style.html) which omits a foreground colour -
     /// at some point a [highlighter](trait.Highlight.html) returns a
     /// [`HighlightedSpan`](struct.HighlightedSpan.html) without a highlight group
-    /// - when [`render`](fn.render.html) is called, what is the foreground color of this
+    /// - when [`render`](fn.render.html) is called, what is the foreground colour of this
     ///   unhighlighted HighlightedSpan?
     ///
     /// To prevent situations like this, `default_style` acts as a fallback for all cases by
