@@ -1,3 +1,7 @@
+#![warn(missing_debug_implementations, rust_2018_idioms)]
+
+mod themes;
+
 use {
     foreignfjordfunc_derive::ForeignFjordFunc,
     std::{
@@ -37,8 +41,8 @@ fn run(path: impl AsRef<Path>) -> anyhow::Result<()> {
 
     queue!(stdout, terminal::EnterAlternateScreen)?;
     terminal::enable_raw_mode()?;
-    stdout.flush()?;
 
+    buffer.initialize_terminal(&mut stdout)?;
     buffer.redraw(&mut stdout)?;
 
     loop {
@@ -89,6 +93,9 @@ enum Direction {
 }
 
 impl Buffer {
+    // Hardcode the theme to default to Gruvbox.
+    const THEME: themes::Gruvbox = themes::Gruvbox;
+
     fn new(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         use crossterm::terminal;
 
@@ -248,6 +255,30 @@ impl Buffer {
         Ok(())
     }
 
+    // All this function does is cover the the terminal in the colors of the theme.
+    fn initialize_terminal(&self, stdout: &mut io::Stdout) -> anyhow::Result<()> {
+        use {
+            crossterm::{cursor, queue, terminal},
+            syntax::Theme,
+        };
+
+        let default_style: ansi_term::Style = Self::THEME.default_style().into();
+
+        // Move the cursor to the top-left, change the colours to be that of the theme, and finally
+        // clear each line of the terminal.
+        queue!(stdout, cursor::MoveTo(0, 0))?;
+        stdout.write_all(default_style.prefix().to_string().as_bytes())?;
+
+        for _ in 0..self.window_lines {
+            queue!(stdout, terminal::Clear(terminal::ClearType::CurrentLine))?;
+            stdout.write_all(b"\r\n")?;
+        }
+
+        queue!(stdout, cursor::MoveTo(0, 0))?;
+
+        Ok(())
+    }
+
     fn redraw(&mut self, stdout: &mut io::Stdout) -> anyhow::Result<()> {
         use {
             crossterm::{cursor, execute, queue, terminal},
@@ -260,13 +291,12 @@ impl Buffer {
             cursor::MoveTo(0, 0),
         )?;
 
-        // Update the window dimensions each refresh.
+        // Update window dimensions and syntax highlighting each redraw.
         self.update_window_dimens()?;
+        let rendered = render(&self.rows.join("\n"), Self::THEME);
 
-        let displayed_portion = self
-            .rows
-            .clone()
-            .into_iter()
+        let displayed_portion = rendered
+            .lines()
             .skip(self.top_line) // Start drawing the file at the line at the top of the screen.
             .take(self.window_lines) // Only draw enough rows to fill the terminal.
             .map(|line| {
@@ -316,4 +346,28 @@ impl Buffer {
 
         Ok(())
     }
+}
+
+// This function highlights the input, renders this with a given theme, adds escape sequences to
+// switch between the theme’s colors, and finally collects this into a string.
+fn render<T: syntax::Theme>(input: &str, theme: T) -> String {
+    let default_style: ansi_term::Style = theme.default_style().into();
+
+    // Hardcode Rust syntax highlighting for now.
+    syntax::render(input, syntax_rust::RustHighlighter, theme)
+        .into_iter()
+        .map(|syntax::StyledSpan { text, style }| {
+            let style: ansi_term::Style = style.into();
+
+            format!(
+                "{}{}{}",
+                // Transition from the theme’s default style to the style of the current span.
+                default_style.infix(style),
+                // Include the span’s text.
+                text,
+                // Transition back to the default style.
+                style.infix(default_style)
+            )
+        })
+        .collect()
 }

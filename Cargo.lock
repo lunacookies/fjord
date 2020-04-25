@@ -80,12 +80,15 @@ dependencies = [
 name = "editor"
 version = "0.1.0"
 dependencies = [
+ "ansi_term",
  "anyhow",
  "crossterm",
  "foreignfjordfunc-derive",
  "itertools",
  "libfjord",
  "ropey",
+ "syntax",
+ "syntax-rust",
 ]
 
 [[package]]
