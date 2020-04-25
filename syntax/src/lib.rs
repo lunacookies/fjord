@@ -31,13 +31,25 @@ pub enum HighlightGroup {
     Keyword,
     /// the name of a function
     Function,
+    /// the name of a type
+    Ty,
     /// the name of a module
     Module,
+    /// the name of a special identifier (e.g. a symbol in Ruby or a lifetime in Rust)
+    SpecialIdent,
+    /// a sigil used to indicate a special identifier
+    SpecialIdentSigil,
+    /// the name of a function parameter
+    FunctionParam,
+    /// a delimiter (e.g. `(`)
+    Delimiter,
     /// an operator that accesses the members of something, whether this is some kind of ‘object’
     /// or a module, e.g. `.` and `::` in Rust
     MemberOper,
     /// an operator relating to pointers (e.g. `*` and `&` in C, those as well as `&mut` in Rust)
     PointerOper,
+    /// a separator of something (e.g. `,` or `->`)
+    Separator,
     /// a terminator of something (e.g. `;`)
     Terminator,
     /// an error
