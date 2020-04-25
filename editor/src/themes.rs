@@ -31,6 +31,9 @@ impl syntax::Theme for Gruvbox {
                 g: 32,
                 b: 33,
             },
+            is_bold: false,
+            is_italic: false,
+            is_underline: false,
         }
     }
 
@@ -39,18 +42,31 @@ impl syntax::Theme for Gruvbox {
             syntax::HighlightGroup::Keyword => syntax::Style {
                 fg_color: Some(RED),
                 bg_color: None,
+                is_bold: false,
+                is_italic: false,
+                is_underline: false,
             },
             syntax::HighlightGroup::Function => syntax::Style {
                 fg_color: Some(GREEN),
                 bg_color: None,
+                is_bold: false,
+                is_italic: false,
+                is_underline: false,
             },
             syntax::HighlightGroup::Module => syntax::Style {
                 fg_color: Some(BLUE),
                 bg_color: None,
+                is_bold: false,
+                is_italic: false,
+                is_underline: false,
             },
             syntax::HighlightGroup::MemberOper => syntax::Style {
                 fg_color: Some(GRAY),
                 bg_color: None,
+                is_bold: false,
+                is_italic: false,
+                is_underline: false,
+            },
             },
             _ => syntax::Style::default(),
         }
