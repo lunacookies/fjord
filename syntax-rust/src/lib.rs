@@ -59,6 +59,9 @@ enum Item<'input> {
         keyword_space: &'input str,
         name: Ident<'input>,
     },
+    Whitespace {
+        text: &'input str,
+    },
     Error {
         text: &'input str,
     },
@@ -66,7 +69,12 @@ enum Item<'input> {
 
 impl<'input> Item<'input> {
     fn new(s: &'input str) -> nom::IResult<&'input str, Self> {
-        alt((Self::new_use, Self::new_function, Self::new_error))(s)
+        alt((
+            Self::new_use,
+            Self::new_function,
+            Self::new_whitespace,
+            Self::new_error,
+        ))(s)
     }
 
     fn new_use(s: &'input str) -> nom::IResult<&'input str, Self> {
@@ -101,6 +109,10 @@ impl<'input> Item<'input> {
                 name,
             },
         ))
+    }
+
+    fn new_whitespace(s: &'input str) -> nom::IResult<&'input str, Self> {
+        map(take_whitespace1, |s| Self::Whitespace { text: s })(s)
     }
 
     fn new_error(s: &'input str) -> nom::IResult<&'input str, Self> {
@@ -160,6 +172,7 @@ impl<'input> From<Item<'input>> for Vec<syntax::HighlightedSpan<'input>> {
                     group: Some(syntax::HighlightGroup::Function),
                 },
             ],
+            Item::Whitespace { text } => vec![syntax::HighlightedSpan { text, group: None }],
             Item::Error { text } => vec![syntax::HighlightedSpan {
                 text,
                 group: Some(syntax::HighlightGroup::Error),
