@@ -34,8 +34,10 @@ pub enum HighlightGroup {
     /// the name of a module
     Module,
     /// an operator that accesses the members of something, whether this is some kind of ‘object’
-    /// or a module, e.g. ‘.’ and ‘::’ in Rust
+    /// or a module, e.g. `.` and `::` in Rust
     MemberOper,
+    /// a terminator of something (e.g. `;`)
+    Terminator,
     /// an error
     Error,
 }
