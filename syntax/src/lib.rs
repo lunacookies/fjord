@@ -71,6 +71,18 @@ impl From<Rgb> for ansi_term::Colour {
     }
 }
 
+/// Allows easy creation of a [`Rgb`](struct.Rgb.html).
+#[macro_export]
+macro_rules! rgb {
+    ($r:literal, $g:literal, $b:literal) => {
+        $crate::Rgb {
+            r: $r,
+            g: $g,
+            b: $b,
+        }
+    };
+}
+
 /// The styling applied to a given [`HighlightGroup`](enum.HighlightGroup.html).
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Style {
