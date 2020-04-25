@@ -7,4 +7,5 @@ members = [
     "foreignfjordfunc-derive",
     "libfjord",
     "syntax",
+    "syntax-rust",
 ]
