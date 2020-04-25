@@ -25,10 +25,17 @@ pub struct HighlightedSpan<'text> {
 /// As it is certain that more variants will be added in future, this enum has been marked as
 /// non-exhaustive.
 #[non_exhaustive]
-#[allow(missing_docs)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, strum_macros::EnumIter)]
 pub enum HighlightGroup {
+    /// a keyword, e.g. `if`
     Keyword,
+    /// the name of a function
+    Function,
+    /// the name of a module
+    Module,
+    /// an operator that accesses the members of something, whether this is some kind of ‘object’
+    /// or a module, e.g. ‘.’ and ‘::’ in Rust
+    MemberOper,
 }
 
 /// An individual fragment of styled text.
