@@ -9,8 +9,8 @@ pub(crate) use {ident::Ident, path::Path};
 
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take_while, take_while1},
-    combinator::opt,
+    bytes::complete::{tag, take_till1, take_while, take_while1},
+    combinator::{map, opt},
 };
 
 /// Highlights Rust code.
@@ -39,6 +39,8 @@ impl syntax::Highlight for RustHighlighter {
     }
 }
 
+// HACK: Rust mistakenly doesn’t realise that the variants of this enum are actually used.
+#[allow(dead_code)]
 enum Item<'input> {
     Use {
         keyword: &'input str,
@@ -51,11 +53,14 @@ enum Item<'input> {
         keyword_space: &'input str,
         name: Ident<'input>,
     },
+    Error {
+        text: &'input str,
+    },
 }
 
 impl<'input> Item<'input> {
     fn new(s: &'input str) -> nom::IResult<&'input str, Self> {
-        alt((Self::new_use, Self::new_function))(s)
+        alt((Self::new_use, Self::new_function, Self::new_error))(s)
     }
 
     fn new_use(s: &'input str) -> nom::IResult<&'input str, Self> {
@@ -90,6 +95,13 @@ impl<'input> Item<'input> {
                 name,
             },
         ))
+    }
+
+    fn new_error(s: &'input str) -> nom::IResult<&'input str, Self> {
+        map(
+            take_till1(|c| c == '}' || c == ')' || c == ',' || c == ';'),
+            |s| Self::Error { text: s },
+        )(s)
     }
 }
 
@@ -142,7 +154,12 @@ impl<'input> From<Item<'input>> for Vec<syntax::HighlightedSpan<'input>> {
                     group: Some(syntax::HighlightGroup::Function),
                 },
             ],
+            Item::Error { text } => vec![syntax::HighlightedSpan {
+                text,
+                group: Some(syntax::HighlightGroup::Error),
+            }],
         };
+
 
         spans
     }
