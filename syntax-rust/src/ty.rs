@@ -1,19 +1,32 @@
 use nom::{bytes::complete::tag, combinator::opt, multi::many0, sequence::pair};
 
-struct Ty<'text> {
+pub(crate) struct Ty<'text> {
     // The second item in this tuple is whitespace.
     refs: Vec<(Ref<'text>, &'text str)>,
-    space: &'text str,
+    refs_space: &'text str,
     name: crate::TyIdent<'text>,
+    name_space: &'text str,
+    generics: crate::Generics<'text>,
 }
 
 impl<'text> Ty<'text> {
-    fn new(s: &'text str) -> nom::IResult<&'text str, Self> {
+    pub(crate) fn new(s: &'text str) -> nom::IResult<&'text str, Self> {
         let (s, refs) = many0(pair(Ref::new, crate::take_whitespace0))(s)?;
-        let (s, space) = crate::take_whitespace0(s)?;
+        let (s, refs_space) = crate::take_whitespace0(s)?;
         let (s, name) = crate::TyIdent::new(s)?;
+        let (s, name_space) = crate::take_whitespace0(s)?;
+        let (s, generics) = crate::Generics::new(s)?;
 
-        Ok((s, Self { refs, space, name }))
+        Ok((
+            s,
+            Self {
+                refs,
+                refs_space,
+                name,
+                name_space,
+                generics,
+            },
+        ))
     }
 }
 
