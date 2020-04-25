@@ -148,7 +148,7 @@ impl<'input> From<Item<'input>> for Vec<syntax::HighlightedSpan<'input>> {
                 if let Some(semicolon) = semicolon {
                     output.push(syntax::HighlightedSpan {
                         text: semicolon,
-                        group: None,
+                        group: Some(syntax::HighlightGroup::Terminator),
                     });
                 }
 
