@@ -11,6 +11,7 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_till1, take_while, take_while1},
     combinator::{map, opt},
+    multi::many1,
 };
 
 /// Highlights Rust code.
@@ -21,21 +22,26 @@ impl syntax::Highlight for RustHighlighter {
     fn highlight<'input>(&self, input: &'input str) -> Vec<syntax::HighlightedSpan<'input>> {
         // FIXME: At the moment, we just don’t highlight if highlighting fails. Ideally,
         // highlighting should always succeed, i.e. it should be fault-tolerant.
-        Item::new(input).map_or(
-            vec![syntax::HighlightedSpan {
+        match many1(Item::new)(input) {
+            Ok((s, items)) => items
+                .into_iter()
+                .map(|item| {
+                    // Convert each item into a vector of HighlightedSpans.
+                    Vec::<_>::from(item)
+                })
+                .flatten()
+                // Add on remaining text that couldn’t be parsed.
+                .chain(std::iter::once(syntax::HighlightedSpan {
+                    text: s,
+                    group: None,
+                }))
+                .collect(),
+            // If the parser failed, then return the unhighlighted input.
+            Err(_) => vec![syntax::HighlightedSpan {
                 text: input,
                 group: None,
             }],
-            |(s, item)| {
-                let mut spans: Vec<_> = item.into();
-                spans.push(syntax::HighlightedSpan {
-                    text: s,
-                    group: None,
-                });
-
-                spans
-            },
-        )
+        }
     }
 }
 
