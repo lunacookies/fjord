@@ -11,3 +11,18 @@ impl<'text> Lifetime<'text> {
         map(lifetime, |(tick, name)| Self { tick, name })(s)
     }
 }
+
+impl<'lt> From<Lifetime<'lt>> for Vec<syntax::HighlightedSpan<'lt>> {
+    fn from(lt: Lifetime<'lt>) -> Self {
+        vec![
+            syntax::HighlightedSpan {
+                text: lt.tick,
+                group: Some(syntax::HighlightGroup::SpecialIdentSigil),
+            },
+            syntax::HighlightedSpan {
+                text: lt.name.name,
+                group: Some(syntax::HighlightGroup::SpecialIdent),
+            },
+        ]
+    }
+}

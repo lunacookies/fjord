@@ -32,7 +32,7 @@ impl<'p> From<Path<'p>> for Vec<syntax::HighlightedSpan<'p>> {
             });
         }
 
-        output.extend(path.components.into_iter().map(Vec::<_>::from).flatten());
+        output.extend(path.components.into_iter().map(Vec::from).flatten());
 
         output
     }

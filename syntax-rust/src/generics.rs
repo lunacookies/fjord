@@ -31,3 +31,34 @@ impl<'text> Generics<'text> {
         ))
     }
 }
+
+impl<'g> From<Generics<'g>> for Vec<syntax::HighlightedSpan<'g>> {
+    fn from(generics: Generics<'g>) -> Self {
+        let mut output = vec![
+            syntax::HighlightedSpan {
+                text: generics.open_angle_bracket,
+                group: Some(syntax::HighlightGroup::Delimiter),
+            },
+            syntax::HighlightedSpan {
+                text: generics.open_angle_bracket_space,
+                group: None,
+            },
+        ];
+
+        output.extend(generics.lifetimes.into_iter().map(Vec::from).flatten());
+        output.extend(generics.tys.into_iter().map(Vec::from).flatten());
+
+        output.extend(
+            std::iter::once(syntax::HighlightedSpan {
+                text: generics.close_angle_bracket_space,
+                group: None,
+            })
+            .chain(std::iter::once(syntax::HighlightedSpan {
+                text: generics.close_angle_bracket,
+                group: Some(syntax::HighlightGroup::Delimiter),
+            })),
+        );
+
+        output
+    }
+}
