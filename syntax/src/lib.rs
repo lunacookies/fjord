@@ -65,6 +65,12 @@ pub struct Rgb {
     pub b: u8,
 }
 
+impl From<Rgb> for ansi_term::Colour {
+    fn from(rgb: Rgb) -> Self {
+        Self::RGB(rgb.r, rgb.g, rgb.b)
+    }
+}
+
 /// The styling applied to a given [`HighlightGroup`](enum.HighlightGroup.html).
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Style {
@@ -100,6 +106,15 @@ pub struct ResolvedStyle {
     pub fg_color: Rgb,
     /// its background color
     pub bg_color: Rgb,
+}
+
+impl From<ResolvedStyle> for ansi_term::Style {
+    fn from(style: ResolvedStyle) -> Self {
+        let fg_color: ansi_term::Colour = style.fg_color.into();
+        let bg_color: ansi_term::Colour = style.bg_color.into();
+
+        fg_color.on(bg_color)
+    }
 }
 
 /// A trait for defining syntax highlighting themes.
