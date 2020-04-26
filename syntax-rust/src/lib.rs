@@ -70,6 +70,7 @@ enum Item<'input> {
         open_paren: &'input str,
         open_paren_space: &'input str,
         params: Vec<FunctionParam<'input>>,
+        params_space: &'input str,
         close_paren_space: &'input str,
         close_paren: &'input str,
         return_type: Option<FunctionReturnType<'input>>,
@@ -121,9 +122,10 @@ impl<'input> Item<'input> {
         let (s, open_paren_space) = take_whitespace0(s)?;
 
         let (s, params) = many0(FunctionParam::new)(s)?;
+        let (s, params_space) = take_whitespace0(s)?;
 
-        let (s, close_paren_space) = take_whitespace0(s)?;
         let (s, close_paren) = tag(")")(s)?;
+        let (s, close_paren_space) = take_whitespace0(s)?;
 
         let (s, return_type) = opt(FunctionReturnType::new)(s)?;
 
@@ -137,6 +139,7 @@ impl<'input> Item<'input> {
                 open_paren,
                 open_paren_space,
                 params,
+                params_space,
                 close_paren_space,
                 close_paren,
                 return_type,
@@ -196,6 +199,7 @@ impl<'input> From<Item<'input>> for Vec<syntax::HighlightedSpan<'input>> {
                 open_paren,
                 open_paren_space,
                 params,
+                params_space,
                 close_paren_space,
                 close_paren,
                 return_type,
@@ -233,12 +237,16 @@ impl<'input> From<Item<'input>> for Vec<syntax::HighlightedSpan<'input>> {
                         .map(Vec::from)
                         .flatten()
                         .chain(std::iter::once(syntax::HighlightedSpan {
-                            text: close_paren_space,
+                            text: params_space,
                             group: None,
                         }))
                         .chain(std::iter::once(syntax::HighlightedSpan {
                             text: close_paren,
                             group: Some(syntax::HighlightGroup::Delimiter),
+                        }))
+                        .chain(std::iter::once(syntax::HighlightedSpan {
+                            text: close_paren_space,
+                            group: None,
                         })),
                 );
 
