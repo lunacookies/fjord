@@ -1,6 +1,7 @@
 use nom::{bytes::complete::tag, combinator::opt, multi::many1};
 
 // TODO: Still need to add final component of path.
+#[derive(Debug, PartialEq)]
 pub(crate) struct Path<'text> {
     leading_colons: Option<&'text str>,
     components: Vec<PathComponent<'text>>,
@@ -38,6 +39,7 @@ impl<'p> From<Path<'p>> for Vec<syntax::HighlightedSpan<'p>> {
     }
 }
 
+#[derive(Debug, PartialEq)]
 struct PathComponent<'text> {
     module_name: crate::Ident<'text>,
     colons: &'text str,

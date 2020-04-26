@@ -1,5 +1,6 @@
 use nom::bytes::complete::tag;
 
+#[derive(Debug, PartialEq)]
 pub(crate) struct FunctionReturnType<'text> {
     arrow: &'text str,
     arrow_space: &'text str,

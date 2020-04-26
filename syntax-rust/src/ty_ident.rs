@@ -1,5 +1,6 @@
 use nom::bytes::complete::take_while1;
 
+#[derive(Debug, PartialEq)]
 pub(crate) struct TyIdent<'text> {
     pub(crate) name: &'text str,
 }

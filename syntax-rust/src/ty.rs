@@ -1,5 +1,6 @@
 use nom::{bytes::complete::tag, combinator::opt, multi::many0, sequence::pair};
 
+#[derive(Debug, PartialEq)]
 pub(crate) struct Ty<'text> {
     // The second item in this tuple is whitespace.
     refs: Vec<(Ref<'text>, &'text str)>,
@@ -60,6 +61,7 @@ impl<'ty> From<Ty<'ty>> for Vec<syntax::HighlightedSpan<'ty>> {
     }
 }
 
+#[derive(Debug, PartialEq)]
 struct Ref<'text> {
     ampersand: &'text str,
     ampersand_space: &'text str,

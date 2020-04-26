@@ -54,6 +54,7 @@ impl syntax::Highlight for RustHighlighter {
 
 // HACK: Rust mistakenly doesn’t realise that the variants of this enum are actually used.
 #[allow(dead_code)]
+#[derive(Debug, PartialEq)]
 enum Item<'input> {
     Use {
         keyword: &'input str,

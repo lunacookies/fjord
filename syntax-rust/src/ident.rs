@@ -1,5 +1,6 @@
 use nom::bytes::complete::take_while1;
 
+#[derive(Debug, PartialEq)]
 pub(crate) struct Ident<'name> {
     pub(crate) name: &'name str,
 }

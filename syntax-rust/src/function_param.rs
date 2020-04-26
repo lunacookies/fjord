@@ -1,5 +1,6 @@
 use nom::{bytes::complete::tag, combinator::opt};
 
+#[derive(Debug, PartialEq)]
 pub(crate) struct FunctionParam<'text> {
     name: crate::Ident<'text>,
     name_space: &'text str,

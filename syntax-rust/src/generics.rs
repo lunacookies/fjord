@@ -1,5 +1,6 @@
 use nom::{bytes::complete::tag, multi::many0};
 
+#[derive(Debug, PartialEq)]
 pub(crate) struct Generics<'text> {
     open_angle_bracket: &'text str,
     open_angle_bracket_space: &'text str,

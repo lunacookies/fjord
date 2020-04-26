@@ -1,5 +1,6 @@
 use nom::{bytes::complete::tag, combinator::map, sequence::pair};
 
+#[derive(Debug, PartialEq)]
 pub(crate) struct Lifetime<'text> {
     tick: &'text str,
     name: crate::Ident<'text>,
