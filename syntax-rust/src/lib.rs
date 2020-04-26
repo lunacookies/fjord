@@ -2,18 +2,23 @@
 
 #![warn(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
+mod block;
+mod expr;
 mod function_param;
 mod function_return_type;
 mod generics;
 mod ident;
 mod lifetime;
 mod path;
+mod pattern;
+mod statement;
 mod ty;
 mod ty_ident;
 
 pub(crate) use {
-    function_param::FunctionParam, function_return_type::FunctionReturnType, generics::Generics,
-    ident::Ident, lifetime::Lifetime, path::Path, ty::Ty, ty_ident::TyIdent,
+    block::Block, expr::Expr, function_param::FunctionParam,
+    function_return_type::FunctionReturnType, generics::Generics, ident::Ident, lifetime::Lifetime,
+    path::Path, pattern::Pattern, statement::Statement, ty::Ty, ty_ident::TyIdent,
 };
 
 use nom::{
@@ -74,6 +79,8 @@ enum Item<'input> {
         close_paren_space: &'input str,
         close_paren: &'input str,
         return_type: Option<FunctionReturnType<'input>>,
+        return_type_space: &'input str,
+        body: Block<'input>,
     },
     Whitespace {
         text: &'input str,
@@ -128,6 +135,9 @@ impl<'input> Item<'input> {
         let (s, close_paren_space) = take_whitespace0(s)?;
 
         let (s, return_type) = opt(FunctionReturnType::new)(s)?;
+        let (s, return_type_space) = take_whitespace0(s)?;
+
+        let (s, body) = Block::new(s)?;
 
         Ok((
             s,
@@ -143,6 +153,8 @@ impl<'input> Item<'input> {
                 close_paren_space,
                 close_paren,
                 return_type,
+                return_type_space,
+                body,
             },
         ))
     }
@@ -208,6 +220,8 @@ impl<'input> From<Item<'input>> for Vec<syntax::HighlightedSpan<'input>> {
                 close_paren_space,
                 close_paren,
                 return_type,
+                return_type_space,
+                body,
             } => {
                 let mut output = vec![
                     syntax::HighlightedSpan {
@@ -258,6 +272,14 @@ impl<'input> From<Item<'input>> for Vec<syntax::HighlightedSpan<'input>> {
                 if let Some(return_type) = return_type {
                     output.append(&mut Vec::from(return_type));
                 }
+
+                output.extend(
+                    std::iter::once(syntax::HighlightedSpan {
+                        text: return_type_space,
+                        group: None,
+                    })
+                    .chain(Vec::from(body)),
+                );
 
                 output
             }
