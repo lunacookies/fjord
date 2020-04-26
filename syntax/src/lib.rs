@@ -41,13 +41,13 @@ pub enum HighlightGroup {
     SpecialIdentSigil,
     /// the name of a function parameter
     FunctionParam,
-    /// a delimiter (e.g. `(`)
-    Delimiter,
     /// an operator that accesses the members of something, whether this is some kind of ‘object’
     /// or a module, e.g. `.` and `::` in Rust
     MemberOper,
     /// an operator relating to pointers (e.g. `*` and `&` in C, those as well as `&mut` in Rust)
     PointerOper,
+    /// a delimiter (e.g. `(`)
+    Delimiter,
     /// a separator of something (e.g. `,` or `->`)
     Separator,
     /// a terminator of something (e.g. `;`)
