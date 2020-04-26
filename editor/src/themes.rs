@@ -3,84 +3,147 @@ pub(crate) struct Gruvbox;
 const GRAY: syntax::Rgb = syntax::rgb!(189, 174, 147);
 const RED: syntax::Rgb = syntax::rgb!(251, 73, 52);
 const GREEN: syntax::Rgb = syntax::rgb!(184, 187, 38);
-
-#[allow(dead_code)]
 const YELLOW: syntax::Rgb = syntax::rgb!(250, 189, 47);
-
 const BLUE: syntax::Rgb = syntax::rgb!(131, 165, 152);
-
-#[allow(dead_code)]
 const PURPLE: syntax::Rgb = syntax::rgb!(211, 134, 155);
-
-#[allow(dead_code)]
 const AQUA: syntax::Rgb = syntax::rgb!(142, 192, 124);
-
-#[allow(dead_code)]
 const ORANGE: syntax::Rgb = syntax::rgb!(254, 128, 25);
 
 impl syntax::Theme for Gruvbox {
     fn default_style(&self) -> syntax::ResolvedStyle {
         syntax::ResolvedStyle {
-            fg_color: syntax::Rgb {
-                r: 235,
-                g: 219,
-                b: 178,
-            },
-            bg_color: syntax::Rgb {
-                r: 29,
-                g: 32,
-                b: 33,
-            },
+            fg_color: syntax::rgb!(235, 219, 178),
+            bg_color: syntax::rgb!(29, 32, 33),
             is_bold: false,
             is_italic: false,
             is_underline: false,
         }
     }
-
     fn style(&self, group: syntax::HighlightGroup) -> syntax::Style {
         match group {
-            syntax::HighlightGroup::Keyword => syntax::Style {
-                fg_color: Some(RED),
-                bg_color: None,
-                is_bold: true,
-                is_italic: false,
-                is_underline: false,
-            },
-            syntax::HighlightGroup::Function => syntax::Style {
-                fg_color: Some(GREEN),
+            // Keywords
+            syntax::HighlightGroup::CtrlFlowKeyword | syntax::HighlightGroup::OtherKeyword => {
+                syntax::Style {
+                    fg_color: Some(RED),
+                    bg_color: None,
+                    is_bold: true,
+                    is_italic: false,
+                    is_underline: false,
+                }
+            }
+
+            // Functions
+            syntax::HighlightGroup::FunctionDef | syntax::HighlightGroup::FunctionCall => {
+                syntax::Style {
+                    fg_color: Some(GREEN),
+                    bg_color: None,
+                    is_bold: false,
+                    is_italic: false,
+                    is_underline: false,
+                }
+            }
+
+            // Types
+            syntax::HighlightGroup::TyDef
+            | syntax::HighlightGroup::TyUse
+            | syntax::HighlightGroup::PrimitiveTy => syntax::Style {
+                fg_color: Some(YELLOW),
                 bg_color: None,
                 is_bold: false,
                 is_italic: false,
                 is_underline: false,
             },
-            syntax::HighlightGroup::Module => syntax::Style {
+
+            // Variables
+            syntax::HighlightGroup::VariableDef
+            | syntax::HighlightGroup::VariableUse
+            | syntax::HighlightGroup::FunctionParam => syntax::Style {
                 fg_color: Some(BLUE),
                 bg_color: None,
                 is_bold: false,
                 is_italic: false,
                 is_underline: false,
             },
-            syntax::HighlightGroup::MemberOper => syntax::Style {
+
+            // Constants
+            syntax::HighlightGroup::ConstantDef
+            | syntax::HighlightGroup::ConstantUse
+            | syntax::HighlightGroup::Number
+            | syntax::HighlightGroup::Character
+            | syntax::HighlightGroup::Boolean => syntax::Style {
+                fg_color: Some(PURPLE),
+                bg_color: None,
+                is_bold: false,
+                is_italic: false,
+                is_underline: false,
+            },
+
+            // Modules
+            syntax::HighlightGroup::ModuleDef | syntax::HighlightGroup::ModuleUse => {
+                syntax::Style {
+                    fg_color: Some(BLUE),
+                    bg_color: None,
+                    is_bold: false,
+                    is_italic: false,
+                    is_underline: false,
+                }
+            }
+
+            // Preprocessor-related
+            syntax::HighlightGroup::MacroDef
+            | syntax::HighlightGroup::MacroUse
+            | syntax::HighlightGroup::PreProc
+            | syntax::HighlightGroup::Attribute => syntax::Style {
+                fg_color: Some(AQUA),
+                bg_color: None,
+                is_bold: false,
+                is_italic: false,
+                is_underline: false,
+            },
+
+            // String literals
+            syntax::HighlightGroup::String => syntax::Style {
+                fg_color: Some(GREEN),
+                bg_color: None,
+                is_bold: false,
+                is_italic: false,
+                is_underline: false,
+            },
+
+            // Special identifiers
+            syntax::HighlightGroup::SpecialIdentDef
+            | syntax::HighlightGroup::SpecialIdentUse
+            | syntax::HighlightGroup::SpecialIdentSigil => syntax::Style {
+                fg_color: Some(ORANGE),
+                bg_color: None,
+                is_bold: false,
+                is_italic: false,
+                is_underline: false,
+            },
+
+            // Comments
+            syntax::HighlightGroup::Comment | syntax::HighlightGroup::DocComment => syntax::Style {
                 fg_color: Some(GRAY),
                 bg_color: None,
                 is_bold: false,
                 is_italic: false,
                 is_underline: false,
             },
-            syntax::HighlightGroup::PointerOper => syntax::Style {
-                fg_color: Some(GRAY),
+
+            // Punctuation
+            syntax::HighlightGroup::MemberOper
+            | syntax::HighlightGroup::PointerOper
+            | syntax::HighlightGroup::Delimiter
+            | syntax::HighlightGroup::Separator
+            | syntax::HighlightGroup::Terminator => syntax::Style {
+                fg_color: None,
                 bg_color: None,
                 is_bold: false,
                 is_italic: false,
                 is_underline: false,
             },
-            syntax::HighlightGroup::Terminator => syntax::Style {
-                fg_color: Some(GRAY),
-                bg_color: None,
-                is_bold: false,
-                is_italic: false,
-                is_underline: false,
-            },
+
+            // Errors
             syntax::HighlightGroup::Error => syntax::Style {
                 fg_color: Some(RED),
                 bg_color: None,
@@ -88,7 +151,6 @@ impl syntax::Theme for Gruvbox {
                 is_italic: false,
                 is_underline: true,
             },
-            _ => syntax::Style::default(),
         }
     }
 }
