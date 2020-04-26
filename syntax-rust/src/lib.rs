@@ -18,7 +18,7 @@ pub(crate) use {
 
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take_till1, take_while, take_while1},
+    bytes::complete::{tag, take, take_till1, take_while, take_while1},
     combinator::{map, opt},
     multi::{many0, many1},
 };
@@ -152,9 +152,14 @@ impl<'input> Item<'input> {
     }
 
     fn new_error(s: &'input str) -> nom::IResult<&'input str, Self> {
-        // ‘Reset’ errors after any of these characters.
         map(
-            take_till1(|c| c == '}' || c == ')' || c == ',' || c == ';'),
+            alt((
+                // ‘Reset’ errors after any of these characters.
+                take_till1(|c| c == '}' || c == ')' || c == ';' || c == '\n'),
+                // This will fail, however, if the input starts with any of these ‘reset’
+                // characters. In the case that this fails, we simply take a single chara
+                take(1usize),
+            )),
             |s| Self::Error { text: s },
         )(s)
     }
