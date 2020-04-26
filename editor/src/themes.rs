@@ -102,13 +102,15 @@ impl syntax::Theme for Gruvbox {
             },
 
             // String literals
-            syntax::HighlightGroup::String => syntax::Style {
-                fg_color: Some(GREEN),
-                bg_color: None,
-                is_bold: false,
-                is_italic: false,
-                is_underline: false,
-            },
+            syntax::HighlightGroup::String | syntax::HighlightGroup::StringDelimiter => {
+                syntax::Style {
+                    fg_color: Some(GREEN),
+                    bg_color: None,
+                    is_bold: false,
+                    is_italic: false,
+                    is_underline: false,
+                }
+            }
 
             // Special identifiers
             syntax::HighlightGroup::SpecialIdentDef
@@ -133,6 +135,7 @@ impl syntax::Theme for Gruvbox {
             // Punctuation
             syntax::HighlightGroup::MemberOper
             | syntax::HighlightGroup::PointerOper
+            | syntax::HighlightGroup::AssignOper
             | syntax::HighlightGroup::Delimiter
             | syntax::HighlightGroup::Separator
             | syntax::HighlightGroup::Terminator => syntax::Style {
