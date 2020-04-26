@@ -80,7 +80,7 @@ enum Item<'input> {
         close_paren: &'input str,
         return_type: Option<FunctionReturnType<'input>>,
         return_type_space: &'input str,
-        body: Block<'input>,
+        body: Option<Block<'input>>,
     },
     Whitespace {
         text: &'input str,
@@ -137,7 +137,7 @@ impl<'input> Item<'input> {
         let (s, return_type) = opt(FunctionReturnType::new)(s)?;
         let (s, return_type_space) = take_whitespace0(s)?;
 
-        let (s, body) = Block::new(s)?;
+        let (s, body) = opt(Block::new)(s)?;
 
         Ok((
             s,
@@ -273,13 +273,14 @@ impl<'input> From<Item<'input>> for Vec<syntax::HighlightedSpan<'input>> {
                     output.append(&mut Vec::from(return_type));
                 }
 
-                output.extend(
-                    std::iter::once(syntax::HighlightedSpan {
-                        text: return_type_space,
-                        group: None,
-                    })
-                    .chain(Vec::from(body)),
-                );
+                output.push(syntax::HighlightedSpan {
+                    text: return_type_space,
+                    group: None,
+                });
+
+                if let Some(body) = body {
+                    output.append(&mut Vec::from(body));
+                }
 
                 output
             }
