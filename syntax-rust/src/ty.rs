@@ -7,7 +7,7 @@ pub(crate) struct Ty<'text> {
     refs_space: &'text str,
     name: crate::TyIdent<'text>,
     name_space: &'text str,
-    generics: crate::Generics<'text>,
+    generics: Option<crate::Generics<'text>>,
 }
 
 impl<'text> Ty<'text> {
@@ -16,7 +16,7 @@ impl<'text> Ty<'text> {
         let (s, refs_space) = crate::take_whitespace0(s)?;
         let (s, name) = crate::TyIdent::new(s)?;
         let (s, name_space) = crate::take_whitespace0(s)?;
-        let (s, generics) = crate::Generics::new(s)?;
+        let (s, generics) = opt(crate::Generics::new)(s)?;
 
         Ok((
             s,
@@ -33,7 +33,8 @@ impl<'text> Ty<'text> {
 
 impl<'ty> From<Ty<'ty>> for Vec<syntax::HighlightedSpan<'ty>> {
     fn from(ty: Ty<'ty>) -> Self {
-        ty.refs
+        let output = ty
+            .refs
             .into_iter()
             .map(|(reference, space)| {
                 Vec::from(reference)
@@ -55,9 +56,13 @@ impl<'ty> From<Ty<'ty>> for Vec<syntax::HighlightedSpan<'ty>> {
             .chain(std::iter::once(syntax::HighlightedSpan {
                 text: ty.name_space,
                 group: None,
-            }))
-            .chain(Vec::from(ty.generics).into_iter())
-            .collect()
+            }));
+
+        if let Some(generics) = ty.generics {
+            output.chain(Vec::from(generics).into_iter()).collect()
+        } else {
+            output.collect()
+        }
     }
 }
 
