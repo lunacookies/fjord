@@ -21,28 +21,66 @@ pub struct HighlightedSpan<'text> {
 }
 
 /// The set of possible syntactical forms text can be assigned.
-///
-/// As it is certain that more variants will be added in future, this enum has been marked as
-/// non-exhaustive.
-#[non_exhaustive]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, strum_macros::EnumIter)]
 pub enum HighlightGroup {
-    /// a keyword, e.g. `if`
-    Keyword,
-    /// the name of a function
-    Function,
-    /// the name of a type
-    Ty,
-    /// the name of a module
-    Module,
-    /// the name of a special identifier (e.g. a symbol in Ruby or a lifetime in Rust)
-    SpecialIdent,
+    /// a keyword that controls the flow of execution within code, e.g. `if` or `for`
+    CtrlFlowKeyword,
+    /// any other kind of keyword
+    OtherKeyword,
+    /// the name of a function when defined
+    FunctionDef,
+    /// the name of a function when called
+    FunctionCall,
+    /// the name of a type when defined
+    TyDef,
+    /// the name of a type when used
+    TyUse,
+    /// a ‘primitive’ baked into the language (e.g. `int` is a primitive type in C++, but
+    /// `std::vector` isn’t)
+    PrimitiveTy,
+    /// the name of a variable when defined
+    VariableDef,
+    /// the name of a variable when used
+    VariableUse,
+    /// the name of a constant when defined
+    ConstantDef,
+    /// the name of a constant when used
+    ConstantUse,
+    /// the name of a module when defined
+    ModuleDef,
+    /// the name of a module when used
+    ModuleUse,
+    /// the name of a macro when defined
+    MacroDef,
+    /// the name of a macro when used
+    MacroUse,
+    /// the name of a special identifier (e.g. a symbol in Ruby or a lifetime in Rust) when defined
+    SpecialIdentDef,
+    /// the name of a special identifier when used
+    SpecialIdentUse,
     /// a sigil used to indicate a special identifier
     SpecialIdentSigil,
     /// the name of a function parameter
     FunctionParam,
-    /// an operator that accesses the members of something, whether this is some kind of ‘object’
-    /// or a module, e.g. `.` and `::` in Rust
+    /// a number literal (whether integer or floating-point)
+    Number,
+    /// a string literal
+    String,
+    /// a character literal
+    Character,
+    /// a boolean literal
+    Boolean,
+    /// a pre-processor invocation that is not a macro itself (e.g. `#if` and `#define` in C)
+    PreProc,
+    /// the name of something that is an attribute of another thing (e.g. the word `derive` in
+    /// `#[derive(Debug)]` in Rust, or a decorator in Python)
+    Attribute,
+    /// a comment
+    Comment,
+    /// a documentation comment
+    DocComment,
+    /// an operator that accesses the members of something, regardless of whether this is some kind
+    /// of ‘object’ or a module, e.g. `.` and `::` in Rust
     MemberOper,
     /// an operator relating to pointers (e.g. `*` and `&` in C, those as well as `&mut` in Rust)
     PointerOper,
