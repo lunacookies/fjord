@@ -128,3 +128,77 @@ impl<'reference> From<Ref<'reference>> for Vec<syntax::HighlightedSpan<'referenc
         output
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn simple() {
+        assert_eq!(
+            Ty::new("Person"),
+            Ok((
+                "",
+                Ty {
+                    refs: vec![],
+                    refs_space: "",
+                    name: crate::TyIdent { name: "Person" },
+                    name_space: "",
+                    generics: None,
+                }
+            ))
+        )
+    }
+
+    #[test]
+    fn mutable_ref() {
+        assert_eq!(
+            Ty::new("&mut String"),
+            Ok((
+                "",
+                Ty {
+                    refs: vec![(
+                        Ref {
+                            ampersand: "&",
+                            ampersand_space: "",
+                            lifetime: None,
+                            lifetime_space: "",
+                            mutable: Some("mut"),
+                        },
+                        " "
+                    )],
+                    refs_space: "",
+                    name: crate::TyIdent { name: "String" },
+                    name_space: "",
+                    generics: None,
+                }
+            ))
+        )
+    }
+
+    #[test]
+    fn immutable_ref_with_generics() {
+        assert_eq!(
+            Ty::new("&Vec<PathBuf>"),
+            Ok((
+                "",
+                Ty {
+                    refs: vec![(
+                        Ref {
+                            ampersand: "&",
+                            ampersand_space: "",
+                            lifetime: None,
+                            lifetime_space: "",
+                            mutable: None,
+                        },
+                        ""
+                    )],
+                    refs_space: "",
+                    name: crate::TyIdent { name: "Vec" },
+                    name_space: "",
+                    generics: Some(crate::Generics::new("<PathBuf>").unwrap().1),
+                }
+            ))
+        )
+    }
+}
