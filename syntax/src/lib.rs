@@ -66,6 +66,8 @@ pub enum HighlightGroup {
     Number,
     /// a string literal
     String,
+    /// the delimiters around a string literal (`"` in most languages)
+    StringDelimiter,
     /// a character literal
     Character,
     /// a boolean literal
@@ -84,6 +86,8 @@ pub enum HighlightGroup {
     MemberOper,
     /// an operator relating to pointers (e.g. `*` and `&` in C, those as well as `&mut` in Rust)
     PointerOper,
+    /// an operator that assigns a value to a binding of some sort (`=` in most languages)
+    AssignOper,
     /// a delimiter (e.g. `(`)
     Delimiter,
     /// a separator of something (e.g. `,` or `->`)
