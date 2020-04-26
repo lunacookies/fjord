@@ -85,3 +85,28 @@ impl<'fp> From<FunctionParam<'fp>> for Vec<syntax::HighlightedSpan<'fp>> {
         output
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn basic() {
+        assert_eq!(
+            FunctionParam::new("buf: &mut String, "),
+            Ok((
+                "",
+                FunctionParam {
+                    name: crate::Ident { name: "buf" },
+                    name_space: "",
+                    colon: ":",
+                    colon_space: " ",
+                    ty: crate::Ty::new("&mut String").unwrap().1,
+                    ty_space: "",
+                    comma: Some(","),
+                    comma_space: " ",
+                }
+            ))
+        )
+    }
+}
