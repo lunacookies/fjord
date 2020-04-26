@@ -65,7 +65,7 @@ impl<'pc> From<PathComponent<'pc>> for Vec<syntax::HighlightedSpan<'pc>> {
         vec![
             syntax::HighlightedSpan {
                 text: path_component.module_name.name,
-                group: Some(syntax::HighlightGroup::Module),
+                group: Some(syntax::HighlightGroup::ModuleUse),
             },
             syntax::HighlightedSpan {
                 text: path_component.colons,

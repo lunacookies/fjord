@@ -22,7 +22,7 @@ impl<'lt> From<Lifetime<'lt>> for Vec<syntax::HighlightedSpan<'lt>> {
             },
             syntax::HighlightedSpan {
                 text: lt.name.name,
-                group: Some(syntax::HighlightGroup::SpecialIdent),
+                group: Some(syntax::HighlightGroup::SpecialIdentUse),
             },
         ]
     }

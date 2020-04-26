@@ -51,7 +51,7 @@ impl<'ty> From<Ty<'ty>> for Vec<syntax::HighlightedSpan<'ty>> {
             }))
             .chain(std::iter::once(syntax::HighlightedSpan {
                 text: ty.name.name,
-                group: Some(syntax::HighlightGroup::Ty),
+                group: Some(syntax::HighlightGroup::TyUse),
             }))
             .chain(std::iter::once(syntax::HighlightedSpan {
                 text: ty.name_space,

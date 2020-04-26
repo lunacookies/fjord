@@ -177,7 +177,7 @@ impl<'input> From<Item<'input>> for Vec<syntax::HighlightedSpan<'input>> {
                 let mut output = vec![
                     syntax::HighlightedSpan {
                         text: keyword,
-                        group: Some(syntax::HighlightGroup::Keyword),
+                        group: Some(syntax::HighlightGroup::OtherKeyword),
                     },
                     syntax::HighlightedSpan {
                         text: keyword_space,
@@ -212,7 +212,7 @@ impl<'input> From<Item<'input>> for Vec<syntax::HighlightedSpan<'input>> {
                 let mut output = vec![
                     syntax::HighlightedSpan {
                         text: keyword,
-                        group: Some(syntax::HighlightGroup::Keyword),
+                        group: Some(syntax::HighlightGroup::OtherKeyword),
                     },
                     syntax::HighlightedSpan {
                         text: keyword_space,
@@ -220,7 +220,7 @@ impl<'input> From<Item<'input>> for Vec<syntax::HighlightedSpan<'input>> {
                     },
                     syntax::HighlightedSpan {
                         text: name.name,
-                        group: Some(syntax::HighlightGroup::Function),
+                        group: Some(syntax::HighlightGroup::FunctionDef),
                     },
                     syntax::HighlightedSpan {
                         text: name_space,
