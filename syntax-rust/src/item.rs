@@ -17,7 +17,7 @@ pub(crate) enum Item<'text> {
         name_space: &'text str,
         open_paren: &'text str,
         open_paren_space: &'text str,
-        params: Vec<crate::FunctionParam<'text>>,
+        params: Vec<crate::FunctionDefParam<'text>>,
         params_space: &'text str,
         close_paren_space: &'text str,
         close_paren: &'text str,
@@ -60,7 +60,7 @@ impl<'text> Item<'text> {
         let (s, open_paren) = tag("(")(s)?;
         let (s, open_paren_space) = crate::take_whitespace0(s)?;
 
-        let (s, params) = many0(crate::FunctionParam::new)(s)?;
+        let (s, params) = many0(crate::FunctionDefParam::new)(s)?;
         let (s, params_space) = crate::take_whitespace0(s)?;
 
         let (s, close_paren) = tag(")")(s)?;

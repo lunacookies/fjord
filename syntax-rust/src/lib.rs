@@ -4,7 +4,7 @@
 
 mod block;
 mod expr;
-mod function_param;
+mod function_def_param;
 mod function_return_type;
 mod generics;
 mod ident;
@@ -17,7 +17,7 @@ mod ty;
 mod ty_ident;
 
 pub(crate) use {
-    block::Block, expr::Expr, function_param::FunctionParam,
+    block::Block, expr::Expr, function_def_param::FunctionDefParam,
     function_return_type::FunctionReturnType, generics::Generics, ident::Ident, item::Item,
     lifetime::Lifetime, path::Path, pattern::Pattern, statement::Statement, ty::Ty,
     ty_ident::TyIdent,

@@ -1,7 +1,7 @@
 use nom::{bytes::complete::tag, combinator::opt};
 
 #[derive(Debug, PartialEq)]
-pub(crate) struct FunctionParam<'text> {
+pub(crate) struct FunctionDefParam<'text> {
     name: crate::Ident<'text>,
     name_space: &'text str,
     colon: &'text str,
@@ -12,7 +12,7 @@ pub(crate) struct FunctionParam<'text> {
     comma_space: &'text str,
 }
 
-impl<'text> FunctionParam<'text> {
+impl<'text> FunctionDefParam<'text> {
     pub(crate) fn new(s: &'text str) -> nom::IResult<&'text str, Self> {
         let (s, name) = crate::Ident::new(s)?;
         let (s, name_space) = crate::take_whitespace0(s)?;
@@ -42,35 +42,35 @@ impl<'text> FunctionParam<'text> {
     }
 }
 
-impl<'fp> From<FunctionParam<'fp>> for Vec<syntax::HighlightedSpan<'fp>> {
-    fn from(fp: FunctionParam<'fp>) -> Self {
+impl<'param> From<FunctionDefParam<'param>> for Vec<syntax::HighlightedSpan<'param>> {
+    fn from(param: FunctionDefParam<'param>) -> Self {
         let mut output = vec![
             syntax::HighlightedSpan {
-                text: fp.name.name,
+                text: param.name.name,
                 group: Some(syntax::HighlightGroup::FunctionParam),
             },
             syntax::HighlightedSpan {
-                text: fp.name_space,
+                text: param.name_space,
                 group: None,
             },
             syntax::HighlightedSpan {
-                text: fp.colon,
+                text: param.colon,
                 group: Some(syntax::HighlightGroup::Separator),
             },
             syntax::HighlightedSpan {
-                text: fp.colon_space,
+                text: param.colon_space,
                 group: None,
             },
         ];
 
-        output.extend(Vec::from(fp.ty).into_iter().chain(std::iter::once(
+        output.extend(Vec::from(param.ty).into_iter().chain(std::iter::once(
             syntax::HighlightedSpan {
-                text: fp.ty_space,
+                text: param.ty_space,
                 group: None,
             },
         )));
 
-        if let Some(comma) = fp.comma {
+        if let Some(comma) = param.comma {
             output.push(syntax::HighlightedSpan {
                 text: comma,
                 group: Some(syntax::HighlightGroup::Separator),
@@ -78,7 +78,7 @@ impl<'fp> From<FunctionParam<'fp>> for Vec<syntax::HighlightedSpan<'fp>> {
         }
 
         output.push(syntax::HighlightedSpan {
-            text: fp.comma_space,
+            text: param.comma_space,
             group: None,
         });
 
@@ -93,10 +93,10 @@ mod tests {
     #[test]
     fn basic() {
         assert_eq!(
-            FunctionParam::new("buf: &mut String, "),
+            FunctionDefParam::new("buf: &mut String, "),
             Ok((
                 "",
-                FunctionParam {
+                FunctionDefParam {
                     name: crate::Ident { name: "buf" },
                     name_space: "",
                     colon: ":",
