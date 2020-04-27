@@ -69,7 +69,6 @@ impl syntax::Theme for Gruvbox {
             syntax::HighlightGroup::ConstantDef
             | syntax::HighlightGroup::ConstantUse
             | syntax::HighlightGroup::Number
-            | syntax::HighlightGroup::Character
             | syntax::HighlightGroup::Boolean => syntax::Style {
                 fg_color: Some(PURPLE),
                 bg_color: None,
@@ -101,16 +100,17 @@ impl syntax::Theme for Gruvbox {
                 is_underline: false,
             },
 
-            // String literals
-            syntax::HighlightGroup::String | syntax::HighlightGroup::StringDelimiter => {
-                syntax::Style {
-                    fg_color: Some(GREEN),
-                    bg_color: None,
-                    is_bold: false,
-                    is_italic: false,
-                    is_underline: false,
-                }
-            }
+            // String and character literals
+            syntax::HighlightGroup::String
+            | syntax::HighlightGroup::StringDelimiter
+            | syntax::HighlightGroup::Character
+            | syntax::HighlightGroup::CharacterDelimiter => syntax::Style {
+                fg_color: Some(GREEN),
+                bg_color: None,
+                is_bold: false,
+                is_italic: false,
+                is_underline: false,
+            },
 
             // Special identifiers
             syntax::HighlightGroup::SpecialIdentDef
