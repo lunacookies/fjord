@@ -70,6 +70,8 @@ pub enum HighlightGroup {
     StringDelimiter,
     /// a character literal
     Character,
+    /// the delimiters around a character literal (`'` in most languages)
+    CharacterDelimiter,
     /// a boolean literal
     Boolean,
     /// a pre-processor invocation that is not a macro itself (e.g. `#if` and `#define` in C)
