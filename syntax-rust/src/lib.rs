@@ -8,6 +8,7 @@ mod function_param;
 mod function_return_type;
 mod generics;
 mod ident;
+mod item;
 mod lifetime;
 mod path;
 mod pattern;
@@ -17,15 +18,16 @@ mod ty_ident;
 
 pub(crate) use {
     block::Block, expr::Expr, function_param::FunctionParam,
-    function_return_type::FunctionReturnType, generics::Generics, ident::Ident, lifetime::Lifetime,
-    path::Path, pattern::Pattern, statement::Statement, ty::Ty, ty_ident::TyIdent,
+    function_return_type::FunctionReturnType, generics::Generics, ident::Ident, item::Item,
+    lifetime::Lifetime, path::Path, pattern::Pattern, statement::Statement, ty::Ty,
+    ty_ident::TyIdent,
 };
 
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take, take_till1, take_while, take_while1},
-    combinator::{map, opt},
-    multi::{many0, many1},
+    bytes::complete::{take, take_till1, take_while, take_while1},
+    combinator::map,
+    multi::many1,
 };
 
 /// Highlights Rust code.
@@ -36,10 +38,10 @@ impl syntax::Highlight for RustHighlighter {
     fn highlight<'input>(&self, input: &'input str) -> Vec<syntax::HighlightedSpan<'input>> {
         // FIXME: At the moment, we just don’t highlight if highlighting fails. Ideally,
         // highlighting should always succeed, i.e. it should be fault-tolerant.
-        match many1(Item::new)(input) {
-            Ok((s, items)) => items
+        match many1(Thing::new)(input) {
+            Ok((s, things)) => things
                 .into_iter()
-                // Convert each item into a vector of HighlightedSpans.
+                // Convert each thing into a vector of HighlightedSpans.
                 .map(Vec::from)
                 .flatten()
                 // Add on remaining text that couldn’t be parsed.
@@ -48,6 +50,7 @@ impl syntax::Highlight for RustHighlighter {
                     group: None,
                 }))
                 .collect(),
+
             // If the parser failed, then return the unhighlighted input.
             Err(_) => vec![syntax::HighlightedSpan {
                 text: input,
@@ -60,110 +63,26 @@ impl syntax::Highlight for RustHighlighter {
 // HACK: Rust mistakenly doesn’t realise that the variants of this enum are actually used.
 #[allow(dead_code)]
 #[derive(Debug, PartialEq)]
-enum Item<'input> {
-    Use {
-        keyword: &'input str,
-        keyword_space: &'input str,
-        path: Path<'input>,
-        semicolon: Option<&'input str>,
-    },
-    Function {
-        keyword: &'input str,
-        keyword_space: &'input str,
-        name: Ident<'input>,
-        name_space: &'input str,
-        open_paren: &'input str,
-        open_paren_space: &'input str,
-        params: Vec<FunctionParam<'input>>,
-        params_space: &'input str,
-        close_paren_space: &'input str,
-        close_paren: &'input str,
-        return_type: Option<FunctionReturnType<'input>>,
-        return_type_space: &'input str,
-        body: Option<Block<'input>>,
-    },
-    Whitespace {
-        text: &'input str,
-    },
-    Error {
-        text: &'input str,
-    },
+enum Thing<'text> {
+    Item(Item<'text>),
+    Whitespace { text: &'text str },
+    Error { text: &'text str },
 }
 
-impl<'input> Item<'input> {
-    fn new(s: &'input str) -> nom::IResult<&'input str, Self> {
-        alt((
-            Self::new_use,
-            Self::new_function,
-            Self::new_whitespace,
-            Self::new_error,
-        ))(s)
+impl<'text> Thing<'text> {
+    fn new(s: &'text str) -> nom::IResult<&'text str, Self> {
+        alt((Self::new_item, Self::new_whitespace, Self::new_error))(s)
     }
 
-    fn new_use(s: &'input str) -> nom::IResult<&'input str, Self> {
-        let (s, keyword) = tag("use")(s)?;
-        let (s, keyword_space) = take_whitespace1(s)?;
-
-        let (s, path) = Path::new(s)?;
-        let (s, semicolon) = opt(tag(";"))(s)?;
-
-        Ok((
-            s,
-            Self::Use {
-                keyword,
-                keyword_space,
-                path,
-                semicolon,
-            },
-        ))
+    fn new_item(s: &'text str) -> nom::IResult<&'text str, Self> {
+        map(Item::new, Self::Item)(s)
     }
 
-    fn new_function(s: &'input str) -> nom::IResult<&'input str, Self> {
-        let (s, keyword) = tag("fn")(s)?;
-        let (s, keyword_space) = take_whitespace1(s)?;
-
-        let (s, name) = Ident::new(s)?;
-        let (s, name_space) = take_whitespace0(s)?;
-
-        let (s, open_paren) = tag("(")(s)?;
-        let (s, open_paren_space) = take_whitespace0(s)?;
-
-        let (s, params) = many0(FunctionParam::new)(s)?;
-        let (s, params_space) = take_whitespace0(s)?;
-
-        let (s, close_paren) = tag(")")(s)?;
-        let (s, close_paren_space) = take_whitespace0(s)?;
-
-        let (s, return_type) = opt(FunctionReturnType::new)(s)?;
-        let (s, return_type_space) = take_whitespace0(s)?;
-
-        let (s, body) = opt(Block::new)(s)?;
-
-        Ok((
-            s,
-            Self::Function {
-                keyword,
-                keyword_space,
-                name,
-                name_space,
-                open_paren,
-                open_paren_space,
-                params,
-                params_space,
-                close_paren_space,
-                close_paren,
-                return_type,
-                return_type_space,
-                body,
-            },
-        ))
+    fn new_whitespace(s: &'text str) -> nom::IResult<&'text str, Self> {
+        map(crate::take_whitespace1, |s| Self::Whitespace { text: s })(s)
     }
 
-    fn new_whitespace(s: &'input str) -> nom::IResult<&'input str, Self> {
-        map(take_whitespace1, |s| Self::Whitespace { text: s })(s)
-    }
-
-    fn new_error(s: &'input str) -> nom::IResult<&'input str, Self> {
+    fn new_error(s: &'text str) -> nom::IResult<&'text str, Self> {
         map(
             alt((
                 // ‘Reset’ errors after any of these characters.
@@ -177,121 +96,16 @@ impl<'input> Item<'input> {
     }
 }
 
-impl<'input> From<Item<'input>> for Vec<syntax::HighlightedSpan<'input>> {
-    fn from(item: Item<'input>) -> Self {
-        let spans = match item {
-            Item::Use {
-                keyword,
-                keyword_space,
-                path,
-                semicolon,
-            } => {
-                let mut output = vec![
-                    syntax::HighlightedSpan {
-                        text: keyword,
-                        group: Some(syntax::HighlightGroup::OtherKeyword),
-                    },
-                    syntax::HighlightedSpan {
-                        text: keyword_space,
-                        group: None,
-                    },
-                ];
-
-                output.append(&mut path.into());
-
-                if let Some(semicolon) = semicolon {
-                    output.push(syntax::HighlightedSpan {
-                        text: semicolon,
-                        group: Some(syntax::HighlightGroup::Terminator),
-                    });
-                }
-
-                output
-            }
-            Item::Function {
-                keyword,
-                keyword_space,
-                name,
-                name_space,
-                open_paren,
-                open_paren_space,
-                params,
-                params_space,
-                close_paren_space,
-                close_paren,
-                return_type,
-                return_type_space,
-                body,
-            } => {
-                let mut output = vec![
-                    syntax::HighlightedSpan {
-                        text: keyword,
-                        group: Some(syntax::HighlightGroup::OtherKeyword),
-                    },
-                    syntax::HighlightedSpan {
-                        text: keyword_space,
-                        group: None,
-                    },
-                    syntax::HighlightedSpan {
-                        text: name.name,
-                        group: Some(syntax::HighlightGroup::FunctionDef),
-                    },
-                    syntax::HighlightedSpan {
-                        text: name_space,
-                        group: None,
-                    },
-                    syntax::HighlightedSpan {
-                        text: open_paren,
-                        group: Some(syntax::HighlightGroup::Delimiter),
-                    },
-                    syntax::HighlightedSpan {
-                        text: open_paren_space,
-                        group: None,
-                    },
-                ];
-
-                output.extend(
-                    params
-                        .into_iter()
-                        .map(Vec::from)
-                        .flatten()
-                        .chain(std::iter::once(syntax::HighlightedSpan {
-                            text: params_space,
-                            group: None,
-                        }))
-                        .chain(std::iter::once(syntax::HighlightedSpan {
-                            text: close_paren,
-                            group: Some(syntax::HighlightGroup::Delimiter),
-                        }))
-                        .chain(std::iter::once(syntax::HighlightedSpan {
-                            text: close_paren_space,
-                            group: None,
-                        })),
-                );
-
-                if let Some(return_type) = return_type {
-                    output.append(&mut Vec::from(return_type));
-                }
-
-                output.push(syntax::HighlightedSpan {
-                    text: return_type_space,
-                    group: None,
-                });
-
-                if let Some(body) = body {
-                    output.append(&mut Vec::from(body));
-                }
-
-                output
-            }
-            Item::Whitespace { text } => vec![syntax::HighlightedSpan { text, group: None }],
-            Item::Error { text } => vec![syntax::HighlightedSpan {
+impl<'t> From<Thing<'t>> for Vec<syntax::HighlightedSpan<'t>> {
+    fn from(thing: Thing<'t>) -> Self {
+        match thing {
+            Thing::Item(item) => Vec::from(item),
+            Thing::Whitespace { text } => vec![syntax::HighlightedSpan { text, group: None }],
+            Thing::Error { text } => vec![syntax::HighlightedSpan {
                 text,
                 group: Some(syntax::HighlightGroup::Error),
             }],
-        };
-
-        spans
+        }
     }
 }
 
