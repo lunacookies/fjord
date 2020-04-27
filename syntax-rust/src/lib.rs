@@ -4,6 +4,7 @@
 
 mod block;
 mod expr;
+mod function_call_param;
 mod function_def_param;
 mod function_return_type;
 mod generics;
@@ -17,10 +18,10 @@ mod ty;
 mod ty_ident;
 
 pub(crate) use {
-    block::Block, expr::Expr, function_def_param::FunctionDefParam,
-    function_return_type::FunctionReturnType, generics::Generics, ident::Ident, item::Item,
-    lifetime::Lifetime, path::Path, pattern::Pattern, statement::Statement, ty::Ty,
-    ty_ident::TyIdent,
+    block::Block, expr::Expr, function_call_param::FunctionCallParam,
+    function_def_param::FunctionDefParam, function_return_type::FunctionReturnType,
+    generics::Generics, ident::Ident, item::Item, lifetime::Lifetime, path::Path, pattern::Pattern,
+    statement::Statement, ty::Ty, ty_ident::TyIdent,
 };
 
 use nom::{
