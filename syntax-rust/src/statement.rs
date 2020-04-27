@@ -15,9 +15,8 @@ pub(crate) enum Statement<'text> {
         keyword_space: &'text str,
         pattern: crate::Pattern<'text>,
         pattern_space: &'text str,
-        equals: &'text str,
-        equals_space: &'text str,
-        value: crate::Expr<'text>,
+        rhs: Option<LetRhs<'text>>,
+        rhs_space: &'text str,
         semicolon: Option<&'text str>,
     },
 }
@@ -42,10 +41,8 @@ impl<'text> Statement<'text> {
         let (s, pattern) = crate::Pattern::new(s)?;
         let (s, pattern_space) = crate::take_whitespace0(s)?;
 
-        let (s, equals) = tag("=")(s)?;
-        let (s, equals_space) = crate::take_whitespace0(s)?;
-
-        let (s, value) = crate::Expr::new(s)?;
+        let (s, rhs) = opt(LetRhs::new)(s)?;
+        let (s, rhs_space) = crate::take_whitespace0(s)?;
 
         let (s, semicolon) = opt(tag(";"))(s)?;
 
@@ -56,9 +53,8 @@ impl<'text> Statement<'text> {
                 keyword_space,
                 pattern,
                 pattern_space,
-                equals,
-                equals_space,
-                value,
+                rhs,
+                rhs_space,
                 semicolon,
             },
         ))
@@ -75,12 +71,11 @@ impl<'s> From<Statement<'s>> for Vec<syntax::HighlightedSpan<'s>> {
                 keyword_space,
                 pattern,
                 pattern_space,
-                equals,
-                equals_space,
-                value,
+                rhs,
+                rhs_space,
                 semicolon,
             } => {
-                let output = std::iter::once(syntax::HighlightedSpan {
+                let mut output: Vec<_> = std::iter::once(syntax::HighlightedSpan {
                     text: keyword,
                     group: Some(syntax::HighlightGroup::OtherKeyword),
                 })
@@ -93,27 +88,66 @@ impl<'s> From<Statement<'s>> for Vec<syntax::HighlightedSpan<'s>> {
                     text: pattern_space,
                     group: None,
                 }))
-                .chain(std::iter::once(syntax::HighlightedSpan {
-                    text: equals,
-                    group: Some(syntax::HighlightGroup::AssignOper),
-                }))
-                .chain(std::iter::once(syntax::HighlightedSpan {
-                    text: equals_space,
+                .collect();
+
+                if let Some(rhs) = rhs {
+                    output.append(&mut Vec::from(rhs));
+                }
+
+                output.push(syntax::HighlightedSpan {
+                    text: rhs_space,
                     group: None,
-                }))
-                .chain(Vec::from(value));
+                });
 
                 if let Some(semicolon) = semicolon {
-                    output
-                        .chain(std::iter::once(syntax::HighlightedSpan {
-                            text: semicolon,
-                            group: Some(syntax::HighlightGroup::Terminator),
-                        }))
-                        .collect()
-                } else {
-                    output.collect()
+                    output.push(syntax::HighlightedSpan {
+                        text: semicolon,
+                        group: Some(syntax::HighlightGroup::Terminator),
+                    });
                 }
+
+                output
             }
         }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub(crate) struct LetRhs<'text> {
+    equals: &'text str,
+    equals_space: &'text str,
+    value: crate::Expr<'text>,
+}
+
+impl<'text> LetRhs<'text> {
+    fn new(s: &'text str) -> nom::IResult<&'text str, Self> {
+        let (s, equals) = tag("=")(s)?;
+        let (s, equals_space) = crate::take_whitespace0(s)?;
+
+        let (s, value) = crate::Expr::new(s)?;
+
+        Ok((
+            s,
+            Self {
+                equals,
+                equals_space,
+                value,
+            },
+        ))
+    }
+}
+
+impl<'rhs> From<LetRhs<'rhs>> for Vec<syntax::HighlightedSpan<'rhs>> {
+    fn from(rhs: LetRhs<'rhs>) -> Self {
+        std::iter::once(syntax::HighlightedSpan {
+            text: rhs.equals,
+            group: Some(syntax::HighlightGroup::AssignOper),
+        })
+        .chain(std::iter::once(syntax::HighlightedSpan {
+            text: rhs.equals_space,
+            group: None,
+        }))
+        .chain(Vec::from(rhs.value).into_iter())
+        .collect()
     }
 }
