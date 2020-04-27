@@ -1,6 +1,8 @@
 use nom::bytes::complete::{tag, take_until};
 
 // TODO: Implement more expression types.
+// HACK: Rust mistakenly doesn’t realise that the variants of this enum are actually used.
+#[allow(dead_code)]
 #[derive(Debug, PartialEq)]
 pub(crate) enum Expr<'text> {
     String {

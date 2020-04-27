@@ -4,6 +4,8 @@ use nom::{
     combinator::{map, opt},
 };
 
+// HACK: Rust mistakenly doesn’t realise that the variants of this enum are actually used.
+#[allow(dead_code)]
 #[derive(Debug, PartialEq)]
 pub(crate) enum Statement<'text> {
     Item(crate::Item<'text>),
