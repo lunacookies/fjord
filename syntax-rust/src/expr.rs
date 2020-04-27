@@ -1,6 +1,6 @@
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take, take_until},
+    bytes::complete::{tag, take, take_till1, take_until},
     combinator::map,
     multi::many0,
     sequence::pair,
@@ -34,6 +34,9 @@ pub(crate) enum Expr<'text> {
         contents: &'text str,
         end_quote: &'text str,
     },
+    Error {
+        text: &'text str,
+    },
 }
 
 impl<'text> Expr<'text> {
@@ -43,6 +46,7 @@ impl<'text> Expr<'text> {
             Self::new_variable,
             Self::new_character,
             Self::new_string,
+            Self::new_error,
         ))(s)
     }
 
@@ -104,6 +108,15 @@ impl<'text> Expr<'text> {
                 end_quote,
             },
         ))
+    }
+
+    fn new_error(s: &'text str) -> nom::IResult<&'text str, Self> {
+        map(
+            // Stop parsing an error (and therby allowing parsing something new) at the characters
+            // that terminate expressions.
+            nom::bytes::complete::take_till1(|c| c == '}' || c == ')' || c == ';'),
+            |text| Self::Error { text },
+        )(s)
     }
 }
 
@@ -196,6 +209,10 @@ impl<'e> From<Expr<'e>> for Vec<syntax::HighlightedSpan<'e>> {
                     group: Some(syntax::HighlightGroup::StringDelimiter),
                 },
             ],
+            Expr::Error { text } => vec![syntax::HighlightedSpan {
+                text,
+                group: Some(syntax::HighlightGroup::Error),
+            }],
         }
     }
 }
