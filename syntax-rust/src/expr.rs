@@ -1,6 +1,7 @@
 use nom::{
     branch::alt,
     bytes::complete::{tag, take, take_until},
+    combinator::map,
 };
 
 // TODO: Implement more expression types.
@@ -8,6 +9,9 @@ use nom::{
 #[allow(dead_code)]
 #[derive(Debug, PartialEq)]
 pub(crate) enum Expr<'text> {
+    Variable {
+        name: crate::Ident<'text>,
+    },
     Character {
         start_quote: &'text str,
         contents: &'text str,
@@ -22,7 +26,11 @@ pub(crate) enum Expr<'text> {
 
 impl<'text> Expr<'text> {
     pub(crate) fn new(s: &'text str) -> nom::IResult<&'text str, Self> {
-        alt((Self::new_character, Self::new_string))(s)
+        alt((Self::new_variable, Self::new_character, Self::new_string))(s)
+    }
+
+    fn new_variable(s: &'text str) -> nom::IResult<&'text str, Self> {
+        map(crate::Ident::new, |name| Self::Variable { name })(s)
     }
 
     fn new_character(s: &'text str) -> nom::IResult<&'text str, Self> {
@@ -59,6 +67,10 @@ impl<'text> Expr<'text> {
 impl<'e> From<Expr<'e>> for Vec<syntax::HighlightedSpan<'e>> {
     fn from(expr: Expr<'e>) -> Self {
         match expr {
+            Expr::Variable { name } => vec![syntax::HighlightedSpan {
+                text: name.name,
+                group: Some(syntax::HighlightGroup::VariableUse),
+            }],
             Expr::Character {
                 start_quote,
                 contents,
