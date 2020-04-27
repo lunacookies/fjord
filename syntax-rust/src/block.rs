@@ -61,3 +61,24 @@ impl<'b> From<Block<'b>> for Vec<syntax::HighlightedSpan<'b>> {
         .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn basic() {
+        assert_eq!(
+            Block::new("{}"),
+            Ok((
+                "",
+                Block {
+                    open_brace: "{",
+                    open_brace_space: "",
+                    statements: vec![],
+                    close_brace: "}"
+                }
+            ))
+        )
+    }
+}
