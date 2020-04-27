@@ -2,14 +2,13 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     combinator::{map, opt},
+    sequence::pair,
 };
 
 // HACK: Rust mistakenly doesn’t realise that the variants of this enum are actually used.
 #[allow(dead_code)]
 #[derive(Debug, PartialEq)]
 pub(crate) enum Statement<'text> {
-    Item(crate::Item<'text>),
-    Expr(crate::Expr<'text>),
     Let {
         keyword: &'text str,
         keyword_space: &'text str,
@@ -17,6 +16,11 @@ pub(crate) enum Statement<'text> {
         pattern_space: &'text str,
         rhs: Option<LetRhs<'text>>,
         rhs_space: &'text str,
+        semicolon: Option<&'text str>,
+    },
+    Item(crate::Item<'text>),
+    Expr {
+        expr: crate::Expr<'text>,
         semicolon: Option<&'text str>,
     },
 }
@@ -57,7 +61,10 @@ impl<'text> Statement<'text> {
     }
 
     fn new_expr(s: &'text str) -> nom::IResult<&'text str, Self> {
-        map(crate::Expr::new, Self::Expr)(s)
+        map(
+            pair(crate::Expr::new, opt(tag(";"))),
+            |(expr, semicolon)| Self::Expr { expr, semicolon },
+        )(s)
     }
 }
 
@@ -107,7 +114,18 @@ impl<'s> From<Statement<'s>> for Vec<syntax::HighlightedSpan<'s>> {
                 output
             }
             Statement::Item(item) => Vec::from(item),
-            Statement::Expr(expr) => Vec::from(expr),
+            Statement::Expr { expr, semicolon } => {
+                let mut output = Vec::from(expr);
+
+                if let Some(semicolon) = semicolon {
+                    output.push(syntax::HighlightedSpan {
+                        text: semicolon,
+                        group: Some(syntax::HighlightGroup::Terminator),
+                    });
+                }
+
+                output
+            }
         }
     }
 }
