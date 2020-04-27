@@ -2,7 +2,6 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     combinator::{map, opt},
-    sequence::pair,
 };
 
 // HACK: Rust mistakenly doesn’t realise that the variants of this enum are actually used.
@@ -21,6 +20,7 @@ pub(crate) enum Statement<'text> {
     Item(crate::Item<'text>),
     Expr {
         expr: crate::Expr<'text>,
+        expr_space: &'text str,
         semicolon: Option<&'text str>,
     },
 }
@@ -61,10 +61,19 @@ impl<'text> Statement<'text> {
     }
 
     fn new_expr(s: &'text str) -> nom::IResult<&'text str, Self> {
-        map(
-            pair(crate::Expr::new, opt(tag(";"))),
-            |(expr, semicolon)| Self::Expr { expr, semicolon },
-        )(s)
+        let (s, expr) = crate::Expr::new(s)?;
+        let (s, expr_space) = crate::take_whitespace0(s)?;
+
+        let (s, semicolon) = opt(tag(";"))(s)?;
+
+        Ok((
+            s,
+            Self::Expr {
+                expr,
+                expr_space,
+                semicolon,
+            },
+        ))
     }
 }
 
@@ -114,17 +123,29 @@ impl<'s> From<Statement<'s>> for Vec<syntax::HighlightedSpan<'s>> {
                 output
             }
             Statement::Item(item) => Vec::from(item),
-            Statement::Expr { expr, semicolon } => {
-                let mut output = Vec::from(expr);
+            Statement::Expr {
+                expr,
+                expr_space,
+                semicolon,
+            } => {
+                let output =
+                    Vec::from(expr)
+                        .into_iter()
+                        .chain(std::iter::once(syntax::HighlightedSpan {
+                            text: expr_space,
+                            group: None,
+                        }));
 
                 if let Some(semicolon) = semicolon {
-                    output.push(syntax::HighlightedSpan {
-                        text: semicolon,
-                        group: Some(syntax::HighlightGroup::Terminator),
-                    });
+                    output
+                        .chain(std::iter::once(syntax::HighlightedSpan {
+                            text: semicolon,
+                            group: Some(syntax::HighlightGroup::Terminator),
+                        }))
+                        .collect()
+                } else {
+                    output.collect()
                 }
-
-                output
             }
         }
     }
