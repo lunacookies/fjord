@@ -1,6 +1,6 @@
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take, take_till1, take_until},
+    bytes::complete::{tag, take, take_until},
     combinator::map,
     multi::many0,
     sequence::pair,
