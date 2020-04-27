@@ -23,15 +23,7 @@ pub(crate) enum Statement<'text> {
 
 impl<'text> Statement<'text> {
     pub(crate) fn new(s: &'text str) -> nom::IResult<&'text str, Self> {
-        alt((Self::new_item, Self::new_expr, Self::new_let))(s)
-    }
-
-    fn new_item(s: &'text str) -> nom::IResult<&'text str, Self> {
-        map(crate::Item::new, Self::Item)(s)
-    }
-
-    fn new_expr(s: &'text str) -> nom::IResult<&'text str, Self> {
-        map(crate::Expr::new, Self::Expr)(s)
+        alt((Self::new_let, Self::new_item, Self::new_expr))(s)
     }
 
     fn new_let(s: &'text str) -> nom::IResult<&'text str, Self> {
@@ -59,13 +51,19 @@ impl<'text> Statement<'text> {
             },
         ))
     }
+
+    fn new_item(s: &'text str) -> nom::IResult<&'text str, Self> {
+        map(crate::Item::new, Self::Item)(s)
+    }
+
+    fn new_expr(s: &'text str) -> nom::IResult<&'text str, Self> {
+        map(crate::Expr::new, Self::Expr)(s)
+    }
 }
 
 impl<'s> From<Statement<'s>> for Vec<syntax::HighlightedSpan<'s>> {
     fn from(statement: Statement<'s>) -> Self {
         match statement {
-            Statement::Item(item) => Vec::from(item),
-            Statement::Expr(expr) => Vec::from(expr),
             Statement::Let {
                 keyword,
                 keyword_space,
@@ -108,6 +106,8 @@ impl<'s> From<Statement<'s>> for Vec<syntax::HighlightedSpan<'s>> {
 
                 output
             }
+            Statement::Item(item) => Vec::from(item),
+            Statement::Expr(expr) => Vec::from(expr),
         }
     }
 }
