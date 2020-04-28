@@ -1,4 +1,5 @@
 mod named_structure_def_fields;
+mod tuple_structure_def_fields;
 
 use {
     crate::utils::{
@@ -9,10 +10,68 @@ use {
         branch::alt,
         bytes::complete::{tag, take},
         combinator::{map, opt},
+        multi::many0,
     },
+    tuple_structure_def_fields::fields as tuple_structure_def_fields,
 };
 
 type ParseResult<'text> = nom::IResult<&'text str, Vec<syntax::HighlightedSpan<'text>>>;
+
+fn comma_separated<'input>(
+    parser: impl Fn(&'input str) -> ParseResult<'input> + Copy + 'input,
+) -> impl Fn(&'input str) -> ParseResult<'input> + 'input {
+    let preceded_by_comma = move |s| {
+        let (s, initial_space) = take_whitespace0(s)?;
+        let (s, comma) = tag(",")(s)?;
+        let (s, comma_space) = take_whitespace0(s)?;
+
+        let (s, mut parser_output) = parser(s)?;
+
+        let mut output = vec![
+            syntax::HighlightedSpan {
+                text: initial_space,
+                group: None,
+            },
+            syntax::HighlightedSpan {
+                text: comma,
+                group: Some(syntax::HighlightGroup::Separator),
+            },
+            syntax::HighlightedSpan {
+                text: comma_space,
+                group: None,
+            },
+        ];
+
+        output.append(&mut parser_output);
+
+        Ok((s, output))
+    };
+
+    move |s| {
+        let (s, first) = parser(s)?;
+        let (s, rest) = many0(preceded_by_comma)(s)?;
+
+        let (s, space) = take_whitespace0(s)?;
+        let (s, trailing_comma) = opt(tag(","))(s)?;
+
+        let mut output = first;
+        output.append(&mut rest.concat());
+
+        output.push(syntax::HighlightedSpan {
+            text: space,
+            group: None,
+        });
+
+        if let Some(trailing_comma) = trailing_comma {
+            output.push(syntax::HighlightedSpan {
+                text: trailing_comma,
+                group: Some(syntax::HighlightGroup::Separator),
+            });
+        }
+
+        Ok((s, output))
+    }
+}
 
 pub(crate) fn parse(s: &str) -> ParseResult<'_> {
     alt((item, whitespace, error))(s)
@@ -153,7 +212,11 @@ fn structure_def(s: &str) -> ParseResult<'_> {
 }
 
 fn structure_def_fields(s: &str) -> ParseResult<'_> {
-    alt((named_structure_def_fields, unnamed_structure))(s)
+    alt((
+        named_structure_def_fields,
+        tuple_structure_def_fields,
+        unnamed_structure,
+    ))(s)
 }
 
 fn unnamed_structure(s: &str) -> ParseResult<'_> {
