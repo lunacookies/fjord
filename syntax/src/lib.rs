@@ -44,6 +44,10 @@ pub enum HighlightGroup {
     PrimitiveTy,
     /// the name of a variable when defined
     VariableDef,
+    /// the name of a struct/class member when defined
+    MemberDef,
+    /// the name of a struct/class member when used
+    MemberUse,
     /// the name of a variable when used
     VariableUse,
     /// the name of a constant when defined
