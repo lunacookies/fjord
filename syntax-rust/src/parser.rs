@@ -5,7 +5,7 @@ use {
     nom::{
         branch::alt,
         bytes::complete::{tag, take},
-        combinator::map,
+        combinator::{map, opt},
     },
 };
 
@@ -48,38 +48,79 @@ fn function(s: &str) -> ParseResult<'_> {
     let (s, open_paren_space) = take_whitespace0(s)?;
 
     let (s, close_paren) = tag(")")(s)?;
+    let (s, close_paren_space) = take_whitespace0(s)?;
 
-    Ok((
-        s,
-        vec![
-            syntax::HighlightedSpan {
-                text: keyword,
-                group: Some(syntax::HighlightGroup::OtherKeyword),
-            },
-            syntax::HighlightedSpan {
-                text: keyword_space,
-                group: None,
-            },
-            syntax::HighlightedSpan {
-                text: name,
-                group: Some(syntax::HighlightGroup::FunctionDef),
-            },
-            syntax::HighlightedSpan {
-                text: name_space,
-                group: None,
-            },
-            syntax::HighlightedSpan {
-                text: open_paren,
-                group: Some(syntax::HighlightGroup::Delimiter),
-            },
-            syntax::HighlightedSpan {
-                text: open_paren_space,
-                group: None,
-            },
-            syntax::HighlightedSpan {
-                text: close_paren,
-                group: Some(syntax::HighlightGroup::Delimiter),
-            },
-        ],
-    ))
+    let (s, return_type) = opt(function_return_type)(s)?;
+
+    let mut output = vec![
+        syntax::HighlightedSpan {
+            text: keyword,
+            group: Some(syntax::HighlightGroup::OtherKeyword),
+        },
+        syntax::HighlightedSpan {
+            text: keyword_space,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: name,
+            group: Some(syntax::HighlightGroup::FunctionDef),
+        },
+        syntax::HighlightedSpan {
+            text: name_space,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: open_paren,
+            group: Some(syntax::HighlightGroup::Delimiter),
+        },
+        syntax::HighlightedSpan {
+            text: open_paren_space,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: close_paren,
+            group: Some(syntax::HighlightGroup::Delimiter),
+        },
+        syntax::HighlightedSpan {
+            text: close_paren_space,
+            group: None,
+        },
+    ];
+
+    if let Some(mut return_type) = return_type {
+        output.append(&mut return_type);
+    }
+
+    Ok((s, output))
+}
+
+fn function_return_type(s: &str) -> ParseResult<'_> {
+    let (s, arrow) = tag("->")(s)?;
+    let (s, arrow_space) = take_whitespace0(s)?;
+
+    let (s, mut ty) = ty(s)?;
+
+    let mut output = vec![
+        syntax::HighlightedSpan {
+            text: arrow,
+            group: Some(syntax::HighlightGroup::Separator),
+        },
+        syntax::HighlightedSpan {
+            text: arrow_space,
+            group: None,
+        },
+    ];
+
+    output.append(&mut ty);
+
+    Ok((s, output))
+}
+
+fn ty(s: &str) -> ParseResult<'_> {
+    map(ident, |s| {
+        vec![syntax::HighlightedSpan {
+            text: s,
+            group: Some(syntax::HighlightGroup::TyUse),
+        }]
+    })(s)
 }
