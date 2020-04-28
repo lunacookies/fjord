@@ -35,6 +35,10 @@ pub enum HighlightGroup {
     TyDef,
     /// the name of a type when used
     TyUse,
+    /// the name of an interface/trait/typeclass when defined
+    InterfaceDef,
+    /// the name of an interface/trait/typeclass when used
+    InterfaceUse,
     /// a ‘primitive’ baked into the language (e.g. `int` is a primitive type in C++, but
     /// `std::vector` isn’t)
     PrimitiveTy,
@@ -58,8 +62,10 @@ pub enum HighlightGroup {
     SpecialIdentDef,
     /// the name of a special identifier when used
     SpecialIdentUse,
-    /// a sigil used to indicate a special identifier
-    SpecialIdentSigil,
+    /// a sigil used to indicate a special identifier when the identifer is being defined
+    SpecialIdentDefSigil,
+    /// a sigil used to indicate a special identifier when the identifer is being used
+    SpecialIdentUseSigil,
     /// the name of a function parameter
     FunctionParam,
     /// a number literal (whether integer or floating-point)
