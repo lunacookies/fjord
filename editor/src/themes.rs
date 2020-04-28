@@ -59,6 +59,8 @@ impl syntax::Theme for Gruvbox {
             // Variables
             syntax::HighlightGroup::VariableDef
             | syntax::HighlightGroup::VariableUse
+            | syntax::HighlightGroup::MemberDef
+            | syntax::HighlightGroup::MemberUse
             | syntax::HighlightGroup::FunctionParam => syntax::Style {
                 fg_color: Some(BLUE),
                 bg_color: None,
