@@ -46,6 +46,8 @@ impl syntax::Theme for Gruvbox {
             // Types
             syntax::HighlightGroup::TyDef
             | syntax::HighlightGroup::TyUse
+            | syntax::HighlightGroup::InterfaceDef
+            | syntax::HighlightGroup::InterfaceUse
             | syntax::HighlightGroup::PrimitiveTy => syntax::Style {
                 fg_color: Some(YELLOW),
                 bg_color: None,
@@ -115,7 +117,8 @@ impl syntax::Theme for Gruvbox {
             // Special identifiers
             syntax::HighlightGroup::SpecialIdentDef
             | syntax::HighlightGroup::SpecialIdentUse
-            | syntax::HighlightGroup::SpecialIdentSigil => syntax::Style {
+            | syntax::HighlightGroup::SpecialIdentDefSigil
+            | syntax::HighlightGroup::SpecialIdentUseSigil => syntax::Style {
                 fg_color: Some(ORANGE),
                 bg_color: None,
                 is_bold: false,
