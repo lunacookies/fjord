@@ -44,15 +44,15 @@ pub enum HighlightGroup {
     PrimitiveTy,
     /// the name of a variable when defined
     VariableDef,
+    /// the name of a variable when used
+    VariableUse,
     /// the name of a struct/class member when defined
     MemberDef,
     /// the name of a struct/class member when used
     MemberUse,
-    /// the name of a variable when used
-    VariableUse,
-    /// the name of a constant when defined
+    /// the name of a constant ‘variable’ when defined
     ConstantDef,
-    /// the name of a constant when used
+    /// the name of a constant ‘variable’ when used
     ConstantUse,
     /// the name of a module when defined
     ModuleDef,
@@ -82,7 +82,9 @@ pub enum HighlightGroup {
     Character,
     /// the delimiters around a character literal (`'` in most languages)
     CharacterDelimiter,
-    /// a boolean literal
+    /// a boolean literal (only to be used if it is a keyword in the language -- if boolean values
+    /// are ‘just’ normal types like in Python and Haskell, then the `TyUse` variant is more
+    /// appropriate)
     Boolean,
     /// a pre-processor invocation that is not a macro itself (e.g. `#if` and `#define` in C)
     PreProc,
