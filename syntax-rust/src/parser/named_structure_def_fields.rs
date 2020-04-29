@@ -1,5 +1,5 @@
 use {
-    super::{comma_separated, ty, ParseResult},
+    super::{comma_separated, expect, ty, ParseResult},
     crate::utils::{ident, take_whitespace0},
     nom::bytes::complete::tag,
 };
@@ -8,7 +8,7 @@ pub(super) fn fields(s: &str) -> ParseResult<'_> {
     let (s, open_brace) = tag("{")(s)?;
     let (s, open_brace_space) = take_whitespace0(s)?;
 
-    let (s, mut fields) = comma_separated(field)(s)?;
+    let (s, mut fields) = comma_separated(&field)(s)?;
 
     let (s, close_brace_space) = take_whitespace0(s)?;
     let (s, close_brace) = tag("}")(s)?;
@@ -47,7 +47,7 @@ fn field(s: &str) -> ParseResult<'_> {
     let (s, colon) = tag(":")(s)?;
     let (s, colon_space) = take_whitespace0(s)?;
 
-    let (s, mut ty) = ty(s)?;
+    let (s, mut ty) = expect(ty)(s)?;
 
     let mut output = vec![
         syntax::HighlightedSpan {

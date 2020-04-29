@@ -9,7 +9,7 @@ pub(super) fn fields(s: &str) -> ParseResult<'_> {
     let (s, open_paren_space) = take_whitespace0(s)?;
 
     // Fields of a tuple struct are simply types.
-    let (s, mut fields) = comma_separated(ty)(s)?;
+    let (s, mut fields) = comma_separated(&ty)(s)?;
     let (s, fields_space) = take_whitespace0(s)?;
 
     let (s, close_paren) = tag(")")(s)?;

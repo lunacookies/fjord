@@ -38,30 +38,36 @@ fn expect<'input>(
     }
 }
 
-fn comma_separated<'input>(
-    parser: impl Fn(&'input str) -> ParseResult<'input> + Copy + 'input,
+fn comma_separated<'input, P: Fn(&'input str) -> ParseResult<'input> + Copy + 'input>(
+    parser: &'input P,
 ) -> impl Fn(&'input str) -> ParseResult<'input> + 'input {
     let preceded_by_comma = move |s| {
         let (s, initial_space) = take_whitespace0(s)?;
-        let (s, comma) = tag(",")(s)?;
+
+        let (s, mut comma) = expect(|s| {
+            map(tag(","), |s| {
+                vec![syntax::HighlightedSpan {
+                    text: s,
+                    group: Some(syntax::HighlightGroup::Separator),
+                }]
+            })(s)
+        })(s)?;
+
         let (s, comma_space) = take_whitespace0(s)?;
 
-        let (s, mut parser_output) = parser(s)?;
+        let (s, mut parser_output) = expect(parser)(s)?;
 
-        let mut output = vec![
-            syntax::HighlightedSpan {
-                text: initial_space,
-                group: None,
-            },
-            syntax::HighlightedSpan {
-                text: comma,
-                group: Some(syntax::HighlightGroup::Separator),
-            },
-            syntax::HighlightedSpan {
-                text: comma_space,
-                group: None,
-            },
-        ];
+        let mut output = vec![syntax::HighlightedSpan {
+            text: initial_space,
+            group: None,
+        }];
+
+        output.append(&mut comma);
+
+        output.push(syntax::HighlightedSpan {
+            text: comma_space,
+            group: None,
+        });
 
         output.append(&mut parser_output);
 
@@ -69,7 +75,11 @@ fn comma_separated<'input>(
     };
 
     move |s| {
-        let (s, first) = parser(s)?;
+        let (s, first) = match parser(s) {
+            Ok((s, first)) => (s, first),
+            _ => return Ok((s, vec![])),
+        };
+
         let (s, rest) = many0(preceded_by_comma)(s)?;
 
         let (s, space) = take_whitespace0(s)?;
