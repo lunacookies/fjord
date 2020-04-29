@@ -430,7 +430,55 @@ fn expr_in_statement(s: &str) -> ParseResult<'_> {
 }
 
 fn expr(s: &str) -> ParseResult<'_> {
-    string(s)
+    alt((function_call, string))(s)
+}
+
+fn function_call(s: &str) -> ParseResult<'_> {
+    let (s, name) = ident(s)?;
+    let (s, name_space) = take_whitespace0(s)?;
+
+    let (s, open_paren) = tag("(")(s)?;
+    let (s, open_paren_space) = take_whitespace0(s)?;
+
+    // Function calls take in expressions.
+    let (s, mut params) = comma_separated(&expr)(s)?;
+    let (s, params_space) = take_whitespace0(s)?;
+
+    let (s, close_paren) = tag(")")(s)?;
+
+    let mut output = vec![
+        syntax::HighlightedSpan {
+            text: name,
+            group: Some(syntax::HighlightGroup::FunctionCall),
+        },
+        syntax::HighlightedSpan {
+            text: name_space,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: open_paren,
+            group: Some(syntax::HighlightGroup::Delimiter),
+        },
+        syntax::HighlightedSpan {
+            text: open_paren_space,
+            group: None,
+        },
+    ];
+
+    output.append(&mut params);
+
+    output.extend_from_slice(&[
+        syntax::HighlightedSpan {
+            text: params_space,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: close_paren,
+            group: Some(syntax::HighlightGroup::Delimiter),
+        },
+    ]);
+
+    Ok((s, output))
 }
 
 fn string(s: &str) -> ParseResult<'_> {
