@@ -430,7 +430,7 @@ fn expr_in_statement(s: &str) -> ParseResult<'_> {
 }
 
 fn expr(s: &str) -> ParseResult<'_> {
-    alt((function_call, string))(s)
+    alt((function_call, variable, string))(s)
 }
 
 fn function_call(s: &str) -> ParseResult<'_> {
@@ -479,6 +479,15 @@ fn function_call(s: &str) -> ParseResult<'_> {
     ]);
 
     Ok((s, output))
+}
+
+fn variable(s: &str) -> ParseResult<'_> {
+    map(ident, |s| {
+        vec![syntax::HighlightedSpan {
+            text: s,
+            group: Some(syntax::HighlightGroup::VariableUse),
+        }]
+    })(s)
 }
 
 fn string(s: &str) -> ParseResult<'_> {
