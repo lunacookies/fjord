@@ -153,6 +153,64 @@ fn error_1_char(s: &str) -> ParseResult<'_> {
     })(s)
 }
 
+fn type_alias(s: &str) -> ParseResult<'_> {
+    let (s, keyword) = tag("type")(s)?;
+    let (s, keyword_space) = take_whitespace1(s)?;
+
+    let (s, name) = ident(s)?;
+    let (s, name_space) = take_whitespace0(s)?;
+
+    let (s, equals) = tag("=")(s)?;
+    let (s, equals_space) = take_whitespace0(s)?;
+
+    let (s, mut ty) = ty(s)?;
+    let (s, ty_space) = take_whitespace0(s)?;
+
+    let (s, semicolon) = tag(";")(s)?;
+
+    let mut output = vec![
+        syntax::HighlightedSpan {
+            text: keyword,
+            group: Some(syntax::HighlightGroup::OtherKeyword),
+        },
+        syntax::HighlightedSpan {
+            text: keyword_space,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: name,
+            group: Some(syntax::HighlightGroup::TyDef),
+        },
+        syntax::HighlightedSpan {
+            text: name_space,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: equals,
+            group: Some(syntax::HighlightGroup::AssignOper),
+        },
+        syntax::HighlightedSpan {
+            text: equals_space,
+            group: None,
+        },
+    ];
+
+    output.append(&mut ty);
+
+    output.extend_from_slice(&[
+        syntax::HighlightedSpan {
+            text: ty_space,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: semicolon,
+            group: Some(syntax::HighlightGroup::Terminator),
+        },
+    ]);
+
+    Ok((s, output))
+}
+
 fn function(s: &str) -> ParseResult<'_> {
     let start_params = "(";
     let end_params = ")";
