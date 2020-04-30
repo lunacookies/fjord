@@ -10,7 +10,7 @@ use {
         branch::alt,
         bytes::complete::{tag, take, take_till1, take_until},
         combinator::{map, not, opt},
-        multi::many0,
+        multi::{many0, many1},
         sequence::pair,
     },
     tuple_structure_def_fields::fields as tuple_structure_def_fields,
@@ -430,7 +430,48 @@ fn expr_in_statement(s: &str) -> ParseResult<'_> {
 }
 
 fn expr(s: &str) -> ParseResult<'_> {
+    alt((method_call_chain, expr_non_method_call))(s)
+}
+
+fn expr_non_method_call(s: &str) -> ParseResult<'_> {
     alt((function_call, variable, string))(s)
+}
+
+fn method_call_chain(s: &str) -> ParseResult<'_> {
+    let (s, receiver) = expr_non_method_call(s)?;
+    let (s, receiver_space) = take_whitespace0(s)?;
+
+    let (s, chain) = many1(|s| {
+        let (s, period) = tag(".")(s)?;
+        let (s, period_space) = take_whitespace0(s)?;
+
+        let (s, mut function_call) = function_call(s)?;
+
+        let mut output = vec![
+            syntax::HighlightedSpan {
+                text: period,
+                group: Some(syntax::HighlightGroup::MemberOper),
+            },
+            syntax::HighlightedSpan {
+                text: period_space,
+                group: None,
+            },
+        ];
+
+        output.append(&mut function_call);
+
+        Ok((s, output))
+    })(s)?;
+
+    let mut output = receiver;
+    output.push(syntax::HighlightedSpan {
+        text: receiver_space,
+        group: None,
+    });
+
+    output.append(&mut chain.concat());
+
+    Ok((s, output))
 }
 
 fn function_call(s: &str) -> ParseResult<'_> {
