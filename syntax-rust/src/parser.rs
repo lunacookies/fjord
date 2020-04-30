@@ -20,15 +20,22 @@ type ParseResult<'text> = nom::IResult<&'text str, Vec<syntax::HighlightedSpan<'
 
 fn expect<'input>(
     parser: impl Fn(&'input str) -> ParseResult<'input> + Copy,
+    ending_sequence: Option<&'input str>,
 ) -> impl Fn(&'input str) -> ParseResult<'input> {
     move |s| {
         if let Ok((s, spans)) = parser(s) {
             Ok((s, spans))
         } else {
+            // Stop parsing if the user has chosen an ending sequence and if we’ve reached the end
+            // of this sequence.
+            if let Some(ending_sequence) = ending_sequence {
+                let _ = not(tag(ending_sequence))(s)?;
+            }
+
             // If the input parser fails, then take a single character as an error and attempt
             // parsing again.
             let (s, error) = error_1_char(s)?;
-            let (s, mut parser_output) = expect(parser)(s)?;
+            let (s, mut parser_output) = expect(parser, ending_sequence)(s)?;
 
             let mut output = error;
             output.append(&mut parser_output);
@@ -40,27 +47,37 @@ fn expect<'input>(
 
 fn comma_separated<'input, P: Fn(&'input str) -> ParseResult<'input> + Copy + 'input>(
     parser: &'input P,
+    ending_sequence: &'input str,
 ) -> impl Fn(&'input str) -> ParseResult<'input> + 'input {
-    let preceded_by_comma = move |s| {
-        let (s, initial_space) = take_whitespace0(s)?;
+    let parser_stop_at_end = move |s| expect(parser, Some(ending_sequence))(s);
 
-        let (s, mut comma) = expect(|s| {
-            map(tag(","), |s| {
-                vec![syntax::HighlightedSpan {
-                    text: s,
-                    group: Some(syntax::HighlightGroup::Separator),
-                }]
-            })(s)
-        })(s)?;
+    let comma_stop_at_end = move |s| {
+        expect(
+            |s| {
+                map(tag(","), |s| {
+                    vec![syntax::HighlightedSpan {
+                        text: s,
+                        group: Some(syntax::HighlightGroup::Separator),
+                    }]
+                })(s)
+            },
+            Some(ending_sequence),
+        )(s)
+    };
 
+    let followed_by_comma = move |s| {
+        let (s, parser_output) = parser_stop_at_end(s)?;
+        let (s, parser_output_space) = take_whitespace0(s)?;
+
+        let (s, mut comma) = comma_stop_at_end(s)?;
         let (s, comma_space) = take_whitespace0(s)?;
 
-        let (s, mut parser_output) = expect(parser)(s)?;
+        let mut output = parser_output;
 
-        let mut output = vec![syntax::HighlightedSpan {
-            text: initial_space,
+        output.push(syntax::HighlightedSpan {
+            text: parser_output_space,
             group: None,
-        }];
+        });
 
         output.append(&mut comma);
 
@@ -69,36 +86,25 @@ fn comma_separated<'input, P: Fn(&'input str) -> ParseResult<'input> + Copy + 'i
             group: None,
         });
 
-        output.append(&mut parser_output);
-
         Ok((s, output))
     };
 
     move |s| {
-        let (s, first) = match parser(s) {
-            Ok((s, first)) => (s, first),
-            _ => return Ok((s, vec![])),
-        };
-
-        let (s, rest) = many0(preceded_by_comma)(s)?;
+        let (s, followed_by_commas) = many0(followed_by_comma)(s)?;
+        let (s, last_without_comma) = opt(parser_stop_at_end)(s)?;
 
         let (s, space) = take_whitespace0(s)?;
-        let (s, trailing_comma) = opt(tag(","))(s)?;
 
-        let mut output = first;
-        output.append(&mut rest.concat());
+        let mut output = followed_by_commas.concat();
+
+        if let Some(mut last_without_comma) = last_without_comma {
+            output.append(&mut last_without_comma);
+        }
 
         output.push(syntax::HighlightedSpan {
             text: space,
             group: None,
         });
-
-        if let Some(trailing_comma) = trailing_comma {
-            output.push(syntax::HighlightedSpan {
-                text: trailing_comma,
-                group: Some(syntax::HighlightGroup::Separator),
-            });
-        }
 
         Ok((s, output))
     }
@@ -149,16 +155,21 @@ fn error_1_char(s: &str) -> ParseResult<'_> {
 }
 
 fn function(s: &str) -> ParseResult<'_> {
+    let start_params = "(";
+    let end_params = ")";
+
     let (s, keyword) = tag("fn")(s)?;
     let (s, keyword_space) = take_whitespace1(s)?;
 
     let (s, name) = ident(s)?;
     let (s, name_space) = take_whitespace0(s)?;
 
-    let (s, open_paren) = tag("(")(s)?;
+    let (s, open_paren) = tag(start_params)(s)?;
     let (s, open_paren_space) = take_whitespace0(s)?;
 
-    let (s, close_paren) = tag(")")(s)?;
+    let (s, mut params) = comma_separated(&function_def_param, end_params)(s)?;
+
+    let (s, close_paren) = tag(end_params)(s)?;
     let (s, close_paren_space) = take_whitespace0(s)?;
 
     let (s, return_type) = opt(function_return_type)(s)?;
@@ -191,6 +202,11 @@ fn function(s: &str) -> ParseResult<'_> {
             text: open_paren_space,
             group: None,
         },
+    ];
+
+    output.append(&mut params);
+
+    output.extend_from_slice(&[
         syntax::HighlightedSpan {
             text: close_paren,
             group: Some(syntax::HighlightGroup::Delimiter),
@@ -199,7 +215,7 @@ fn function(s: &str) -> ParseResult<'_> {
             text: close_paren_space,
             group: None,
         },
-    ];
+    ]);
 
     if let Some(mut return_type) = return_type {
         output.append(&mut return_type);
@@ -211,6 +227,39 @@ fn function(s: &str) -> ParseResult<'_> {
     });
 
     output.append(&mut body);
+
+    Ok((s, output))
+}
+
+fn function_def_param(s: &str) -> ParseResult<'_> {
+    let (s, name) = ident(s)?;
+    let (s, name_space) = take_whitespace0(s)?;
+
+    let (s, colon) = tag(":")(s)?;
+    let (s, colon_space) = take_whitespace0(s)?;
+
+    let (s, mut ty) = ty(s)?;
+
+    let mut output = vec![
+        syntax::HighlightedSpan {
+            text: name,
+            group: Some(syntax::HighlightGroup::FunctionParam),
+        },
+        syntax::HighlightedSpan {
+            text: name_space,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: colon,
+            group: Some(syntax::HighlightGroup::Separator),
+        },
+        syntax::HighlightedSpan {
+            text: colon_space,
+            group: None,
+        },
+    ];
+
+    output.append(&mut ty);
 
     Ok((s, output))
 }
@@ -296,7 +345,7 @@ fn block(s: &str) -> ParseResult<'_> {
         let end_block = pair(take_whitespace0, tag("}"));
         let _ = not(end_block)(s)?;
 
-        let (s, statement) = expect(statement)(s)?;
+        let (s, statement) = expect(statement, None)(s)?;
         let (s, space) = take_whitespace0(s)?;
 
         let mut output = statement;
@@ -353,7 +402,7 @@ fn let_statement(s: &str) -> ParseResult<'_> {
         let (s, equals) = tag("=")(s)?;
         let (s, equals_space) = take_whitespace0(s)?;
 
-        let (s, mut expr) = expect(expr)(s)?;
+        let (s, mut expr) = expect(expr, None)(s)?;
         let (s, expr_space) = take_whitespace0(s)?;
 
         let mut output = vec![
@@ -376,14 +425,17 @@ fn let_statement(s: &str) -> ParseResult<'_> {
         Ok((s, output))
     })(s)?;
 
-    let (s, mut semicolon) = expect(|s| {
-        map(tag(";"), |s| {
-            vec![syntax::HighlightedSpan {
-                text: s,
-                group: Some(syntax::HighlightGroup::Terminator),
-            }]
-        })(s)
-    })(s)?;
+    let (s, mut semicolon) = expect(
+        |s| {
+            map(tag(";"), |s| {
+                vec![syntax::HighlightedSpan {
+                    text: s,
+                    group: Some(syntax::HighlightGroup::Terminator),
+                }]
+            })(s)
+        },
+        None,
+    )(s)?;
 
     let mut output = vec![
         syntax::HighlightedSpan {
@@ -499,7 +551,7 @@ fn function_call(s: &str) -> ParseResult<'_> {
     let (s, open_paren_space) = take_whitespace0(s)?;
 
     // Function calls take in expressions.
-    let (s, mut params) = comma_separated(&expr)(s)?;
+    let (s, mut params) = comma_separated(&expr, ")")(s)?;
     let (s, params_space) = take_whitespace0(s)?;
 
     let (s, close_paren) = tag(")")(s)?;

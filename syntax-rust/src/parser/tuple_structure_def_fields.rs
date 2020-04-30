@@ -4,15 +4,18 @@ use {
     nom::bytes::complete::tag,
 };
 
+const FIELDS_START: &str = "(";
+const FIELDS_END: &str = ")";
+
 pub(super) fn fields(s: &str) -> ParseResult<'_> {
-    let (s, open_paren) = tag("(")(s)?;
+    let (s, open_paren) = tag(FIELDS_START)(s)?;
     let (s, open_paren_space) = take_whitespace0(s)?;
 
     // Fields of a tuple struct are simply types.
-    let (s, mut fields) = comma_separated(&ty)(s)?;
+    let (s, mut fields) = comma_separated(&ty, FIELDS_END)(s)?;
     let (s, fields_space) = take_whitespace0(s)?;
 
-    let (s, close_paren) = tag(")")(s)?;
+    let (s, close_paren) = tag(FIELDS_END)(s)?;
     let (s, close_paren_space) = take_whitespace0(s)?;
 
     let (s, semicolon) = tag(";")(s)?;

@@ -4,14 +4,17 @@ use {
     nom::bytes::complete::tag,
 };
 
+const FIELDS_START: &str = "{";
+const FIELDS_END: &str = "}";
+
 pub(super) fn fields(s: &str) -> ParseResult<'_> {
-    let (s, open_brace) = tag("{")(s)?;
+    let (s, open_brace) = tag(FIELDS_START)(s)?;
     let (s, open_brace_space) = take_whitespace0(s)?;
 
-    let (s, mut fields) = comma_separated(&field)(s)?;
+    let (s, mut fields) = comma_separated(&field, FIELDS_END)(s)?;
 
     let (s, close_brace_space) = take_whitespace0(s)?;
-    let (s, close_brace) = tag("}")(s)?;
+    let (s, close_brace) = tag(FIELDS_END)(s)?;
 
     let mut output = vec![
         syntax::HighlightedSpan {
@@ -47,7 +50,7 @@ fn field(s: &str) -> ParseResult<'_> {
     let (s, colon) = tag(":")(s)?;
     let (s, colon_space) = take_whitespace0(s)?;
 
-    let (s, mut ty) = expect(ty)(s)?;
+    let (s, mut ty) = expect(ty, None)(s)?;
 
     let mut output = vec![
         syntax::HighlightedSpan {
