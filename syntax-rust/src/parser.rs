@@ -11,7 +11,6 @@ use {
         bytes::complete::{tag, take, take_till1, take_until},
         combinator::{map, not, opt},
         multi::many0,
-        sequence::pair,
     },
     tuple_structure_def_fields::fields as tuple_structure_def_fields,
 };
@@ -337,15 +336,14 @@ fn unnamed_structure(s: &str) -> ParseResult<'_> {
 }
 
 fn block(s: &str) -> ParseResult<'_> {
-    let (s, open_brace) = tag("{")(s)?;
+    let start_block = "{";
+    let end_block = "}";
+
+    let (s, open_brace) = tag(start_block)(s)?;
     let (s, open_brace_space) = take_whitespace0(s)?;
 
     let (s, statements) = many0(|s| {
-        // Only continue parsing statements if we’re not at the end of the block.
-        let end_block = pair(take_whitespace0, tag("}"));
-        let _ = not(end_block)(s)?;
-
-        let (s, statement) = expect(statement, None)(s)?;
+        let (s, statement) = expect(statement, Some(end_block))(s)?;
         let (s, space) = take_whitespace0(s)?;
 
         let mut output = statement;
@@ -358,7 +356,7 @@ fn block(s: &str) -> ParseResult<'_> {
     })(s)?;
 
     let (s, close_brace_space) = take_whitespace0(s)?;
-    let (s, close_brace) = tag("}")(s)?;
+    let (s, close_brace) = tag(end_block)(s)?;
 
     let mut output = vec![
         syntax::HighlightedSpan {
