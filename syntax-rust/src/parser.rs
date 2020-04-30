@@ -353,7 +353,7 @@ fn let_statement(s: &str) -> ParseResult<'_> {
         let (s, equals) = tag("=")(s)?;
         let (s, equals_space) = take_whitespace0(s)?;
 
-        let (s, mut expr) = expr(s)?;
+        let (s, mut expr) = expect(expr)(s)?;
         let (s, expr_space) = take_whitespace0(s)?;
 
         let mut output = vec![
@@ -376,7 +376,14 @@ fn let_statement(s: &str) -> ParseResult<'_> {
         Ok((s, output))
     })(s)?;
 
-    let (s, semicolon) = tag(";")(s)?;
+    let (s, mut semicolon) = expect(|s| {
+        map(tag(";"), |s| {
+            vec![syntax::HighlightedSpan {
+                text: s,
+                group: Some(syntax::HighlightGroup::Terminator),
+            }]
+        })(s)
+    })(s)?;
 
     let mut output = vec![
         syntax::HighlightedSpan {
@@ -399,10 +406,7 @@ fn let_statement(s: &str) -> ParseResult<'_> {
         output.append(&mut rhs);
     }
 
-    output.push(syntax::HighlightedSpan {
-        text: semicolon,
-        group: Some(syntax::HighlightGroup::Terminator),
-    });
+    output.append(&mut semicolon);
 
     Ok((s, output))
 }
