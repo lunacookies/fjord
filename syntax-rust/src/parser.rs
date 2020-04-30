@@ -454,6 +454,34 @@ fn let_statement(s: &str) -> ParseResult<'_> {
     let (s, mut pattern) = pattern(s)?;
     let (s, pattern_space) = take_whitespace0(s)?;
 
+    let (s, ty_annotation) = opt(|s| {
+        let (s, colon) = tag(":")(s)?;
+        let (s, colon_space) = take_whitespace0(s)?;
+
+        let (s, mut ty) = ty(s)?;
+        let (s, ty_space) = take_whitespace0(s)?;
+
+        let mut output = vec![
+            syntax::HighlightedSpan {
+                text: colon,
+                group: Some(syntax::HighlightGroup::Separator),
+            },
+            syntax::HighlightedSpan {
+                text: colon_space,
+                group: None,
+            },
+        ];
+
+        output.append(&mut ty);
+
+        output.push(syntax::HighlightedSpan {
+            text: ty_space,
+            group: None,
+        });
+
+        Ok((s, output))
+    })(s)?;
+
     let (s, rhs) = opt(|s| {
         let (s, equals) = tag("=")(s)?;
         let (s, equals_space) = take_whitespace0(s)?;
@@ -509,6 +537,10 @@ fn let_statement(s: &str) -> ParseResult<'_> {
         text: pattern_space,
         group: None,
     });
+
+    if let Some(mut ty_annotation) = ty_annotation {
+        output.append(&mut ty_annotation);
+    }
 
     if let Some(mut rhs) = rhs {
         output.append(&mut rhs);
