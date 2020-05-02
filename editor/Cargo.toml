@@ -13,6 +13,5 @@ crossterm = "0.17"
 foreignfjordfunc-derive = { path = "../foreignfjordfunc-derive" }
 itertools = "0.9"
 libfjord = { path = "../libfjord" }
-ropey = "1"
 syntax = { path = "../syntax" }
 syntax-rust = { path = "../syntax-rust" }
