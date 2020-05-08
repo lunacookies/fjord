@@ -3,7 +3,7 @@ mod tuple_structure_def_fields;
 
 use {
     crate::utils::{
-        digits, ident, {take_whitespace0, take_whitespace1},
+        digits, float_ty, int_ty, pascal_case, snake_case, {take_whitespace0, take_whitespace1},
     },
     named_structure_def_fields::fields as named_structure_def_fields,
     nom::{
@@ -160,7 +160,7 @@ fn use_(s: &str) -> ParseResult<'_> {
     let (s, mut path) = path(s)?;
     let (s, path_space) = take_whitespace0(s)?;
 
-    let (s, ident) = ident(s)?;
+    let (s, mut ident) = alt((ty_name, module_name))(s)?;
     let (s, ident_space) = take_whitespace0(s)?;
 
     let (s, semicolon) = tag(";")(s)?;
@@ -178,15 +178,14 @@ fn use_(s: &str) -> ParseResult<'_> {
 
     output.append(&mut path);
 
+    output.push(syntax::HighlightedSpan {
+        text: path_space,
+        group: None,
+    });
+
+    output.append(&mut ident);
+
     output.extend_from_slice(&[
-        syntax::HighlightedSpan {
-            text: path_space,
-            group: None,
-        },
-        syntax::HighlightedSpan {
-            text: ident,
-            group: None,
-        },
         syntax::HighlightedSpan {
             text: ident_space,
             group: None,
@@ -204,7 +203,7 @@ fn type_alias(s: &str) -> ParseResult<'_> {
     let (s, keyword) = tag("type")(s)?;
     let (s, keyword_space) = take_whitespace1(s)?;
 
-    let (s, name) = ident(s)?;
+    let (s, name) = pascal_case(s)?;
     let (s, name_space) = take_whitespace0(s)?;
 
     let (s, equals) = tag("=")(s)?;
@@ -265,7 +264,7 @@ fn function(s: &str) -> ParseResult<'_> {
     let (s, keyword) = tag("fn")(s)?;
     let (s, keyword_space) = take_whitespace1(s)?;
 
-    let (s, name) = ident(s)?;
+    let (s, name) = snake_case(s)?;
     let (s, name_space) = take_whitespace0(s)?;
 
     let (s, open_paren) = tag(start_params)(s)?;
@@ -336,7 +335,7 @@ fn function(s: &str) -> ParseResult<'_> {
 }
 
 fn function_def_param(s: &str) -> ParseResult<'_> {
-    let (s, name) = ident(s)?;
+    let (s, name) = snake_case(s)?;
     let (s, name_space) = take_whitespace0(s)?;
 
     let (s, colon) = tag(":")(s)?;
@@ -394,7 +393,7 @@ fn structure_def(s: &str) -> ParseResult<'_> {
     let (s, keyword) = tag("struct")(s)?;
     let (s, keyword_space) = take_whitespace1(s)?;
 
-    let (s, name) = ident(s)?;
+    let (s, name) = pascal_case(s)?;
     let (s, name_space) = take_whitespace0(s)?;
 
     let (s, mut fields) = structure_def_fields(s)?;
@@ -657,7 +656,7 @@ fn field_access(s: &str) -> ParseResult<'_> {
     let (s, period) = tag(".")(s)?;
     let (s, period_space) = take_whitespace0(s)?;
 
-    let (s, field) = ident(s)?;
+    let (s, field) = snake_case(s)?;
 
     let output = vec![
         syntax::HighlightedSpan {
@@ -688,7 +687,7 @@ fn try_(s: &str) -> ParseResult<'_> {
 
 fn function_call(s: &str) -> ParseResult<'_> {
     let (s, path) = path(s)?;
-    let (s, name) = ident(s)?;
+    let (s, name) = snake_case(s)?;
     let (s, name_space) = take_whitespace0(s)?;
 
     let (s, open_paren) = tag("(")(s)?;
@@ -738,7 +737,7 @@ fn function_call(s: &str) -> ParseResult<'_> {
 }
 
 fn variable(s: &str) -> ParseResult<'_> {
-    map(ident, |s| {
+    map(snake_case, |s| {
         vec![syntax::HighlightedSpan {
             text: s,
             group: Some(syntax::HighlightGroup::VariableUse),
@@ -793,23 +792,8 @@ fn character(s: &str) -> ParseResult<'_> {
 }
 
 fn int(s: &str) -> ParseResult<'_> {
-    let int_suffix = alt((
-        tag("u8"),
-        tag("u16"),
-        tag("u32"),
-        tag("u64"),
-        tag("u128"),
-        tag("usize"),
-        tag("i8"),
-        tag("i16"),
-        tag("i32"),
-        tag("i64"),
-        tag("i128"),
-        tag("isize"),
-    ));
-
     let (s, number) = alt((binary, octal, hex, decimal))(s)?;
-    let (s, suffix) = opt(int_suffix)(s)?;
+    let (s, suffix) = opt(int_ty)(s)?;
 
     let mut output = number;
 
@@ -909,7 +893,7 @@ fn hex(s: &str) -> ParseResult<'_> {
 }
 
 fn pattern(s: &str) -> ParseResult<'_> {
-    map(ident, |s| {
+    map(snake_case, |s| {
         vec![syntax::HighlightedSpan {
             text: s,
             group: Some(syntax::HighlightGroup::VariableDef),
@@ -919,34 +903,50 @@ fn pattern(s: &str) -> ParseResult<'_> {
 
 fn ty(s: &str) -> ParseResult<'_> {
     let (s, path) = path(s)?;
-    let (s, ident) = ident(s)?;
+    let (s, mut name) = ty_name(s)?;
 
     let mut output = path;
-    output.push(syntax::HighlightedSpan {
-        text: ident,
-        group: Some(syntax::HighlightGroup::TyUse),
-    });
+    output.append(&mut name);
 
     Ok((s, output))
+}
+
+fn ty_name(s: &str) -> ParseResult<'_> {
+    let user_ty = map(pascal_case, |s| {
+        vec![syntax::HighlightedSpan {
+            text: s,
+            group: Some(syntax::HighlightGroup::TyUse),
+        }]
+    });
+
+    alt((user_ty, primitive_ty))(s)
+}
+
+fn primitive_ty(s: &str) -> ParseResult<'_> {
+    map(
+        alt((int_ty, float_ty, tag("str"), tag("bool"), tag("!"))),
+        |s| {
+            vec![syntax::HighlightedSpan {
+                text: s,
+                group: Some(syntax::HighlightGroup::PrimitiveTy),
+            }]
+        },
+    )(s)
 }
 
 fn path(s: &str) -> ParseResult<'_> {
     let (s, leading_colons) = opt(tag("::"))(s)?;
 
     let (s, modules) = many0(|s| {
-        let (s, module_name) = ident(s)?;
+        let (s, module_name) = module_name(s)?;
         let (s, double_colon) = tag("::")(s)?;
 
-        let output = vec![
-            syntax::HighlightedSpan {
-                text: module_name,
-                group: Some(syntax::HighlightGroup::ModuleUse),
-            },
-            syntax::HighlightedSpan {
-                text: double_colon,
-                group: Some(syntax::HighlightGroup::Separator),
-            },
-        ];
+        let mut output = module_name;
+
+        output.push(syntax::HighlightedSpan {
+            text: double_colon,
+            group: Some(syntax::HighlightGroup::Separator),
+        });
 
         Ok((s, output))
     })(s)?;
@@ -963,4 +963,13 @@ fn path(s: &str) -> ParseResult<'_> {
     output.append(&mut modules.concat());
 
     Ok((s, output))
+}
+
+fn module_name(s: &str) -> ParseResult<'_> {
+    map(snake_case, |s| {
+        vec![syntax::HighlightedSpan {
+            text: s,
+            group: Some(syntax::HighlightGroup::ModuleUse),
+        }]
+    })(s)
 }

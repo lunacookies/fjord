@@ -1,6 +1,6 @@
 use {
     super::{comma_separated, expect, ty, ParseResult},
-    crate::utils::{ident, take_whitespace0},
+    crate::utils::{snake_case, take_whitespace0},
     nom::bytes::complete::tag,
 };
 
@@ -44,7 +44,7 @@ pub(super) fn fields(s: &str) -> ParseResult<'_> {
 }
 
 fn field(s: &str) -> ParseResult<'_> {
-    let (s, name) = ident(s)?;
+    let (s, name) = snake_case(s)?;
     let (s, name_space) = take_whitespace0(s)?;
 
     let (s, colon) = tag(":")(s)?;
