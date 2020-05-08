@@ -165,6 +165,8 @@ impl syntax::Theme for DarkPlus {
             syntax::HighlightGroup::MemberOper
             | syntax::HighlightGroup::PointerOper
             | syntax::HighlightGroup::AssignOper
+            | syntax::HighlightGroup::BinaryOper
+            | syntax::HighlightGroup::OtherOper
             | syntax::HighlightGroup::Delimiter
             | syntax::HighlightGroup::Separator
             | syntax::HighlightGroup::Terminator => syntax::Style {

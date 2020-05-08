@@ -25,7 +25,9 @@ impl syntax::Theme for Monokai {
             // Control flow and operators
             syntax::HighlightGroup::CtrlFlowKeyword
             | syntax::HighlightGroup::PointerOper
-            | syntax::HighlightGroup::AssignOper => syntax::Style {
+            | syntax::HighlightGroup::AssignOper
+            | syntax::HighlightGroup::BinaryOper
+            | syntax::HighlightGroup::OtherOper => syntax::Style {
                 fg_color: Some(PINK),
                 bg_color: None,
                 is_bold: false,

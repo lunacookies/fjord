@@ -19,6 +19,7 @@ impl syntax::Theme for Gruvbox {
             is_underline: false,
         }
     }
+
     fn style(&self, group: syntax::HighlightGroup) -> syntax::Style {
         match group {
             // Keywords
@@ -141,6 +142,8 @@ impl syntax::Theme for Gruvbox {
             syntax::HighlightGroup::MemberOper
             | syntax::HighlightGroup::PointerOper
             | syntax::HighlightGroup::AssignOper
+            | syntax::HighlightGroup::BinaryOper
+            | syntax::HighlightGroup::OtherOper
             | syntax::HighlightGroup::Delimiter
             | syntax::HighlightGroup::Separator
             | syntax::HighlightGroup::Terminator => syntax::Style {
