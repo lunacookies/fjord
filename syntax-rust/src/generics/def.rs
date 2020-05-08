@@ -1,18 +1,17 @@
 use {
-    super::{bounds, lifetime_def, ty, ParseResult},
-    crate::utils::take_whitespace0,
+    crate::{utils::take_whitespace0, ParseResult},
     nom::{branch::alt, combinator::opt},
 };
 
-pub(super) fn parse(s: &str) -> ParseResult<'_> {
-    super::generics(&param)(s)
+pub(crate) fn parse(s: &str) -> ParseResult<'_> {
+    super::parse(&param)(s)
 }
 
 fn param(s: &str) -> ParseResult<'_> {
-    let (s, param) = alt((lifetime_def, ty))(s)?;
+    let (s, param) = alt((crate::lifetime::def, crate::ty))(s)?;
     let (s, param_space) = take_whitespace0(s)?;
 
-    let (s, bounds) = opt(bounds)(s)?;
+    let (s, bounds) = opt(crate::bounds)(s)?;
 
     let mut output = param;
 

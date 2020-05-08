@@ -1,10 +1,9 @@
 use {
-    super::{lifetime_use, trait_, ParseResult},
-    crate::utils::take_whitespace0,
+    crate::{utils::take_whitespace0, ParseResult},
     nom::{branch::alt, bytes::complete::tag, multi::many0},
 };
 
-pub(super) fn parse(s: &str) -> ParseResult<'_> {
+pub(crate) fn parse(s: &str) -> ParseResult<'_> {
     let (s, colon) = tag(":")(s)?;
     let (s, colon_space) = take_whitespace0(s)?;
 
@@ -56,5 +55,5 @@ pub(super) fn parse(s: &str) -> ParseResult<'_> {
 }
 
 fn bound(s: &str) -> ParseResult<'_> {
-    alt((lifetime_use, trait_))(s)
+    alt((crate::lifetime::usage, crate::trait_))(s)
 }

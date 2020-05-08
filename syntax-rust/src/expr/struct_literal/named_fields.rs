@@ -1,13 +1,15 @@
 use {
-    super::{comma_separated, expect, ty, ParseResult},
-    crate::utils::{snake_case, take_whitespace0},
+    crate::{
+        utils::{comma_separated, snake_case, take_whitespace0},
+        ParseResult,
+    },
     nom::bytes::complete::tag,
 };
 
 const FIELDS_START: &str = "{";
 const FIELDS_END: &str = "}";
 
-pub(super) fn fields(s: &str) -> ParseResult<'_> {
+pub(super) fn parse(s: &str) -> ParseResult<'_> {
     let (s, open_brace) = tag(FIELDS_START)(s)?;
     let (s, open_brace_space) = take_whitespace0(s)?;
 
@@ -50,12 +52,12 @@ fn field(s: &str) -> ParseResult<'_> {
     let (s, colon) = tag(":")(s)?;
     let (s, colon_space) = take_whitespace0(s)?;
 
-    let (s, mut ty) = expect(ty, None)(s)?;
+    let (s, mut value) = crate::expr(s)?;
 
     let mut output = vec![
         syntax::HighlightedSpan {
             text: name,
-            group: Some(syntax::HighlightGroup::MemberDef),
+            group: Some(syntax::HighlightGroup::MemberUse),
         },
         syntax::HighlightedSpan {
             text: name_space,
@@ -71,7 +73,7 @@ fn field(s: &str) -> ParseResult<'_> {
         },
     ];
 
-    output.append(&mut ty);
+    output.append(&mut value);
 
     Ok((s, output))
 }
