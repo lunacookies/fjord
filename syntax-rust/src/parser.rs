@@ -1297,6 +1297,20 @@ fn path(s: &str) -> ParseResult<'_> {
         Ok((s, output))
     })(s)?;
 
+    let (s, associated_tys) = many0(|s| {
+        let (s, ty_name) = ty_name(s)?;
+        let (s, double_colon) = tag("::")(s)?;
+
+        let mut output = ty_name;
+
+        output.push(syntax::HighlightedSpan {
+            text: double_colon,
+            group: Some(syntax::HighlightGroup::Separator),
+        });
+
+        Ok((s, output))
+    })(s)?;
+
     let mut output = if let Some(leading_colons) = leading_colons {
         vec![syntax::HighlightedSpan {
             text: leading_colons,
@@ -1307,6 +1321,7 @@ fn path(s: &str) -> ParseResult<'_> {
     };
 
     output.append(&mut modules.concat());
+    output.append(&mut associated_tys.concat());
 
     Ok((s, output))
 }
