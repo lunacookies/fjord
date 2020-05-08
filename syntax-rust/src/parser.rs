@@ -1301,12 +1301,30 @@ fn path(s: &str) -> ParseResult<'_> {
         let (s, ty_name) = ty_name(s)?;
         let (s, double_colon) = tag("::")(s)?;
 
+        let (s, turbofish) = opt(|s| {
+            let (s, generics) = generics_use(s)?;
+            let (s, double_colon) = tag("::")(s)?;
+
+            let mut output = generics;
+
+            output.push(syntax::HighlightedSpan {
+                text: double_colon,
+                group: Some(syntax::HighlightGroup::Separator),
+            });
+
+            Ok((s, output))
+        })(s)?;
+
         let mut output = ty_name;
 
         output.push(syntax::HighlightedSpan {
             text: double_colon,
             group: Some(syntax::HighlightGroup::Separator),
         });
+
+        if let Some(mut turbofish) = turbofish {
+            output.append(&mut turbofish);
+        }
 
         Ok((s, output))
     })(s)?;
