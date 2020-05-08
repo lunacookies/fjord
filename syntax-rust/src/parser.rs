@@ -1,3 +1,4 @@
+mod bounds;
 mod named_structure_def_fields;
 mod tuple_structure_def_fields;
 
@@ -5,6 +6,7 @@ use {
     crate::utils::{
         digits, float_ty, int_ty, pascal_case, snake_case, {take_whitespace0, take_whitespace1},
     },
+    bounds::parse as bounds,
     named_structure_def_fields::fields as named_structure_def_fields,
     nom::{
         branch::alt,
@@ -114,7 +116,7 @@ pub(crate) fn parse(s: &str) -> ParseResult<'_> {
 }
 
 fn item(s: &str) -> ParseResult<'_> {
-    alt((trait_, use_, ty_alias, function, structure_def))(s)
+    alt((trait_def, use_, ty_alias, function, structure_def))(s)
 }
 
 fn whitespace(s: &str) -> ParseResult<'_> {
@@ -153,12 +155,15 @@ fn error_1_char(s: &str) -> ParseResult<'_> {
     })(s)
 }
 
-fn trait_(s: &str) -> ParseResult<'_> {
+fn trait_def(s: &str) -> ParseResult<'_> {
     let (s, keyword) = tag("trait")(s)?;
     let (s, keyword_space) = take_whitespace1(s)?;
 
     let (s, name) = pascal_case(s)?;
     let (s, name_space) = take_whitespace0(s)?;
+
+    let (s, bounds) = opt(bounds)(s)?;
+    let (s, bounds_space) = take_whitespace0(s)?;
 
     let (s, open_brace) = tag("{")(s)?;
     let (s, open_brace_space) = take_whitespace0(s)?;
@@ -196,6 +201,17 @@ fn trait_(s: &str) -> ParseResult<'_> {
             text: name_space,
             group: None,
         },
+    ];
+
+    if let Some(mut bounds) = bounds {
+        output.append(&mut bounds);
+    }
+
+    output.extend_from_slice(&[
+        syntax::HighlightedSpan {
+            text: bounds_space,
+            group: None,
+        },
         syntax::HighlightedSpan {
             text: open_brace,
             group: Some(syntax::HighlightGroup::Delimiter),
@@ -204,7 +220,7 @@ fn trait_(s: &str) -> ParseResult<'_> {
             text: open_brace_space,
             group: None,
         },
-    ];
+    ]);
 
     output.append(&mut items.concat());
 
@@ -997,6 +1013,19 @@ fn pattern(s: &str) -> ParseResult<'_> {
             group: Some(syntax::HighlightGroup::VariableDef),
         }]
     })(s)
+}
+
+fn trait_(s: &str) -> ParseResult<'_> {
+    let (s, path) = path(s)?;
+    let (s, name) = pascal_case(s)?;
+
+    let mut output = path;
+    output.push(syntax::HighlightedSpan {
+        text: name,
+        group: Some(syntax::HighlightGroup::InterfaceUse),
+    });
+
+    Ok((s, output))
 }
 
 fn ty(s: &str) -> ParseResult<'_> {
