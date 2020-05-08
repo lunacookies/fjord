@@ -709,7 +709,7 @@ fn expr_in_statement(s: &str) -> ParseResult<'_> {
 }
 
 fn expr(s: &str) -> ParseResult<'_> {
-    let (s, expr) = alt((function_call, variable, string, character, int))(s)?;
+    let (s, expr) = alt((function_call, boolean, variable, string, character, int))(s)?;
 
     let (s, postfixes) = many0(alt((method_call, field_access, try_)))(s)?;
 
@@ -823,6 +823,15 @@ fn function_call(s: &str) -> ParseResult<'_> {
     ]);
 
     Ok((s, output))
+}
+
+fn boolean(s: &str) -> ParseResult<'_> {
+    map(alt((tag("true"), tag("false"))), |s| {
+        vec![syntax::HighlightedSpan {
+            text: s,
+            group: Some(syntax::HighlightGroup::Boolean),
+        }]
+    })(s)
 }
 
 fn variable(s: &str) -> ParseResult<'_> {
