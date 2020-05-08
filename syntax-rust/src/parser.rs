@@ -1,4 +1,5 @@
 mod bounds;
+mod generics_use;
 mod named_structure_def_fields;
 mod tuple_structure_def_fields;
 
@@ -7,6 +8,7 @@ use {
         digits, float_ty, int_ty, pascal_case, snake_case, {take_whitespace0, take_whitespace1},
     },
     bounds::parse as bounds,
+    generics_use::parse as generics_use,
     named_structure_def_fields::fields as named_structure_def_fields,
     nom::{
         branch::alt,
@@ -1064,23 +1066,51 @@ fn pattern(s: &str) -> ParseResult<'_> {
 
 fn trait_(s: &str) -> ParseResult<'_> {
     let (s, path) = path(s)?;
+
     let (s, name) = pascal_case(s)?;
+    let (s, name_space) = take_whitespace0(s)?;
+
+    let (s, generics) = opt(generics_use)(s)?;
 
     let mut output = path;
-    output.push(syntax::HighlightedSpan {
-        text: name,
-        group: Some(syntax::HighlightGroup::InterfaceUse),
-    });
+
+    output.extend_from_slice(&[
+        syntax::HighlightedSpan {
+            text: name,
+            group: Some(syntax::HighlightGroup::InterfaceUse),
+        },
+        syntax::HighlightedSpan {
+            text: name_space,
+            group: None,
+        },
+    ]);
+
+    if let Some(mut generics) = generics {
+        output.append(&mut generics);
+    }
 
     Ok((s, output))
 }
 
 fn ty(s: &str) -> ParseResult<'_> {
     let (s, path) = path(s)?;
+
     let (s, mut name) = ty_name(s)?;
+    let (s, name_space) = take_whitespace0(s)?;
+
+    let (s, generics) = opt(generics_use)(s)?;
 
     let mut output = path;
+
     output.append(&mut name);
+    output.push(syntax::HighlightedSpan {
+        text: name_space,
+        group: None,
+    });
+
+    if let Some(mut generics) = generics {
+        output.append(&mut generics);
+    }
 
     Ok((s, output))
 }
@@ -1106,6 +1136,21 @@ fn primitive_ty(s: &str) -> ParseResult<'_> {
             }]
         },
     )(s)
+}
+
+fn lifetime_use(s: &str) -> ParseResult<'_> {
+    map(pair(tag("'"), snake_case), |(tick, name)| {
+        vec![
+            syntax::HighlightedSpan {
+                text: tick,
+                group: Some(syntax::HighlightGroup::SpecialIdentUse),
+            },
+            syntax::HighlightedSpan {
+                text: name,
+                group: Some(syntax::HighlightGroup::SpecialIdentUse),
+            },
+        ]
+    })(s)
 }
 
 fn path(s: &str) -> ParseResult<'_> {
