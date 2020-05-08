@@ -275,11 +275,29 @@ fn ty_alias(s: &str) -> ParseResult<'_> {
     let (s, name) = pascal_case(s)?;
     let (s, name_space) = take_whitespace0(s)?;
 
-    let (s, equals) = tag("=")(s)?;
-    let (s, equals_space) = take_whitespace0(s)?;
+    let (s, rhs) = opt(|s| {
+        let (s, equals) = tag("=")(s)?;
+        let (s, equals_space) = take_whitespace0(s)?;
 
-    let (s, mut ty) = ty(s)?;
-    let (s, ty_space) = take_whitespace0(s)?;
+        let (s, mut ty) = ty(s)?;
+
+        let mut output = vec![
+            syntax::HighlightedSpan {
+                text: equals,
+                group: Some(syntax::HighlightGroup::AssignOper),
+            },
+            syntax::HighlightedSpan {
+                text: equals_space,
+                group: None,
+            },
+        ];
+
+        output.append(&mut ty);
+
+        Ok((s, output))
+    })(s)?;
+
+    let (s, rhs_space) = take_whitespace0(s)?;
 
     let (s, semicolon) = tag(";")(s)?;
 
@@ -300,21 +318,15 @@ fn ty_alias(s: &str) -> ParseResult<'_> {
             text: name_space,
             group: None,
         },
-        syntax::HighlightedSpan {
-            text: equals,
-            group: Some(syntax::HighlightGroup::AssignOper),
-        },
-        syntax::HighlightedSpan {
-            text: equals_space,
-            group: None,
-        },
     ];
 
-    output.append(&mut ty);
+    if let Some(mut rhs) = rhs {
+        output.append(&mut rhs);
+    }
 
     output.extend_from_slice(&[
         syntax::HighlightedSpan {
-            text: ty_space,
+            text: rhs_space,
             group: None,
         },
         syntax::HighlightedSpan {
