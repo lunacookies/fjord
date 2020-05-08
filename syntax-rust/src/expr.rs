@@ -24,6 +24,7 @@ pub(crate) fn parse(s: &str) -> ParseResult<'_> {
     let (s, prefixes) = many0(prefix)(s)?;
 
     let (s, mut expr) = alt((
+        crate::block,
         fn_call,
         macro_invocation,
         boolean,
