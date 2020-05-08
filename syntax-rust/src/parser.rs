@@ -114,7 +114,7 @@ pub(crate) fn parse(s: &str) -> ParseResult<'_> {
 }
 
 fn item(s: &str) -> ParseResult<'_> {
-    alt((type_alias, function, structure_def))(s)
+    alt((use_, type_alias, function, structure_def))(s)
 }
 
 fn whitespace(s: &str) -> ParseResult<'_> {
@@ -151,6 +151,53 @@ fn error_1_char(s: &str) -> ParseResult<'_> {
             group: Some(syntax::HighlightGroup::Error),
         }]
     })(s)
+}
+
+fn use_(s: &str) -> ParseResult<'_> {
+    let (s, keyword) = tag("use")(s)?;
+    let (s, keyword_space) = take_whitespace1(s)?;
+
+    let (s, mut path) = path(s)?;
+    let (s, path_space) = take_whitespace0(s)?;
+
+    let (s, ident) = ident(s)?;
+    let (s, ident_space) = take_whitespace0(s)?;
+
+    let (s, semicolon) = tag(";")(s)?;
+
+    let mut output = vec![
+        syntax::HighlightedSpan {
+            text: keyword,
+            group: Some(syntax::HighlightGroup::OtherKeyword),
+        },
+        syntax::HighlightedSpan {
+            text: keyword_space,
+            group: None,
+        },
+    ];
+
+    output.append(&mut path);
+
+    output.extend_from_slice(&[
+        syntax::HighlightedSpan {
+            text: path_space,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: ident,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: ident_space,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: semicolon,
+            group: Some(syntax::HighlightGroup::Terminator),
+        },
+    ]);
+
+    Ok((s, output))
 }
 
 fn type_alias(s: &str) -> ParseResult<'_> {
