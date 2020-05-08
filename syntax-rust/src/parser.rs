@@ -383,6 +383,9 @@ fn function(s: &str) -> ParseResult<'_> {
     let (s, name) = snake_case(s)?;
     let (s, name_space) = take_whitespace0(s)?;
 
+    let (s, generics) = opt(generics_def)(s)?;
+    let (s, generics_space) = take_whitespace0(s)?;
+
     let (s, open_paren) = tag(start_params)(s)?;
     let (s, open_paren_space) = take_whitespace0(s)?;
 
@@ -421,6 +424,17 @@ fn function(s: &str) -> ParseResult<'_> {
             text: name_space,
             group: None,
         },
+    ];
+
+    if let Some(mut generics) = generics {
+        output.append(&mut generics);
+    }
+
+    output.extend_from_slice(&[
+        syntax::HighlightedSpan {
+            text: generics_space,
+            group: None,
+        },
         syntax::HighlightedSpan {
             text: open_paren,
             group: Some(syntax::HighlightGroup::Delimiter),
@@ -429,7 +443,7 @@ fn function(s: &str) -> ParseResult<'_> {
             text: open_paren_space,
             group: None,
         },
-    ];
+    ]);
 
     output.append(&mut params);
 
@@ -520,6 +534,9 @@ fn structure_def(s: &str) -> ParseResult<'_> {
     let (s, name) = pascal_case(s)?;
     let (s, name_space) = take_whitespace0(s)?;
 
+    let (s, generics) = opt(generics_def)(s)?;
+    let (s, generics_space) = take_whitespace0(s)?;
+
     let (s, mut fields) = structure_def_fields(s)?;
 
     let mut output = vec![
@@ -540,6 +557,15 @@ fn structure_def(s: &str) -> ParseResult<'_> {
             group: None,
         },
     ];
+
+    if let Some(mut generics) = generics {
+        output.append(&mut generics);
+    }
+
+    output.push(syntax::HighlightedSpan {
+        text: generics_space,
+        group: None,
+    });
 
     output.append(&mut fields);
 
