@@ -100,8 +100,12 @@ pub enum HighlightGroup {
     MemberOper,
     /// an operator relating to pointers (e.g. `*` and `&` in C, those as well as `&mut` in Rust)
     PointerOper,
-    /// an operator that assigns a value to a binding of some sort (`=` in most languages)
+    /// an operator that assigns a value to a binding of some sort (`=` and `+=` are examples)
     AssignOper,
+    /// an operator that has two operands (e.g. `+`, `||`)
+    BinaryOper,
+    /// any operator not covered by the other variants
+    OtherOper,
     /// a delimiter (e.g. `(`)
     Delimiter,
     /// a separator of something (e.g. `,` or `->`)
