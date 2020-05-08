@@ -114,7 +114,7 @@ pub(crate) fn parse(s: &str) -> ParseResult<'_> {
 }
 
 fn item(s: &str) -> ParseResult<'_> {
-    alt((use_, type_alias, function, structure_def))(s)
+    alt((use_, ty_alias, function, structure_def))(s)
 }
 
 fn whitespace(s: &str) -> ParseResult<'_> {
@@ -199,7 +199,7 @@ fn use_(s: &str) -> ParseResult<'_> {
     Ok((s, output))
 }
 
-fn type_alias(s: &str) -> ParseResult<'_> {
+fn ty_alias(s: &str) -> ParseResult<'_> {
     let (s, keyword) = tag("type")(s)?;
     let (s, keyword_space) = take_whitespace1(s)?;
 
