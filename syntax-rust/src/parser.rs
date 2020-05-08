@@ -114,7 +114,7 @@ pub(crate) fn parse(s: &str) -> ParseResult<'_> {
 }
 
 fn item(s: &str) -> ParseResult<'_> {
-    expect(|s| alt((type_alias, function, structure_def))(s), None)(s)
+    alt((type_alias, function, structure_def))(s)
 }
 
 fn whitespace(s: &str) -> ParseResult<'_> {
