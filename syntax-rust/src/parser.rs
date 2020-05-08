@@ -771,7 +771,17 @@ fn expr_in_statement(s: &str) -> ParseResult<'_> {
 
 fn expr(s: &str) -> ParseResult<'_> {
     let (s, prefixes) = many0(alt((deref, borrow_mut, borrow)))(s)?;
-    let (s, mut expr) = alt((function_call, boolean, variable, string, character, int))(s)?;
+
+    let (s, mut expr) = alt((
+        function_call,
+        macro_invocation,
+        boolean,
+        variable,
+        string,
+        character,
+        int,
+    ))(s)?;
+
     let (s, postfixes) = many0(alt((method_call, field_access, try_)))(s)?;
 
     let mut output = prefixes.concat();
@@ -925,6 +935,66 @@ fn function_call(s: &str) -> ParseResult<'_> {
         },
         syntax::HighlightedSpan {
             text: close_paren,
+            group: Some(syntax::HighlightGroup::Delimiter),
+        },
+    ]);
+
+    Ok((s, output))
+}
+
+fn macro_invocation(s: &str) -> ParseResult<'_> {
+    let open_delim = alt((tag("("), tag("["), tag("{")));
+    let close_delim = alt((tag(")"), tag("]"), tag("}")));
+
+    let (s, path) = path(s)?;
+    let (s, name) = snake_case(s)?;
+    let (s, bang) = tag("!")(s)?;
+    let (s, bang_space) = take_whitespace0(s)?;
+
+    let (s, open_delim) = open_delim(s)?;
+    let (s, open_delim_space) = take_whitespace0(s)?;
+
+    // This isn’t 100% correct, as macros can take any valid token tree as input. However, it’s
+    // close enough for most macros.
+    let (s, mut params) = comma_separated(&|s| alt((item, statement))(s), "")(s)?;
+    let (s, params_space) = take_whitespace0(s)?;
+
+    let (s, close_delim) = close_delim(s)?;
+
+    let mut output = path;
+
+    output.extend_from_slice(&[
+        syntax::HighlightedSpan {
+            text: name,
+            group: Some(syntax::HighlightGroup::MacroUse),
+        },
+        syntax::HighlightedSpan {
+            text: bang,
+            group: Some(syntax::HighlightGroup::MacroUse),
+        },
+        syntax::HighlightedSpan {
+            text: bang_space,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: open_delim,
+            group: Some(syntax::HighlightGroup::Delimiter),
+        },
+        syntax::HighlightedSpan {
+            text: open_delim_space,
+            group: None,
+        },
+    ]);
+
+    output.append(&mut params);
+
+    output.extend_from_slice(&[
+        syntax::HighlightedSpan {
+            text: params_space,
+            group: None,
+        },
+        syntax::HighlightedSpan {
+            text: close_delim,
             group: Some(syntax::HighlightGroup::Delimiter),
         },
     ]);
