@@ -860,10 +860,49 @@ fn pattern(s: &str) -> ParseResult<'_> {
 }
 
 fn ty(s: &str) -> ParseResult<'_> {
-    map(ident, |s| {
+    let (s, path) = path(s)?;
+    let (s, ident) = ident(s)?;
+
+    let mut output = path;
+    output.push(syntax::HighlightedSpan {
+        text: ident,
+        group: Some(syntax::HighlightGroup::TyUse),
+    });
+
+    Ok((s, output))
+}
+
+fn path(s: &str) -> ParseResult<'_> {
+    let (s, leading_colons) = opt(tag("::"))(s)?;
+
+    let (s, modules) = many0(|s| {
+        let (s, module_name) = ident(s)?;
+        let (s, double_colon) = tag("::")(s)?;
+
+        let output = vec![
+            syntax::HighlightedSpan {
+                text: module_name,
+                group: Some(syntax::HighlightGroup::ModuleUse),
+            },
+            syntax::HighlightedSpan {
+                text: double_colon,
+                group: Some(syntax::HighlightGroup::Separator),
+            },
+        ];
+
+        Ok((s, output))
+    })(s)?;
+
+    let mut output = if let Some(leading_colons) = leading_colons {
         vec![syntax::HighlightedSpan {
-            text: s,
-            group: Some(syntax::HighlightGroup::TyUse),
+            text: leading_colons,
+            group: Some(syntax::HighlightGroup::Separator),
         }]
-    })(s)
+    } else {
+        vec![]
+    };
+
+    output.append(&mut modules.concat());
+
+    Ok((s, output))
 }
