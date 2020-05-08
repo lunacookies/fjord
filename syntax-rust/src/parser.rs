@@ -574,7 +574,7 @@ fn expr_in_statement(s: &str) -> ParseResult<'_> {
 }
 
 fn expr(s: &str) -> ParseResult<'_> {
-    let (s, expr) = alt((function_call, variable, string))(s)?;
+    let (s, expr) = alt((function_call, variable, string, character))(s)?;
 
     // ‘follower’ is the term I’ve given to method calls and field accesses.
     let (s, followers) = many0(alt((method_call, field_access)))(s)?;
@@ -705,6 +705,29 @@ fn string(s: &str) -> ParseResult<'_> {
         syntax::HighlightedSpan {
             text: end_quote,
             group: Some(syntax::HighlightGroup::StringDelimiter),
+        },
+    ];
+
+    Ok((s, output))
+}
+
+fn character(s: &str) -> ParseResult<'_> {
+    let (s, start_quote) = tag("'")(s)?;
+    let (s, contents) = take(1usize)(s)?;
+    let (s, end_quote) = tag("'")(s)?;
+
+    let output = vec![
+        syntax::HighlightedSpan {
+            text: start_quote,
+            group: Some(syntax::HighlightGroup::CharacterDelimiter),
+        },
+        syntax::HighlightedSpan {
+            text: contents,
+            group: Some(syntax::HighlightGroup::Character),
+        },
+        syntax::HighlightedSpan {
+            text: end_quote,
+            group: Some(syntax::HighlightGroup::CharacterDelimiter),
         },
     ];
 
