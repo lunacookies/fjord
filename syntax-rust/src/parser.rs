@@ -347,7 +347,15 @@ fn function(s: &str) -> ParseResult<'_> {
     let (s, return_type) = opt(function_return_type)(s)?;
     let (s, return_type_space) = take_whitespace0(s)?;
 
-    let (s, mut body) = block(s)?;
+    let semicolon = map(tag(";"), |s| {
+        vec![syntax::HighlightedSpan {
+            text: s,
+            group: Some(syntax::HighlightGroup::Terminator),
+        }]
+    });
+
+    // Function bodies can be either a block expression, or simply a semicolon (as in traits).
+    let (s, mut body) = alt((block, semicolon))(s)?;
 
     let mut output = vec![
         syntax::HighlightedSpan {
