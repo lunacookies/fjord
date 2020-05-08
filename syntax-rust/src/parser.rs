@@ -632,6 +632,7 @@ fn field_access(s: &str) -> ParseResult<'_> {
 }
 
 fn function_call(s: &str) -> ParseResult<'_> {
+    let (s, path) = path(s)?;
     let (s, name) = ident(s)?;
     let (s, name_space) = take_whitespace0(s)?;
 
@@ -644,7 +645,9 @@ fn function_call(s: &str) -> ParseResult<'_> {
 
     let (s, close_paren) = tag(")")(s)?;
 
-    let mut output = vec![
+    let mut output = path;
+
+    output.extend_from_slice(&[
         syntax::HighlightedSpan {
             text: name,
             group: Some(syntax::HighlightGroup::FunctionCall),
@@ -661,7 +664,7 @@ fn function_call(s: &str) -> ParseResult<'_> {
             text: open_paren_space,
             group: None,
         },
-    ];
+    ]);
 
     output.append(&mut params);
 
