@@ -894,7 +894,22 @@ fn try_(s: &str) -> ParseResult<'_> {
 fn function_call(s: &str) -> ParseResult<'_> {
     let (s, path) = path(s)?;
     let (s, name) = snake_case(s)?;
-    let (s, name_space) = take_whitespace0(s)?;
+
+    let (s, turbofish) = opt(|s| {
+        let (s, double_colon) = tag("::")(s)?;
+        let (s, mut generics) = generics_use(s)?;
+
+        let mut output = vec![syntax::HighlightedSpan {
+            text: double_colon,
+            group: Some(syntax::HighlightGroup::Separator),
+        }];
+
+        output.append(&mut generics);
+
+        Ok((s, output))
+    })(s)?;
+
+    let (s, turbofish_space) = take_whitespace0(s)?;
 
     let (s, open_paren) = tag("(")(s)?;
     let (s, open_paren_space) = take_whitespace0(s)?;
@@ -907,13 +922,18 @@ fn function_call(s: &str) -> ParseResult<'_> {
 
     let mut output = path;
 
+    output.push(syntax::HighlightedSpan {
+        text: name,
+        group: Some(syntax::HighlightGroup::FunctionCall),
+    });
+
+    if let Some(mut turbofish) = turbofish {
+        output.append(&mut turbofish);
+    }
+
     output.extend_from_slice(&[
         syntax::HighlightedSpan {
-            text: name,
-            group: Some(syntax::HighlightGroup::FunctionCall),
-        },
-        syntax::HighlightedSpan {
-            text: name_space,
+            text: turbofish_space,
             group: None,
         },
         syntax::HighlightedSpan {
