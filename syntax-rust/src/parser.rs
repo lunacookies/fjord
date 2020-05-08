@@ -3,7 +3,9 @@ mod generics;
 mod generics_def;
 mod generics_use;
 mod named_structure_def_fields;
+mod named_structure_literal_fields;
 mod tuple_structure_def_fields;
+mod tuple_structure_literal_fields;
 
 use {
     crate::utils::{
@@ -14,6 +16,7 @@ use {
     generics_def::parse as generics_def,
     generics_use::parse as generics_use,
     named_structure_def_fields::fields as named_structure_def_fields,
+    named_structure_literal_fields::fields as named_structure_literal_fields,
     nom::{
         branch::alt,
         bytes::complete::{tag, take, take_till1, take_until},
@@ -22,6 +25,7 @@ use {
         sequence::pair,
     },
     tuple_structure_def_fields::fields as tuple_structure_def_fields,
+    tuple_structure_literal_fields::fields as tuple_structure_literal_fields,
 };
 
 type ParseResult<'text> = nom::IResult<&'text str, Vec<syntax::HighlightedSpan<'text>>>;
@@ -777,6 +781,7 @@ fn expr(s: &str) -> ParseResult<'_> {
         macro_invocation,
         boolean,
         variable,
+        structure_literal,
         string,
         character,
         int,
@@ -1038,6 +1043,35 @@ fn variable(s: &str) -> ParseResult<'_> {
             group: Some(syntax::HighlightGroup::VariableUse),
         }]
     })(s)
+}
+
+fn structure_literal(s: &str) -> ParseResult<'_> {
+    let (s, path) = path(s)?;
+
+    let (s, mut name) = ty_name(s)?;
+    let (s, name_space) = take_whitespace0(s)?;
+
+    let (s, mut fields) = structure_literal_fields(s)?;
+
+    let mut output = path;
+
+    output.append(&mut name);
+    output.push(syntax::HighlightedSpan {
+        text: name_space,
+        group: None,
+    });
+
+    output.append(&mut fields);
+
+    Ok((s, output))
+}
+
+fn structure_literal_fields(s: &str) -> ParseResult<'_> {
+    alt((
+        named_structure_literal_fields,
+        tuple_structure_literal_fields,
+        |s| Ok((s, vec![])),
+    ))(s)
 }
 
 fn string(s: &str) -> ParseResult<'_> {
