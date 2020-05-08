@@ -66,10 +66,6 @@ pub enum HighlightGroup {
     SpecialIdentDef,
     /// the name of a special identifier when used
     SpecialIdentUse,
-    /// a sigil used to indicate a special identifier when the identifer is being defined
-    SpecialIdentDefSigil,
-    /// a sigil used to indicate a special identifier when the identifer is being used
-    SpecialIdentUseSigil,
     /// the name of a function parameter
     FunctionParam,
     /// a number literal (whether integer or floating-point)
