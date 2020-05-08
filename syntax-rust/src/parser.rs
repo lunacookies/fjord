@@ -13,6 +13,7 @@ use {
         bytes::complete::{tag, take, take_till1, take_until},
         combinator::{map, not, opt},
         multi::many0,
+        sequence::pair,
     },
     tuple_structure_def_fields::fields as tuple_structure_def_fields,
 };
@@ -725,14 +726,60 @@ fn expr_in_statement(s: &str) -> ParseResult<'_> {
 }
 
 fn expr(s: &str) -> ParseResult<'_> {
-    let (s, expr) = alt((function_call, boolean, variable, string, character, int))(s)?;
-
+    let (s, prefixes) = many0(alt((deref, borrow_mut, borrow)))(s)?;
+    let (s, mut expr) = alt((function_call, boolean, variable, string, character, int))(s)?;
     let (s, postfixes) = many0(alt((method_call, field_access, try_)))(s)?;
 
-    let mut output = expr;
+    let mut output = prefixes.concat();
+    output.append(&mut expr);
     output.append(&mut postfixes.concat());
 
     Ok((s, output))
+}
+
+fn deref(s: &str) -> ParseResult<'_> {
+    map(pair(tag("*"), take_whitespace0), |(oper, space)| {
+        vec![
+            syntax::HighlightedSpan {
+                text: oper,
+                group: Some(syntax::HighlightGroup::PointerOper),
+            },
+            syntax::HighlightedSpan {
+                text: space,
+                group: None,
+            },
+        ]
+    })(s)
+}
+
+fn borrow_mut(s: &str) -> ParseResult<'_> {
+    map(pair(tag("&mut"), take_whitespace0), |(oper, space)| {
+        vec![
+            syntax::HighlightedSpan {
+                text: oper,
+                group: Some(syntax::HighlightGroup::PointerOper),
+            },
+            syntax::HighlightedSpan {
+                text: space,
+                group: None,
+            },
+        ]
+    })(s)
+}
+
+fn borrow(s: &str) -> ParseResult<'_> {
+    map(pair(tag("&"), take_whitespace0), |(oper, space)| {
+        vec![
+            syntax::HighlightedSpan {
+                text: oper,
+                group: Some(syntax::HighlightGroup::PointerOper),
+            },
+            syntax::HighlightedSpan {
+                text: space,
+                group: None,
+            },
+        ]
+    })(s)
 }
 
 fn method_call(s: &str) -> ParseResult<'_> {
