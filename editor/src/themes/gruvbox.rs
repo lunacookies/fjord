@@ -118,16 +118,15 @@ impl syntax::Theme for Gruvbox {
             },
 
             // Special identifiers
-            syntax::HighlightGroup::SpecialIdentDef
-            | syntax::HighlightGroup::SpecialIdentUse
-            | syntax::HighlightGroup::SpecialIdentDefSigil
-            | syntax::HighlightGroup::SpecialIdentUseSigil => syntax::Style {
-                fg_color: Some(ORANGE),
-                bg_color: None,
-                is_bold: false,
-                is_italic: false,
-                is_underline: false,
-            },
+            syntax::HighlightGroup::SpecialIdentDef | syntax::HighlightGroup::SpecialIdentUse => {
+                syntax::Style {
+                    fg_color: Some(ORANGE),
+                    bg_color: None,
+                    is_bold: false,
+                    is_italic: false,
+                    is_underline: false,
+                }
+            }
 
             // Comments
             syntax::HighlightGroup::Comment | syntax::HighlightGroup::DocComment => syntax::Style {

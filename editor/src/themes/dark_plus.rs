@@ -89,23 +89,22 @@ impl syntax::Theme for DarkPlus {
                 is_underline: false,
             },
 
-            syntax::HighlightGroup::SpecialIdentDef
-            | syntax::HighlightGroup::SpecialIdentUse
-            | syntax::HighlightGroup::SpecialIdentDefSigil
-            | syntax::HighlightGroup::SpecialIdentUseSigil => syntax::Style {
-                // This colour is actually used for structs, but the distinction between structs
-                // and other types is only possible through semantic highlighting -- it is expected
-                // that all highlighters will either be simple lexers or parsers.
-                //
-                // Since ‘special identifiers’ are unique in the languages that they occur in (e.g.
-                // lifetimes in Rust, symbols in Ruby), it makes sense to give them a special
-                // colour. This colour was left over, so I decided to use it.
-                fg_color: Some(GREEN),
-                bg_color: None,
-                is_bold: false,
-                is_italic: false,
-                is_underline: false,
-            },
+            syntax::HighlightGroup::SpecialIdentDef | syntax::HighlightGroup::SpecialIdentUse => {
+                syntax::Style {
+                    // This colour is actually used for structs, but the distinction between
+                    // structs and other types is only possible through semantic highlighting -- it
+                    // is expected that all highlighters will either be simple lexers or parsers.
+                    //
+                    // Since ‘special identifiers’ are unique in the languages that they occur in
+                    // (e.g.  lifetimes in Rust, symbols in Ruby), it makes sense to give them a
+                    // special colour. This colour was left over, so I decided to use it.
+                    fg_color: Some(GREEN),
+                    bg_color: None,
+                    is_bold: false,
+                    is_italic: false,
+                    is_underline: false,
+                }
+            }
 
             // Modules aren’t highlighted
             syntax::HighlightGroup::ModuleDef | syntax::HighlightGroup::ModuleUse => {

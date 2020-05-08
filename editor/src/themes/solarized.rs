@@ -46,8 +46,6 @@ macro_rules! create_solarized_theme {
                     | syntax::HighlightGroup::MemberUse
                     | syntax::HighlightGroup::SpecialIdentDef
                     | syntax::HighlightGroup::SpecialIdentUse
-                    | syntax::HighlightGroup::SpecialIdentDefSigil
-                    | syntax::HighlightGroup::SpecialIdentUseSigil
                     | syntax::HighlightGroup::FunctionParam
                     | syntax::HighlightGroup::ModuleDef
                     | syntax::HighlightGroup::ModuleUse => syntax::Style {
