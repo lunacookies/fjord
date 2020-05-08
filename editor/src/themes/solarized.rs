@@ -1,5 +1,3 @@
-pub(crate) struct Monokai;
-
 const BASE03: syntax::Rgb = syntax::rgb!(0, 43, 54);
 const BASE01: syntax::Rgb = syntax::rgb!(88, 110, 117);
 const BASE00: syntax::Rgb = syntax::rgb!(101, 123, 131);
