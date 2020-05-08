@@ -1,4 +1,6 @@
 mod bounds;
+mod generics;
+mod generics_def;
 mod generics_use;
 mod named_structure_def_fields;
 mod tuple_structure_def_fields;
@@ -8,6 +10,8 @@ use {
         digits, float_ty, int_ty, pascal_case, snake_case, {take_whitespace0, take_whitespace1},
     },
     bounds::parse as bounds,
+    generics::parse as generics,
+    generics_def::parse as generics_def,
     generics_use::parse as generics_use,
     named_structure_def_fields::fields as named_structure_def_fields,
     nom::{
@@ -165,6 +169,9 @@ fn trait_def(s: &str) -> ParseResult<'_> {
     let (s, name) = pascal_case(s)?;
     let (s, name_space) = take_whitespace0(s)?;
 
+    let (s, generics) = opt(generics_def)(s)?;
+    let (s, generics_space) = take_whitespace0(s)?;
+
     let (s, bounds) = opt(bounds)(s)?;
     let (s, bounds_space) = take_whitespace0(s)?;
 
@@ -205,6 +212,15 @@ fn trait_def(s: &str) -> ParseResult<'_> {
             group: None,
         },
     ];
+
+    if let Some(mut generics) = generics {
+        output.append(&mut generics);
+    }
+
+    output.push(syntax::HighlightedSpan {
+        text: generics_space,
+        group: None,
+    });
 
     if let Some(mut bounds) = bounds {
         output.append(&mut bounds);
@@ -1148,6 +1164,21 @@ fn lifetime_use(s: &str) -> ParseResult<'_> {
             syntax::HighlightedSpan {
                 text: name,
                 group: Some(syntax::HighlightGroup::SpecialIdentUse),
+            },
+        ]
+    })(s)
+}
+
+fn lifetime_def(s: &str) -> ParseResult<'_> {
+    map(pair(tag("'"), snake_case), |(tick, name)| {
+        vec![
+            syntax::HighlightedSpan {
+                text: tick,
+                group: Some(syntax::HighlightGroup::SpecialIdentDef),
+            },
+            syntax::HighlightedSpan {
+                text: name,
+                group: Some(syntax::HighlightGroup::SpecialIdentDef),
             },
         ]
     })(s)
