@@ -3,7 +3,7 @@ mod tuple_structure_def_fields;
 
 use {
     crate::utils::{
-        ident, {take_whitespace0, take_whitespace1},
+        digits, ident, {take_whitespace0, take_whitespace1},
     },
     named_structure_def_fields::fields as named_structure_def_fields,
     nom::{
@@ -574,7 +574,7 @@ fn expr_in_statement(s: &str) -> ParseResult<'_> {
 }
 
 fn expr(s: &str) -> ParseResult<'_> {
-    let (s, expr) = alt((function_call, variable, string, character))(s)?;
+    let (s, expr) = alt((function_call, variable, string, character, int))(s)?;
 
     // ‘follower’ is the term I’ve given to method calls and field accesses.
     let (s, followers) = many0(alt((method_call, field_access)))(s)?;
@@ -730,6 +730,122 @@ fn character(s: &str) -> ParseResult<'_> {
             group: Some(syntax::HighlightGroup::CharacterDelimiter),
         },
     ];
+
+    Ok((s, output))
+}
+
+fn int(s: &str) -> ParseResult<'_> {
+    let int_suffix = alt((
+        tag("u8"),
+        tag("u16"),
+        tag("u32"),
+        tag("u64"),
+        tag("u128"),
+        tag("usize"),
+        tag("i8"),
+        tag("i16"),
+        tag("i32"),
+        tag("i64"),
+        tag("i128"),
+        tag("isize"),
+    ));
+
+    let (s, number) = alt((binary, octal, hex, decimal))(s)?;
+    let (s, suffix) = opt(int_suffix)(s)?;
+
+    let mut output = number;
+
+    if let Some(suffix) = suffix {
+        output.push(syntax::HighlightedSpan {
+            text: suffix,
+            group: Some(syntax::HighlightGroup::Number),
+        });
+    }
+
+    Ok((s, output))
+}
+
+fn decimal(s: &str) -> ParseResult<'_> {
+    map(digits(|c| c.is_ascii_digit()), |s| {
+        vec![syntax::HighlightedSpan {
+            text: s,
+            group: Some(syntax::HighlightGroup::Number),
+        }]
+    })(s)
+}
+
+fn binary(s: &str) -> ParseResult<'_> {
+    let (s, leader) = tag("0b")(s)?;
+    let (s, underscore) = opt(tag("_"))(s)?;
+    let (s, digits) = digits(|c| c == '0' || c == '1')(s)?;
+
+    let mut output = vec![syntax::HighlightedSpan {
+        text: leader,
+        group: Some(syntax::HighlightGroup::Number),
+    }];
+
+    if let Some(underscore) = underscore {
+        output.push(syntax::HighlightedSpan {
+            text: underscore,
+            group: Some(syntax::HighlightGroup::Number),
+        });
+    }
+
+    output.push(syntax::HighlightedSpan {
+        text: digits,
+        group: Some(syntax::HighlightGroup::Number),
+    });
+
+    Ok((s, output))
+}
+
+fn octal(s: &str) -> ParseResult<'_> {
+    let (s, leader) = tag("0o")(s)?;
+    let (s, underscore) = opt(tag("_"))(s)?;
+    let (s, digits) = digits(|c| c >= '0' && c <= '7')(s)?;
+
+    let mut output = vec![syntax::HighlightedSpan {
+        text: leader,
+        group: Some(syntax::HighlightGroup::Number),
+    }];
+
+    if let Some(underscore) = underscore {
+        output.push(syntax::HighlightedSpan {
+            text: underscore,
+            group: Some(syntax::HighlightGroup::Number),
+        });
+    }
+
+    output.push(syntax::HighlightedSpan {
+        text: digits,
+        group: Some(syntax::HighlightGroup::Number),
+    });
+
+    Ok((s, output))
+}
+
+fn hex(s: &str) -> ParseResult<'_> {
+    let (s, leader) = tag("0x")(s)?;
+    let (s, underscore) = opt(tag("_"))(s)?;
+    let (s, digits) =
+        digits(|c| c.is_ascii_digit() || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))(s)?;
+
+    let mut output = vec![syntax::HighlightedSpan {
+        text: leader,
+        group: Some(syntax::HighlightGroup::Number),
+    }];
+
+    if let Some(underscore) = underscore {
+        output.push(syntax::HighlightedSpan {
+            text: underscore,
+            group: Some(syntax::HighlightGroup::Number),
+        });
+    }
+
+    output.push(syntax::HighlightedSpan {
+        text: digits,
+        group: Some(syntax::HighlightGroup::Number),
+    });
 
     Ok((s, output))
 }

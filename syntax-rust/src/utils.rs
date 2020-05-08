@@ -19,3 +19,15 @@ pub(crate) fn ident(s: &str) -> nom::IResult<&str, &str> {
     // After this, however, they can contain alphanumeric characters or underscores.
     take_while1(|c: char| c.is_ascii_alphanumeric() || c == '_')(s)
 }
+
+pub(crate) fn digits(
+    is_digit: impl Fn(char) -> bool + Copy + 'static,
+) -> impl Fn(&str) -> nom::IResult<&str, &str> {
+    move |s| {
+        // Digit literals must start with at least one digit.
+        let _ = take_while1(is_digit)(s)?;
+
+        // This can be folloewd by digits as well as underscores.
+        take_while1(|c| is_digit(c) || c == '_')(s)
+    }
+}
