@@ -623,11 +623,10 @@ fn expr_in_statement(s: &str) -> ParseResult<'_> {
 fn expr(s: &str) -> ParseResult<'_> {
     let (s, expr) = alt((function_call, variable, string, character, int))(s)?;
 
-    // ‘follower’ is the term I’ve given to method calls and field accesses.
-    let (s, followers) = many0(alt((method_call, field_access)))(s)?;
+    let (s, postfixes) = many0(alt((method_call, field_access, try_)))(s)?;
 
     let mut output = expr;
-    output.append(&mut followers.concat());
+    output.append(&mut postfixes.concat());
 
     Ok((s, output))
 }
@@ -676,6 +675,15 @@ fn field_access(s: &str) -> ParseResult<'_> {
     ];
 
     Ok((s, output))
+}
+
+fn try_(s: &str) -> ParseResult<'_> {
+    map(tag("?"), |s| {
+        vec![syntax::HighlightedSpan {
+            text: s,
+            group: Some(syntax::HighlightGroup::OtherOper),
+        }]
+    })(s)
 }
 
 fn function_call(s: &str) -> ParseResult<'_> {
