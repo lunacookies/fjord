@@ -5,6 +5,7 @@ use {
 
 mod character;
 mod fn_call;
+mod if_;
 mod int;
 mod macro_invocation;
 mod postfix;
@@ -14,7 +15,7 @@ mod struct_literal;
 mod variable;
 
 use {
-    character::parse as character, fn_call::parse as fn_call, int::parse as int,
+    character::parse as character, fn_call::parse as fn_call, if_::parse as if_, int::parse as int,
     macro_invocation::parse as macro_invocation, postfix::parse as postfix,
     prefix::parse as prefix, string::parse as string, struct_literal::parse as struct_literal,
     variable::parse as variable,
@@ -25,6 +26,7 @@ pub(crate) fn parse(s: &str) -> ParseResult<'_> {
 
     let (s, mut expr) = alt((
         crate::block,
+        if_,
         fn_call,
         macro_invocation,
         boolean,
