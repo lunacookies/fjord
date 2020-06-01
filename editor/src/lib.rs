@@ -2,16 +2,13 @@
 
 mod themes;
 
-use {
-    foreignfjordfunc_derive::ForeignFjordFunc,
-    std::{
-        convert::TryInto,
-        io::{self, Write},
-        path::Path,
-    },
+use std::{
+    convert::TryInto,
+    io::{self, Write},
+    path::Path,
 };
 
-#[derive(Debug, ForeignFjordFunc)]
+#[derive(Debug)]
 struct Editor {
     // TODO: Add support for paths to Fjord.
     file: String,

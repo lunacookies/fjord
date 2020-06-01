@@ -1,6 +1,6 @@
 //! Types for working with the evaluation of Fjord code.
 
-use {crate::ffi::ForeignFjordFunc, std::collections::HashMap};
+use std::collections::HashMap;
 
 /// A structure that contains all the variables and functions available at a given location in a
 /// Fjord program.
@@ -8,20 +8,15 @@ use {crate::ffi::ForeignFjordFunc, std::collections::HashMap};
 pub struct State<'a> {
     vars: HashMap<crate::IdentName, OutputExpr>,
     funcs: HashMap<crate::IdentName, crate::Func>,
-    foreign_funcs: HashMap<crate::IdentName, Box<dyn ForeignFjordFunc>>,
     parent: Option<&'a Self>,
 }
 
 impl<'a> State<'a> {
-    /// This creates a new ‘root’ state (meaning that it does not have a parent state) from a
-    /// vector of foreign functions (plus their names).
-    pub fn new_root(foreign_funcs: Vec<(crate::IdentName, Box<dyn ForeignFjordFunc>)>) -> Self {
-        use std::iter::FromIterator;
-
+    /// This creates a new ‘root’ state (meaning that it does not have a parent state).
+    pub fn new_root() -> Self {
         Self {
             vars: HashMap::new(),
             funcs: HashMap::new(),
-            foreign_funcs: HashMap::from_iter(foreign_funcs),
             parent: None,
         }
     }
@@ -30,7 +25,6 @@ impl<'a> State<'a> {
         Self {
             vars: HashMap::new(),
             funcs: HashMap::new(),
-            foreign_funcs: HashMap::new(),
             parent: Some(self),
         }
     }
@@ -45,17 +39,6 @@ impl<'a> State<'a> {
     pub(crate) fn get_func(&self, name: crate::IdentName) -> Option<&crate::Func> {
         self.funcs.get(&name).or_else(|| match self.parent {
             Some(parent_state) => parent_state.get_func(name),
-            _ => None,
-        })
-    }
-
-    #[allow(clippy::borrowed_box)]
-    pub(crate) fn get_foreign_func(
-        &self,
-        name: crate::IdentName,
-    ) -> Option<&Box<dyn ForeignFjordFunc>> {
-        self.foreign_funcs.get(&name).or_else(|| match self.parent {
-            Some(parent_state) => parent_state.get_foreign_func(name),
             _ => None,
         })
     }

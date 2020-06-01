@@ -1,10 +1,8 @@
-//! A library that parses and evaluates Fjord code. Through [an FFI](ffi), Rust code can be called
-//! from Fjord.
+//! A library that parses and evaluates Fjord code.
 
 #![warn(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 pub mod eval;
 mod expr;
-pub mod ffi;
 mod func;
 mod ident_name;
 mod item;

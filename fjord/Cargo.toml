@@ -8,6 +8,5 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1"
-foreignfjordfunc-derive = { path = "../foreignfjordfunc-derive" }
 libfjord = { path = "../libfjord" }
 fjordstd = { path = "../fjordstd" }

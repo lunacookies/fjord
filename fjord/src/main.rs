@@ -5,10 +5,7 @@ fn main() -> anyhow::Result<()> {
     let mut stdout = io::stdout();
     let mut stderr = io::stderr();
 
-    let mut state = libfjord::eval::State::new_root(vec![(
-        libfjord::IdentName::new_panicking("editor"),
-        Box::new(fjordstd::EditorFunc::new()),
-    )]);
+    let mut state = libfjord::eval::State::new_root();
 
     loop {
         write!(stdout, "→ ")?;
