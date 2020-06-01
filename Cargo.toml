@@ -1,10 +1,6 @@
 [workspace]
 
 members = [
-    "editor",
     "fjord",
-    "fjordstd",
     "libfjord",
-    "syntax",
-    "syntax-rust",
 ]
