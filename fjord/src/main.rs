@@ -18,7 +18,7 @@ fn main() -> anyhow::Result<()> {
 
         match eval_result {
             Ok(output) => writeln!(stdout, "{}", output)?,
-            Err(e) => writeln!(stderr, "Error: {}", e)?,
+            Err(e) => writeln!(stderr, "Error: {:?}", anyhow::Error::new(e))?,
         }
     }
 }
