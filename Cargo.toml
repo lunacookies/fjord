@@ -1,5 +1,5 @@
 [package]
-name = "libfjord"
+name = "fjord"
 version = "0.1.0"
 authors = ["Aramis Razzaghipour <aramisnoah@gmail.com>"]
 edition = "2018"
@@ -7,8 +7,6 @@ license = "MIT OR Apache-2.0"
 description = "A library that parses and evaluates Fjord code."
 homepage = "https://github.com/arzg/fjord"
 repository = "https://github.com/arzg/fjord"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 nom = "5"
