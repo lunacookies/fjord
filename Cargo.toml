@@ -5,6 +5,7 @@ authors = ["Aramis Razzaghipour <aramisnoah@gmail.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
 description = "A library that parses and evaluates Fjord code."
+documentation = "https://docs.rs/fjord"
 homepage = "https://github.com/arzg/fjord"
 repository = "https://github.com/arzg/fjord"
 
