@@ -574,7 +574,7 @@ mod eval_tests {
 
     #[test]
     fn bool() {
-        let state = crate::eval::State::new_root(vec![]);
+        let state = crate::eval::State::new_root();
 
         assert_eq!(
             Expr::Bool(false).eval(&state),
@@ -584,7 +584,7 @@ mod eval_tests {
 
     #[test]
     fn number() {
-        let state = crate::eval::State::new_root(vec![]);
+        let state = crate::eval::State::new_root();
 
         assert_eq!(
             Expr::Number(100).eval(&state),
@@ -594,7 +594,7 @@ mod eval_tests {
 
     #[test]
     fn str() {
-        let state = crate::eval::State::new_root(vec![]);
+        let state = crate::eval::State::new_root();
 
         assert_eq!(
             Expr::Str("Hello, World!".into()).eval(&state),
@@ -604,7 +604,7 @@ mod eval_tests {
 
     #[test]
     fn fstr() {
-        let state = crate::eval::State::new_root(vec![]);
+        let state = crate::eval::State::new_root();
 
         assert_eq!(
             Expr::FStr(
@@ -618,7 +618,7 @@ mod eval_tests {
 
     #[test]
     fn block() {
-        let state = crate::eval::State::new_root(vec![]);
+        let state = crate::eval::State::new_root();
 
         assert_eq!(
             Expr::Block(vec![
@@ -635,7 +635,7 @@ mod eval_tests {
 
     #[test]
     fn var() {
-        let mut state = crate::eval::State::new_root(vec![]);
+        let mut state = crate::eval::State::new_root();
         state.set_var(
             crate::IdentName::new("name").unwrap().1,
             crate::eval::OutputExpr::Str("John Smith".into()),
@@ -649,7 +649,7 @@ mod eval_tests {
 
     #[test]
     fn if_expr() {
-        let state = crate::eval::State::new_root(vec![]);
+        let state = crate::eval::State::new_root();
 
         assert_eq!(
             Expr::If {
@@ -666,7 +666,7 @@ mod eval_tests {
     fn func_call() {
         use crate::params::def::Param;
 
-        let mut state = crate::eval::State::new_root(vec![]);
+        let mut state = crate::eval::State::new_root();
         state.set_func(
             crate::IdentName::new("identity").unwrap().1,
             crate::Func {
@@ -693,7 +693,7 @@ mod eval_tests {
 
     #[test]
     fn parens() {
-        let state = crate::eval::State::new_root(vec![]);
+        let state = crate::eval::State::new_root();
 
         assert_eq!(
             Expr::Parens(Box::new(Expr::Number(100))).eval(&state),
