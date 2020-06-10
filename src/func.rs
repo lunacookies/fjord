@@ -1,14 +1,11 @@
-use {
-    crate::params::{call, def},
-    nom::{bytes::complete::tag, multi::many0},
-};
+use nom::{bytes::complete::tag, multi::many0};
 
 /// A function literal. Note that this isn’t a ‘real’ function literal, as it is not part of
 /// [`Expr`](enum.Expr.html), and therefore can only be used when defining a function.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Func {
     /// its parameters
-    pub params: Vec<def::Param>,
+    pub params: Vec<crate::IdentName>,
     /// its body is simply an expression
     pub body: crate::Expr,
 }
@@ -16,7 +13,7 @@ pub struct Func {
 impl Func {
     pub(crate) fn new(s: &str) -> nom::IResult<&str, Self> {
         let (s, params) = many0(|s| {
-            let (s, param) = def::Param::new(s)?;
+            let (s, param) = crate::IdentName::new(s)?;
             let (s, _) = crate::take_whitespace1(s)?;
             Ok((s, param))
         })(s)?;
@@ -31,11 +28,11 @@ impl Func {
 
     pub(crate) fn eval(
         self,
-        call_params: Vec<call::Param>,
+        call_params: Vec<crate::Expr>,
         state: &crate::eval::State<'_>,
     ) -> crate::eval::EvalResult {
         let def_params = self.params;
-        let complete_params = crate::params::eval(call_params, def_params)?;
+        let complete_params = crate::params::eval(call_params.into_iter(), def_params.into_iter())?;
 
         let mut func_state = state.new_child();
 
@@ -73,8 +70,8 @@ mod tests {
                 "",
                 Func {
                     params: vec![
-                        def::Param::new("param1").unwrap().1,
-                        def::Param::new("param2").unwrap().1
+                        crate::IdentName::new("param1").unwrap().1,
+                        crate::IdentName::new("param2").unwrap().1
                     ],
                     body: crate::Expr::new("\"Hello, World!\"").unwrap().1
                 }
@@ -109,7 +106,7 @@ x :: {
             Ok((
                 "",
                 Func {
-                    params: vec![def::Param::new("x").unwrap().1],
+                    params: vec![crate::IdentName::new("x").unwrap().1],
                     body: crate::Expr::new(
                         "\
 {

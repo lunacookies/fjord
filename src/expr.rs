@@ -6,8 +6,6 @@ use nom::{
     sequence::delimited,
 };
 
-use crate::params::call;
-
 /// An expression.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
@@ -18,7 +16,7 @@ pub enum Expr {
     /// a string literal
     Str(String),
     /// a format string
-    FStr(String, Vec<(Expr, String)>),
+    FStr(String, Vec<(Self, String)>),
     /// a [block expression](https://doc.rust-lang.org/reference/expressions/block-expr.html)
     Block(Vec<crate::Item>),
     /// a variable usage (not definition)
@@ -37,7 +35,7 @@ pub enum Expr {
         /// the name of the function being called
         name: crate::IdentName,
         /// the parameters given to the function
-        params: Vec<call::Param>,
+        params: Vec<Self>,
     },
     /// an expression surrounded by parentheses
     Parens(Box<Self>),
@@ -169,7 +167,7 @@ impl Expr {
 
         let (s, params) = many0(|s| {
             let (s, _) = crate::take_whitespace1(s)?;
-            call::Param::new(s)
+            Self::new(s)
         })(s)?;
 
         Ok((s, Self::FuncCall { name, params }))
@@ -440,9 +438,9 @@ mod tests {
                 Expr::FuncCall {
                     name: crate::IdentName::new("addThree").unwrap().1,
                     params: vec![
-                        call::Param::new("1").unwrap().1,
-                        call::Param::new("7").unwrap().1,
-                        call::Param::new("4").unwrap().1
+                        Expr::new("1").unwrap().1,
+                        Expr::new("7").unwrap().1,
+                        Expr::new("4").unwrap().1
                     ]
                 }
             ))
@@ -457,7 +455,7 @@ mod tests {
                 "",
                 Expr::FuncCall {
                     name: crate::IdentName::new("sqrt").unwrap().1,
-                    params: vec![call::Param::new("5").unwrap().1]
+                    params: vec![Expr::new("5").unwrap().1]
                 }
             ))
         )
@@ -476,10 +474,7 @@ mod tests {
                 "",
                 Expr::Parens(Box::new(Expr::FuncCall {
                     name: crate::IdentName::new("getUserInput").unwrap().1,
-                    params: vec![call::Param {
-                        val: Expr::Var(crate::IdentName::new("stdout").unwrap().1),
-                        name: None,
-                    }]
+                    params: vec![Expr::Var(crate::IdentName::new("stdout").unwrap().1),]
                 }))
             ))
         );
@@ -664,16 +659,12 @@ mod eval_tests {
 
     #[test]
     fn func_call() {
-        use crate::params::def::Param;
-
         let mut state = crate::eval::State::new_root();
+
         state.set_func(
             crate::IdentName::new("identity").unwrap().1,
             crate::Func {
-                params: vec![Param {
-                    name: crate::IdentName::new("x").unwrap().1,
-                    default_val: None,
-                }],
+                params: vec![crate::IdentName::new("x").unwrap().1],
                 body: Expr::Var(crate::IdentName::new("x").unwrap().1),
             },
         );
@@ -681,10 +672,7 @@ mod eval_tests {
         assert_eq!(
             Expr::FuncCall {
                 name: crate::IdentName::new("identity").unwrap().1,
-                params: vec![call::Param {
-                    val: Expr::Str("✅".into()),
-                    name: None,
-                }]
+                params: vec![Expr::Str("✅".into()),]
             }
             .eval(&state),
             Ok(crate::eval::OutputExpr::Str("✅".into()))
