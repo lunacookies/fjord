@@ -1,22 +1,24 @@
 //! Types for working with the evaluation of Fjord code.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
-/// A structure that contains all the variables and functions available at a given location in a
-/// Fjord program.
+/// A structure that contains all the variables, functions and commands available at a given
+/// location in a Fjord program.
 #[derive(Debug)]
 pub struct State<'a> {
     vars: HashMap<crate::IdentName, OutputExpr>,
     funcs: HashMap<crate::IdentName, crate::Func>,
+    commands: &'a crate::Commands,
     parent: Option<&'a Self>,
 }
 
 impl<'a> State<'a> {
     /// This creates a new ‘root’ state (meaning that it does not have a parent state).
-    pub fn new_root() -> Self {
+    pub fn new_root(commands: &'a crate::Commands) -> Self {
         Self {
             vars: HashMap::new(),
             funcs: HashMap::new(),
+            commands,
             parent: None,
         }
     }
@@ -25,6 +27,7 @@ impl<'a> State<'a> {
         Self {
             vars: HashMap::new(),
             funcs: HashMap::new(),
+            commands: self.commands,
             parent: Some(self),
         }
     }
@@ -41,6 +44,10 @@ impl<'a> State<'a> {
             Some(parent_state) => parent_state.get_func(name),
             _ => None,
         })
+    }
+
+    pub(crate) fn get_command(&self, name: &str) -> Option<PathBuf> {
+        self.commands.get(name)
     }
 
     pub(crate) fn set_var(&mut self, name: crate::IdentName, val: OutputExpr) {
