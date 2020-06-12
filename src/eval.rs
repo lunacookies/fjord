@@ -29,15 +29,15 @@ impl<'a> State<'a> {
         }
     }
 
-    pub(crate) fn get_var(&self, name: crate::IdentName) -> Option<&OutputExpr> {
-        self.vars.get(&name).or_else(|| match self.parent {
+    pub(crate) fn get_var(&self, name: &crate::IdentName) -> Option<&OutputExpr> {
+        self.vars.get(name).or_else(|| match self.parent {
             Some(parent_state) => parent_state.get_var(name),
             _ => None,
         })
     }
 
-    pub(crate) fn get_func(&self, name: crate::IdentName) -> Option<&crate::Func> {
-        self.funcs.get(&name).or_else(|| match self.parent {
+    pub(crate) fn get_func(&self, name: &crate::IdentName) -> Option<&crate::Func> {
+        self.funcs.get(name).or_else(|| match self.parent {
             Some(parent_state) => parent_state.get_func(name),
             _ => None,
         })

@@ -537,7 +537,7 @@ impl Expr {
                 // the unit.
                 Ok(crate::eval::OutputExpr::Unit)
             }
-            Self::Var(name) => match state.get_var(name) {
+            Self::Var(name) => match state.get_var(&name) {
                 Some(val) => Ok(val.clone()),
                 None => Err(crate::eval::Error::VarNotFound),
             },
