@@ -1,5 +1,4 @@
 use std::{
-    cell::RefCell,
     collections::HashMap,
     fs, io,
     path::{Path, PathBuf},
@@ -9,21 +8,21 @@ use std::{
 /// be available through the $PATH in a conventional shell.
 #[derive(Debug)]
 pub struct Commands {
-    paths: RefCell<HashMap<String, PathBuf>>,
+    paths: HashMap<String, PathBuf>,
 }
 
 impl Commands {
     /// Searches the given paths for commands, removing all commands that were stored previously.
-    pub fn rescan<'a>(&self, search_paths: impl Iterator<Item = &'a Path>) -> io::Result<()> {
-        let mut paths = self.paths.borrow_mut();
-        paths.clear();
+    pub fn rescan<'a>(&mut self, search_paths: impl Iterator<Item = &'a Path>) -> io::Result<()> {
+        self.paths.clear();
 
         for search_path in search_paths {
             for path in fs::read_dir(search_path)? {
                 let path = path?.path();
 
                 if let Some(command_name) = path.file_name() {
-                    paths.insert(command_name.to_string_lossy().into(), path);
+                    self.paths
+                        .insert(command_name.to_string_lossy().into(), path);
                 }
             }
         }
@@ -33,14 +32,14 @@ impl Commands {
 
     /// Obtains the path to a command based on its name, if it exists.
     pub fn get(&self, command_name: &str) -> Option<PathBuf> {
-        self.paths.borrow().get(command_name).map(Clone::clone)
+        self.paths.get(command_name).map(Clone::clone)
     }
 }
 
 impl Default for Commands {
     fn default() -> Self {
         Self {
-            paths: RefCell::new(HashMap::new()),
+            paths: HashMap::new(),
         }
     }
 }
