@@ -1,4 +1,4 @@
-use nom::character::complete::char;
+use nom::{branch::alt, character::complete::char};
 
 /// An `Item` is either a expression or a binding. This is separate from [`Expr`](enum.Expr.html)
 /// because it would be undesirable to use a binding as a value. Imagine calling a function, with
@@ -19,7 +19,7 @@ pub enum Item {
 
 impl Item {
     pub(crate) fn new(s: &str) -> nom::IResult<&str, Self> {
-        Self::new_binding(s).or_else(|_| Self::new_expr(s))
+        alt((Self::new_binding, Self::new_expr))(s)
     }
 
     fn new_expr(s: &str) -> nom::IResult<&str, Self> {
@@ -104,7 +104,7 @@ pub enum BindingVal {
 
 impl BindingVal {
     fn new(s: &str) -> nom::IResult<&str, Self> {
-        Self::new_func(s).or_else(|_| Self::new_var(s))
+        alt((Self::new_func, Self::new_var))(s)
     }
 
     fn new_func(s: &str) -> nom::IResult<&str, Self> {

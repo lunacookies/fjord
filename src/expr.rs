@@ -43,15 +43,17 @@ pub enum Expr {
 
 impl Expr {
     pub(crate) fn new(s: &str) -> nom::IResult<&str, Self> {
-        Self::new_bool(s)
-            .or_else(|_| Self::new_number(s))
-            .or_else(|_| Self::new_str(s))
-            .or_else(|_| Self::new_fstr(s))
-            .or_else(|_| Self::new_block(s))
-            .or_else(|_| Self::new_var(s))
-            .or_else(|_| Self::new_if(s))
-            .or_else(|_| Self::new_func_call(s))
-            .or_else(|_| Self::new_parens(s))
+        alt((
+            Self::new_bool,
+            Self::new_number,
+            Self::new_str,
+            Self::new_fstr,
+            Self::new_block,
+            Self::new_var,
+            Self::new_if,
+            Self::new_func_call,
+            Self::new_parens,
+        ))(s)
     }
 
     fn new_bool(s: &str) -> nom::IResult<&str, Self> {
