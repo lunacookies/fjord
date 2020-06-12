@@ -63,8 +63,8 @@ impl<'a> State<'a> {
 #[derive(Debug, thiserror::Error, PartialEq)]
 pub enum Error {
     /// when a variable is used that does not exist
-    #[error("could not find variable")]
-    VarNotFound,
+    #[error("could not find variable ‘.{0}’")]
+    VarNotFound(crate::IdentName),
     /// when a function or command is called that does not exist
     #[error("could not find function or command ‘{0}’")]
     FuncOrCommandNotFound(crate::IdentName),

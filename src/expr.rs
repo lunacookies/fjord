@@ -539,10 +539,13 @@ impl Expr {
                 // the unit.
                 Ok(crate::eval::OutputExpr::Unit)
             }
-            Self::Var(name) => match state.get_var(&name) {
-                Some(val) => Ok(val.clone()),
-                None => Err(crate::eval::Error::VarNotFound),
-            },
+            Self::Var(name) => {
+                if let Some(val) = state.get_var(&name) {
+                    Ok(val.clone())
+                } else {
+                    Err(crate::eval::Error::VarNotFound(name))
+                }
+            }
             Self::If {
                 condition,
                 true_case,
