@@ -65,9 +65,9 @@ pub enum Error {
     /// when a variable is used that does not exist
     #[error("could not find variable")]
     VarNotFound,
-    /// when a function is called that does not exist
-    #[error("could not find function")]
-    FuncNotFound,
+    /// when a function or command is called that does not exist
+    #[error("could not find function or command ‘{0}’")]
+    FuncOrCommandNotFound(crate::IdentName),
     /// when some kind of error occurs while matching up function call parameters with function
     /// definition parameters
     #[error("failed evaluating function parameters")]
@@ -75,6 +75,12 @@ pub enum Error {
     /// when a non-boolean expression is used as the condition of an if expression
     #[error("a non-boolean expression was used as the condition of an if expression")]
     NonBoolCond,
+    /// when the execution of a command fails
+    #[error("executing command failed")]
+    CommandFailure,
+    /// when a command exits with a non-zero exit code
+    #[error("command exited with a non-zero exit code: {0}")]
+    NonZeroExitCode(i32),
 }
 
 /// The output of evaluating something.
