@@ -1,6 +1,7 @@
 //! A library that parses and evaluates Fjord code.
 
 #![warn(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+mod commands;
 pub mod eval;
 mod expr;
 mod func;
@@ -11,6 +12,7 @@ pub mod params;
 
 use misc::*;
 pub use {
+    commands::Commands,
     expr::Expr,
     func::Func,
     ident_name::IdentName,
