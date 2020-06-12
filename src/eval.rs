@@ -6,56 +6,77 @@ use std::{collections::HashMap, path::PathBuf};
 /// location in a Fjord program.
 #[derive(Debug)]
 pub struct State<'a> {
-    vars: HashMap<crate::IdentName, OutputExpr>,
-    funcs: HashMap<crate::IdentName, crate::Func>,
-    commands: &'a crate::Commands,
-    parent: Option<&'a Self>,
+    env: Environment<'a>,
+    kind: StateKind<'a>,
 }
 
 impl<'a> State<'a> {
     /// This creates a new ‘root’ state (meaning that it does not have a parent state).
     pub fn new_root(commands: &'a crate::Commands) -> Self {
         Self {
-            vars: HashMap::new(),
-            funcs: HashMap::new(),
-            commands,
-            parent: None,
+            env: Environment::new(commands),
+            kind: StateKind::Root,
         }
     }
 
     pub(crate) fn new_child(&'a self) -> Self {
         Self {
-            vars: HashMap::new(),
-            funcs: HashMap::new(),
-            commands: self.commands,
-            parent: Some(self),
+            env: Environment::new(self.env.commands),
+            kind: StateKind::Child { parent: self },
         }
     }
 
     pub(crate) fn get_var(&self, name: &crate::IdentName) -> Option<&OutputExpr> {
-        self.vars.get(name).or_else(|| match self.parent {
-            Some(parent_state) => parent_state.get_var(name),
+        self.env.vars.get(name).or_else(|| match self.kind {
+            StateKind::Child {
+                parent: parent_state,
+            } => parent_state.get_var(name),
             _ => None,
         })
     }
 
     pub(crate) fn get_func(&self, name: &crate::IdentName) -> Option<&crate::Func> {
-        self.funcs.get(name).or_else(|| match self.parent {
-            Some(parent_state) => parent_state.get_func(name),
+        self.env.funcs.get(name).or_else(|| match self.kind {
+            StateKind::Child {
+                parent: parent_state,
+            } => parent_state.get_func(name),
             _ => None,
         })
     }
 
     pub(crate) fn get_command(&self, name: &str) -> Option<PathBuf> {
-        self.commands.get(name)
+        self.env.commands.get(name)
     }
 
     pub(crate) fn set_var(&mut self, name: crate::IdentName, val: OutputExpr) {
-        self.vars.insert(name, val);
+        self.env.vars.insert(name, val);
     }
 
     pub(crate) fn set_func(&mut self, name: crate::IdentName, func: crate::Func) {
-        self.funcs.insert(name, func);
+        self.env.funcs.insert(name, func);
+    }
+}
+
+#[derive(Debug)]
+enum StateKind<'a> {
+    Root,
+    Child { parent: &'a State<'a> },
+}
+
+#[derive(Debug)]
+struct Environment<'a> {
+    vars: HashMap<crate::IdentName, OutputExpr>,
+    funcs: HashMap<crate::IdentName, crate::Func>,
+    commands: &'a crate::Commands,
+}
+
+impl<'a> Environment<'a> {
+    fn new(commands: &'a crate::Commands) -> Self {
+        Self {
+            vars: HashMap::new(),
+            funcs: HashMap::new(),
+            commands,
+        }
     }
 }
 
