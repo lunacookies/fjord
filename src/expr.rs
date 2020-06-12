@@ -553,11 +553,30 @@ impl Expr {
             Self::FuncCall {
                 name,
                 params: call_params,
-            } => state
-                .get_func(name)
-                .map_or(Err(crate::eval::Error::FuncNotFound), |func| {
-                    func.clone().eval(call_params, state)
-                }),
+            } => {
+                // If a function has been defined with this name, then evaluate it and return.
+                if let Some(func) = state.get_func(&name) {
+                    return func.clone().eval(call_params, state);
+                }
+
+                // If a command exists with the name of the function call, then execute the
+                // command.
+                if let Some(command_name) = state.get_command(&name) {
+                    let status = std::process::Command::new(command_name)
+                        .status()
+                        .map_err(|_| crate::eval::Error::CommandFailure)?;
+
+                    // Return an error if the exit code isn’t 0; otherwise return Unit.
+                    return match status.code() {
+                        Some(code) if code != 0 => Err(crate::eval::Error::NonZeroExitCode(code)),
+                        _ => Ok(crate::eval::OutputExpr::Unit),
+                    };
+                }
+
+                // In this case no function or command exists with the name of the function call,
+                // so we return an error saying as such.
+                Err(crate::eval::Error::FuncOrCommandNotFound(name))
+            }
             Self::Parens(e) => e.eval(state),
         }
     }
