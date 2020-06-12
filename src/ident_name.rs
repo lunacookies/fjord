@@ -1,4 +1,7 @@
-use nom::bytes::complete::take_while1;
+use {
+    nom::bytes::complete::take_while1,
+    std::{fmt, ops::Deref},
+};
 
 /// An identifier (e.g. variable name, function name). Currently, all `IdentName`s have to follow
 /// camelCase. They can be matched by the regex `[a-z][a-zA-Z0-9]*`.
@@ -29,6 +32,20 @@ impl IdentName {
         assert!(s == "");
 
         ident_name
+    }
+}
+
+impl Deref for IdentName {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl fmt::Display for IdentName {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
