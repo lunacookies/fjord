@@ -15,7 +15,9 @@ impl<'a> State<'a> {
     pub fn new_root(commands: &'a crate::Commands) -> Self {
         Self {
             env: Environment::new(commands),
-            kind: StateKind::Root,
+            kind: StateKind::Root {
+                globals: HashMap::new(),
+            },
         }
     }
 
@@ -48,6 +50,13 @@ impl<'a> State<'a> {
         self.env.commands.get(name)
     }
 
+    pub(crate) fn get_global(&self, name: &crate::IdentName) -> Option<&OutputExpr> {
+        match self.kind {
+            StateKind::Root { ref globals } => globals.get(name),
+            StateKind::Child { parent } => parent.get_global(name),
+        }
+    }
+
     pub(crate) fn set_var(&mut self, name: crate::IdentName, val: OutputExpr) {
         self.env.vars.insert(name, val);
     }
@@ -59,8 +68,12 @@ impl<'a> State<'a> {
 
 #[derive(Debug)]
 enum StateKind<'a> {
-    Root,
-    Child { parent: &'a State<'a> },
+    Root {
+        globals: HashMap<crate::IdentName, OutputExpr>,
+    },
+    Child {
+        parent: &'a State<'a>,
+    },
 }
 
 #[derive(Debug)]
