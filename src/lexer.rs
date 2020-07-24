@@ -11,6 +11,9 @@ enum SyntaxKind {
     #[token("=")]
     Equals,
 
+    #[token("::")]
+    DoubleColon,
+
     #[regex("[\n ]+")]
     Whitespace,
 
@@ -67,6 +70,11 @@ mod tests {
     #[test]
     fn lex_equals_sign() {
         test("=", SyntaxKind::Equals);
+    }
+
+    #[test]
+    fn lex_double_colon() {
+        test("::", SyntaxKind::DoubleColon);
     }
 
     #[test]
