@@ -11,6 +11,9 @@ enum SyntaxKind {
     #[token("=")]
     Equals,
 
+    #[regex("[\n ]+")]
+    Whitespace,
+
     #[error]
     Error,
 }
@@ -64,5 +67,15 @@ mod tests {
     #[test]
     fn lex_equals_sign() {
         test("=", SyntaxKind::Equals);
+    }
+
+    #[test]
+    fn lex_spaces() {
+        test("  ", SyntaxKind::Whitespace);
+    }
+
+    #[test]
+    fn lex_line_feeds() {
+        test("\n\n\n", SyntaxKind::Whitespace);
     }
 }
