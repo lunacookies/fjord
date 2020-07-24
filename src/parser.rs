@@ -1,6 +1,7 @@
 use crate::lexer::{Lexer, SyntaxKind};
 use crate::SyntaxNode;
 use rowan::{GreenNode, GreenNodeBuilder};
+use std::iter::Peekable;
 
 /// The output of parsing Fjord code.
 pub struct ParseOutput {
@@ -20,7 +21,7 @@ impl ParseOutput {
 
 /// Parses Fjord code.
 pub struct Parser<'a> {
-    lexer: Lexer<'a>,
+    lexer: Peekable<Lexer<'a>>,
     builder: GreenNodeBuilder<'static>,
 }
 
@@ -28,18 +29,43 @@ impl<'a> Parser<'a> {
     /// Creates a new Parser given the input.
     pub fn new(input: &'a str) -> Self {
         Self {
-            lexer: Lexer::new(input),
+            lexer: Lexer::new(input).peekable(),
             builder: GreenNodeBuilder::new(),
         }
+    }
+
+    fn peek(&mut self) -> Option<SyntaxKind> {
+        self.lexer.peek().map(|(kind, _)| *kind)
+    }
+
+    fn at_end(&mut self) -> bool {
+        self.lexer.peek().is_none()
+    }
+
+    fn bump(&mut self) {
+        let (kind, text) = self.lexer.next().unwrap();
+        self.builder.token(kind.into(), text);
     }
 
     /// Parses the input the `Parser` was constructed with.
     pub fn parse(mut self) -> ParseOutput {
         self.builder.start_node(SyntaxKind::Root.into());
+
+        if !self.at_end() {
+            self.parse_expr();
+        }
+
         self.builder.finish_node();
 
         ParseOutput {
             green_node: self.builder.finish(),
+        }
+    }
+
+    fn parse_expr(&mut self) {
+        match self.peek() {
+            Some(SyntaxKind::Digits) => self.bump(),
+            _ => panic!("expected expression"),
         }
     }
 }
@@ -60,5 +86,15 @@ mod tests {
             r#"
 Root@0..0"#,
         );
+    }
+
+    #[test]
+    fn parse_number_literal() {
+        test(
+            "10",
+            r#"
+Root@0..2
+  Digits@0..2 "10""#,
+        )
     }
 }
