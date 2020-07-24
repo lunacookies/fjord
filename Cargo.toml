@@ -11,4 +11,5 @@ repository = "https://github.com/arzg/fjord"
 
 [dependencies]
 logos = "0.11"
+rowan = "0.10"
 smol_str = "0.1"
