@@ -4,10 +4,10 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[derive(Debug, Logos, Copy, Clone, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u16)]
 pub(crate) enum SyntaxKind {
-    #[regex("[A-Za-z][A-Za-z0-9]*")]
-    Identifier,
+    #[regex(".+")]
+    Atom,
 
-    #[regex("[0-9]+")]
+    #[regex("[0-9]+", priority = 2)]
     Digits,
 
     #[regex("\"[^\"]*\"")]
@@ -19,7 +19,7 @@ pub(crate) enum SyntaxKind {
     #[token("::")]
     DoubleColon,
 
-    #[regex("[\n ]+")]
+    #[regex("[\n ]+", priority = 2)]
     Whitespace,
 
     #[error]
@@ -52,28 +52,8 @@ mod tests {
     }
 
     #[test]
-    fn lex_all_lowercase_identifier() {
-        test("abcdefg", SyntaxKind::Identifier);
-    }
-
-    #[test]
-    fn lex_all_caps_identifier() {
-        test("ABCDEFG", SyntaxKind::Identifier);
-    }
-
-    #[test]
-    fn lex_identifer_with_digits_at_the_end() {
-        test("abc123", SyntaxKind::Identifier);
-    }
-
-    #[test]
-    fn lex_identifier_with_digits_in_the_middle() {
-        test("abc123def", SyntaxKind::Identifier);
-    }
-
-    #[test]
-    fn lex_one_char_identifier() {
-        test("a", SyntaxKind::Identifier);
+    fn lex_atom() {
+        test("/bin/åbç123défg456", SyntaxKind::Atom);
     }
 
     #[test]
