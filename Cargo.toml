@@ -10,3 +10,4 @@ homepage = "https://github.com/arzg/fjord"
 repository = "https://github.com/arzg/fjord"
 
 [dependencies]
+logos = "0.11"
