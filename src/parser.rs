@@ -95,7 +95,7 @@ Root@0..0"#,
             r#"
 Root@0..2
   Digits@0..2 "10""#,
-        )
+        );
     }
 
     #[test]
@@ -105,6 +105,6 @@ Root@0..2
             r#"
 Root@0..15
   StringLiteral@0..15 "\"Hello, world!\"""#,
-        )
+        );
     }
 }
