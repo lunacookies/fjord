@@ -28,13 +28,6 @@ mod tests {
         assert_eq!(lexer.slice(), input);
     }
 
-    fn neg_test(input: &str, expected_kind: SyntaxKind) {
-        let mut lexer = SyntaxKind::lexer(input);
-
-        assert_ne!(lexer.next(), Some(expected_kind));
-        assert_ne!(lexer.slice(), input);
-    }
-
     #[test]
     fn lex_all_lowercase_identifier() {
         test("abcdefg", SyntaxKind::Identifier);
@@ -53,11 +46,6 @@ mod tests {
     #[test]
     fn lex_identifier_with_digits_in_the_middle() {
         test("abc123def", SyntaxKind::Identifier);
-    }
-
-    #[test]
-    fn dont_lex_identifier_with_digits_at_the_start() {
-        neg_test("123abc", SyntaxKind::Identifier);
     }
 
     #[test]
