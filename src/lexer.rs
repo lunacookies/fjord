@@ -1,8 +1,8 @@
 mod syntax_kind;
+pub(crate) use syntax_kind::SyntaxKind;
 
 use logos::Logos;
 use smol_str::SmolStr;
-use syntax_kind::SyntaxKind;
 
 pub(crate) struct Lexer<'a> {
     inner: logos::Lexer<'a, SyntaxKind>,

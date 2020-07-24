@@ -1,6 +1,8 @@
 use logos::Logos;
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Logos, PartialEq)]
+#[derive(Debug, Logos, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[repr(u16)]
 pub(crate) enum SyntaxKind {
     #[regex("[A-Za-z][A-Za-z0-9]*")]
     Identifier,
@@ -22,6 +24,12 @@ pub(crate) enum SyntaxKind {
 
     // Compound variants
     Root,
+}
+
+impl From<SyntaxKind> for rowan::SyntaxKind {
+    fn from(kind: SyntaxKind) -> Self {
+        Self(kind.into())
+    }
 }
 
 #[cfg(test)]
