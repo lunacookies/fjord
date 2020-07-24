@@ -10,6 +10,9 @@ pub(crate) enum SyntaxKind {
     #[regex("[0-9]+")]
     Digits,
 
+    #[regex("\"[^\"]*\"")]
+    StringLiteral,
+
     #[token("=")]
     Equals,
 
@@ -76,6 +79,11 @@ mod tests {
     #[test]
     fn lex_digits() {
         test("1234567890", SyntaxKind::Digits);
+    }
+
+    #[test]
+    fn lex_string_literal() {
+        test("\"hello\"", SyntaxKind::StringLiteral);
     }
 
     #[test]
