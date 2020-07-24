@@ -4,7 +4,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[derive(Debug, Logos, Copy, Clone, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u16)]
 pub(crate) enum SyntaxKind {
-    #[regex(r"([^\n ]|\\ )+")]
+    #[regex(r"([^\n $]|\\ )+")]
     Atom,
 
     #[regex("[0-9]+", priority = 2)]
@@ -82,6 +82,16 @@ mod tests {
     #[test]
     fn lex_dollar_sign() {
         test("$", SyntaxKind::Dollar);
+    }
+
+    #[test]
+    fn lex_dollar_sign_then_atom() {
+        let mut lexer = SyntaxKind::lexer("$foo");
+
+        assert_eq!(lexer.next(), Some(SyntaxKind::Dollar));
+        assert_eq!(lexer.slice(), "$");
+        assert_eq!(lexer.next(), Some(SyntaxKind::Atom));
+        assert_eq!(lexer.slice(), "foo");
     }
 
     #[test]
