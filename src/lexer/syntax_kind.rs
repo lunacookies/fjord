@@ -30,6 +30,7 @@ pub(crate) enum SyntaxKind {
 
     // Compound variants
     Root,
+    BindingUsage,
 }
 
 impl From<SyntaxKind> for rowan::SyntaxKind {

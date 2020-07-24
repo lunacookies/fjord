@@ -65,8 +65,23 @@ impl<'a> Parser<'a> {
     fn parse_expr(&mut self) {
         match self.peek() {
             Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) => self.bump(),
+            Some(SyntaxKind::Dollar) => self.parse_binding_usage(),
             _ => panic!("expected expression"),
         }
+    }
+
+    fn parse_binding_usage(&mut self) {
+        assert_eq!(self.peek(), Some(SyntaxKind::Dollar));
+
+        self.builder.start_node(SyntaxKind::BindingUsage.into());
+        self.bump();
+
+        match self.peek() {
+            Some(SyntaxKind::Atom) => self.bump(),
+            _ => panic!("expected atom"),
+        }
+
+        self.builder.finish_node();
     }
 }
 
@@ -105,6 +120,18 @@ Root@0..2
             r#"
 Root@0..15
   StringLiteral@0..15 "\"Hello, world!\"""#,
+        );
+    }
+
+    #[test]
+    fn parse_binding_usage() {
+        test(
+            "$var",
+            r#"
+Root@0..4
+  BindingUsage@0..4
+    Dollar@0..1 "$"
+    Atom@1..4 "var""#,
         );
     }
 }
