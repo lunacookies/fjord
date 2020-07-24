@@ -1,7 +1,7 @@
 use logos::Logos;
 
 #[derive(Debug, Logos, PartialEq)]
-enum SyntaxKind {
+pub(crate) enum SyntaxKind {
     #[regex("[A-Za-z][A-Za-z0-9]*")]
     Identifier,
 
