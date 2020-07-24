@@ -2,7 +2,7 @@ use crate::lexer::SyntaxKind;
 use std::convert::TryFrom;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-enum Lang {}
+pub(crate) enum Lang {}
 
 impl rowan::Language for Lang {
     type Kind = SyntaxKind;
