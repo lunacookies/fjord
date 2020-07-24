@@ -5,6 +5,9 @@ enum SyntaxKind {
     #[regex("[A-Za-z][A-Za-z0-9]*")]
     Identifier,
 
+    #[regex("[0-9]+")]
+    Digits,
+
     #[error]
     Error,
 }
@@ -60,5 +63,10 @@ mod tests {
     #[test]
     fn lex_one_char_identifier() {
         test("a", SyntaxKind::Identifier);
+    }
+
+    #[test]
+    fn lex_digits() {
+        test("1234567890", SyntaxKind::Digits);
     }
 }
