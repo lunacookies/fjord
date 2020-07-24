@@ -19,6 +19,9 @@ pub(crate) enum SyntaxKind {
 
     #[error]
     Error,
+
+    // Compound variants
+    Root,
 }
 
 #[cfg(test)]
