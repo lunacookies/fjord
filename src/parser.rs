@@ -47,6 +47,12 @@ impl<'a> Parser<'a> {
         self.builder.token(kind.into(), text);
     }
 
+    fn skip_ws(&mut self) {
+        while let Some(SyntaxKind::Whitespace) = self.peek() {
+            self.bump();
+        }
+    }
+
     /// Parses the input the `Parser` was constructed with.
     pub fn parse(mut self) -> ParseOutput {
         self.builder.start_node(SyntaxKind::Root.into());
@@ -64,10 +70,46 @@ impl<'a> Parser<'a> {
 
     fn parse_expr(&mut self) {
         match self.peek() {
-            Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) => self.bump(),
+            Some(SyntaxKind::Atom) => self.parse_function_call(),
+            Some(SyntaxKind::Digits)
+            | Some(SyntaxKind::StringLiteral)
+            | Some(SyntaxKind::Dollar) => self.parse_contained_expr(),
+            _ => panic!("expected expression"),
+        }
+    }
+
+    fn parse_contained_expr(&mut self) {
+        match self.peek() {
+            Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) | Some(SyntaxKind::Atom) => {
+                self.bump()
+            }
             Some(SyntaxKind::Dollar) => self.parse_binding_usage(),
             _ => panic!("expected expression"),
         }
+    }
+
+    fn parse_function_call(&mut self) {
+        assert_eq!(self.peek(), Some(SyntaxKind::Atom));
+
+        self.builder.start_node(SyntaxKind::FunctionCall.into());
+        self.bump();
+        self.skip_ws();
+
+        self.builder
+            .start_node(SyntaxKind::FunctionCallParams.into());
+
+        loop {
+            if self.at_end() {
+                break;
+            }
+
+            self.parse_contained_expr();
+            self.skip_ws();
+        }
+
+        self.builder.finish_node();
+
+        self.builder.finish_node();
     }
 
     fn parse_binding_usage(&mut self) {
@@ -120,6 +162,22 @@ Root@0..2
             r#"
 Root@0..15
   StringLiteral@0..15 "\"Hello, world!\"""#,
+        );
+    }
+
+    #[test]
+    fn parse_function_call() {
+        test(
+            "func a 1",
+            r#"
+Root@0..8
+  FunctionCall@0..8
+    Atom@0..4 "func"
+    Whitespace@4..5 " "
+    FunctionCallParams@5..8
+      Atom@5..6 "a"
+      Whitespace@6..7 " "
+      Digits@7..8 "1""#,
         );
     }
 
