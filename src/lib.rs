@@ -8,4 +8,4 @@ mod parser;
 
 type SyntaxNode = rowan::SyntaxNode<lang::Lang>;
 
-pub use parser::Parser;
+pub use parser::{ParseOutput, Parser};
