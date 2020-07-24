@@ -64,7 +64,7 @@ impl<'a> Parser<'a> {
 
     fn parse_expr(&mut self) {
         match self.peek() {
-            Some(SyntaxKind::Digits) => self.bump(),
+            Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) => self.bump(),
             _ => panic!("expected expression"),
         }
     }
@@ -95,6 +95,16 @@ Root@0..0"#,
             r#"
 Root@0..2
   Digits@0..2 "10""#,
+        )
+    }
+
+    #[test]
+    fn parse_string_literal() {
+        test(
+            "\"Hello, world!\"",
+            r#"
+Root@0..15
+  StringLiteral@0..15 "\"Hello, world!\"""#,
         )
     }
 }
