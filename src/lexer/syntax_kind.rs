@@ -16,6 +16,9 @@ pub(crate) enum SyntaxKind {
     #[token("=")]
     Equals,
 
+    #[token("$")]
+    Dollar,
+
     #[token("::")]
     DoubleColon,
 
@@ -74,6 +77,11 @@ mod tests {
     #[test]
     fn lex_equals_sign() {
         test("=", SyntaxKind::Equals);
+    }
+
+    #[test]
+    fn lex_dollar_sign() {
+        test("$", SyntaxKind::Dollar);
     }
 
     #[test]
