@@ -10,5 +10,3 @@ homepage = "https://github.com/arzg/fjord"
 repository = "https://github.com/arzg/fjord"
 
 [dependencies]
-nom = "5"
-thiserror = "1"
