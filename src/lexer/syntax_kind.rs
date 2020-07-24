@@ -4,7 +4,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[derive(Debug, Logos, Copy, Clone, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u16)]
 pub(crate) enum SyntaxKind {
-    #[regex(".+")]
+    #[regex(r#"([^\n ]|\\ )+"#)]
     Atom,
 
     #[regex("[0-9]+", priority = 2)]
@@ -19,7 +19,7 @@ pub(crate) enum SyntaxKind {
     #[token("::")]
     DoubleColon,
 
-    #[regex("[\n ]+", priority = 2)]
+    #[regex("[\n ]+")]
     Whitespace,
 
     #[error]
@@ -54,6 +54,11 @@ mod tests {
     #[test]
     fn lex_atom() {
         test("/bin/åbç123défg456", SyntaxKind::Atom);
+    }
+
+    #[test]
+    fn lex_atom_that_contains_space_escaped_by_backslash() {
+        test("escaped\\ space", SyntaxKind::Atom);
     }
 
     #[test]
