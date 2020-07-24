@@ -22,8 +22,11 @@ pub(crate) enum SyntaxKind {
     #[token("::")]
     DoubleColon,
 
-    #[regex("[\n ]+")]
+    #[regex(" +")]
     Whitespace,
+
+    #[regex("\n+")]
+    Eol,
 
     #[error]
     Error,
@@ -107,6 +110,6 @@ mod tests {
 
     #[test]
     fn lex_line_feeds() {
-        test("\n\n\n", SyntaxKind::Whitespace);
+        test("\n\n\n", SyntaxKind::Eol);
     }
 }
