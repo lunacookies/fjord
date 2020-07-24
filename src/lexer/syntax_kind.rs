@@ -1,7 +1,7 @@
 use logos::Logos;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Logos, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Debug, Logos, Copy, Clone, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u16)]
 pub(crate) enum SyntaxKind {
     #[regex("[A-Za-z][A-Za-z0-9]*")]
