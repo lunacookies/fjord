@@ -1,10 +1,19 @@
 mod syntax_kind;
 
+use logos::Logos;
 use smol_str::SmolStr;
 use syntax_kind::SyntaxKind;
 
-struct Lexer<'a> {
+pub(crate) struct Lexer<'a> {
     inner: logos::Lexer<'a, SyntaxKind>,
+}
+
+impl<'a> Lexer<'a> {
+    pub(crate) fn new(input: &'a str) -> Self {
+        Self {
+            inner: SyntaxKind::lexer(input),
+        }
+    }
 }
 
 impl Iterator for Lexer<'_> {
