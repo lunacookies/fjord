@@ -21,6 +21,8 @@ macro_rules! ast_node {
 
 ast_node!(Root, SyntaxKind::Root);
 
+ast_node!(Item, SyntaxKind::Item);
+
 ast_node!(Expr, SyntaxKind::Expr);
 
 ast_node!(Statement, SyntaxKind::Statement);
