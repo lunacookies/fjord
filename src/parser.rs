@@ -23,6 +23,7 @@ impl ParseOutput {
 pub struct Parser<'a> {
     lexer: Peekable<Lexer<'a>>,
     builder: GreenNodeBuilder<'static>,
+    errors: Vec<&'static str>,
 }
 
 impl<'a> Parser<'a> {
@@ -31,6 +32,7 @@ impl<'a> Parser<'a> {
         Self {
             lexer: Lexer::new(input).peekable(),
             builder: GreenNodeBuilder::new(),
+            errors: Vec::new(),
         }
     }
 
@@ -50,6 +52,14 @@ impl<'a> Parser<'a> {
     fn skip_ws(&mut self) {
         while let Some(SyntaxKind::Whitespace) = self.peek() {
             self.bump();
+        }
+    }
+
+    fn error(&mut self, message: &'static str) {
+        self.errors.push(message);
+
+        if let Some((_, text)) = self.lexer.next() {
+            self.builder.token(SyntaxKind::Error.into(), text)
         }
     }
 
@@ -81,7 +91,7 @@ impl<'a> Parser<'a> {
         if let Some(SyntaxKind::Atom) = self.peek() {
             self.bump();
         } else {
-            panic!("expected binding name");
+            self.error("expected binding name");
         }
 
         self.skip_ws();
@@ -89,7 +99,7 @@ impl<'a> Parser<'a> {
         if let Some(SyntaxKind::Equals) = self.peek() {
             self.bump();
         } else {
-            panic!("expected equals sign");
+            self.error("expected equals sign");
         }
 
         self.skip_ws();
@@ -109,7 +119,11 @@ impl<'a> Parser<'a> {
             Some(SyntaxKind::Digits)
             | Some(SyntaxKind::StringLiteral)
             | Some(SyntaxKind::Dollar) => self.parse_contained_expr(),
-            _ => panic!("expected expression"),
+            _ => {
+                self.builder.start_node(SyntaxKind::Expr.into());
+                self.error("expected expression");
+                self.builder.finish_node();
+            }
         }
     }
 
@@ -121,7 +135,7 @@ impl<'a> Parser<'a> {
                 self.bump()
             }
             Some(SyntaxKind::Dollar) => self.parse_binding_usage(),
-            _ => panic!("expected expression"),
+            _ => self.error("expected expression"),
         }
 
         self.builder.finish_node();
@@ -159,7 +173,7 @@ impl<'a> Parser<'a> {
 
         match self.peek() {
             Some(SyntaxKind::Atom) => self.bump(),
-            _ => panic!("expected atom"),
+            _ => self.error("expected atom"),
         }
 
         self.builder.finish_node();
@@ -269,5 +283,72 @@ Root@0..27
             Digits@26..27 "5"
           "#,
         );
+    }
+
+    #[test]
+    fn recover_from_junk_binding_name_in_binding_definition() {
+        test(
+            "let 5 = 10",
+            r#"
+Root@0..10
+  Statement@0..10
+    Let@0..3 "let"
+    Whitespace@3..4 " "
+    Error@4..5 "5"
+    Whitespace@5..6 " "
+    Equals@6..7 "="
+    Whitespace@7..8 " "
+    Expr@8..10
+      Digits@8..10 "10""#,
+        );
+    }
+
+    #[test]
+    fn recover_from_junk_equals_sign_in_binding_definition() {
+        test(
+            "let x _ 10",
+            r#"
+Root@0..10
+  Statement@0..10
+    Let@0..3 "let"
+    Whitespace@3..4 " "
+    Atom@4..5 "x"
+    Whitespace@5..6 " "
+    Error@6..7 "_"
+    Whitespace@7..8 " "
+    Expr@8..10
+      Digits@8..10 "10""#,
+        );
+    }
+
+    #[test]
+    fn recover_from_junk_expression() {
+        test(
+            "let a = =",
+            r#"
+Root@0..9
+  Statement@0..9
+    Let@0..3 "let"
+    Whitespace@3..4 " "
+    Atom@4..5 "a"
+    Whitespace@5..6 " "
+    Equals@6..7 "="
+    Whitespace@7..8 " "
+    Expr@8..9
+      Error@8..9 "=""#,
+        );
+    }
+
+    #[test]
+    fn recover_from_junk_binding_usage() {
+        test(
+            "$let",
+            r#"
+Root@0..4
+  Expr@0..4
+    BindingUsage@0..4
+      Dollar@0..1 "$"
+      Error@1..4 "let""#,
+        )
     }
 }
