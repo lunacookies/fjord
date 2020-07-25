@@ -22,8 +22,8 @@ pub(crate) enum SyntaxKind {
     #[token("$")]
     Dollar,
 
-    #[token("::")]
-    DoubleColon,
+    #[token("|")]
+    Pipe,
 
     #[regex(" +")]
     Whitespace,
@@ -112,8 +112,8 @@ mod tests {
     }
 
     #[test]
-    fn lex_double_colon() {
-        test("::", SyntaxKind::DoubleColon);
+    fn lex_pipe() {
+        test("|", SyntaxKind::Pipe);
     }
 
     #[test]
