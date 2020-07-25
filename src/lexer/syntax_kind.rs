@@ -4,6 +4,9 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[derive(Debug, Logos, Copy, Clone, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u16)]
 pub(crate) enum SyntaxKind {
+    #[token("let")]
+    Let,
+
     #[regex(r"([^\n $]|\\ )+")]
     Atom,
 
@@ -59,6 +62,11 @@ mod tests {
 
         assert_eq!(lexer.next(), Some(expected_kind));
         assert_eq!(lexer.slice(), input);
+    }
+
+    #[test]
+    fn lex_let_keyword() {
+        test("let", SyntaxKind::Let);
     }
 
     #[test]
