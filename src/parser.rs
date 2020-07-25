@@ -70,7 +70,11 @@ impl<'a> Parser<'a> {
 
     fn parse_expr(&mut self) {
         match self.peek() {
-            Some(SyntaxKind::Atom) => self.parse_function_call(),
+            Some(SyntaxKind::Atom) => {
+                self.builder.start_node(SyntaxKind::Expr.into());
+                self.parse_function_call();
+                self.builder.finish_node();
+            }
             Some(SyntaxKind::Digits)
             | Some(SyntaxKind::StringLiteral)
             | Some(SyntaxKind::Dollar) => self.parse_contained_expr(),
@@ -79,6 +83,8 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_contained_expr(&mut self) {
+        self.builder.start_node(SyntaxKind::Expr.into());
+
         match self.peek() {
             Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) | Some(SyntaxKind::Atom) => {
                 self.bump()
@@ -86,6 +92,8 @@ impl<'a> Parser<'a> {
             Some(SyntaxKind::Dollar) => self.parse_binding_usage(),
             _ => panic!("expected expression"),
         }
+
+        self.builder.finish_node();
     }
 
     fn parse_function_call(&mut self) {
@@ -151,7 +159,8 @@ Root@0..0"#,
             "10",
             r#"
 Root@0..2
-  Digits@0..2 "10""#,
+  Expr@0..2
+    Digits@0..2 "10""#,
         );
     }
 
@@ -161,7 +170,8 @@ Root@0..2
             "\"Hello, world!\"",
             r#"
 Root@0..15
-  StringLiteral@0..15 "\"Hello, world!\"""#,
+  Expr@0..15
+    StringLiteral@0..15 "\"Hello, world!\"""#,
         );
     }
 
@@ -171,13 +181,16 @@ Root@0..15
             "func a 1",
             r#"
 Root@0..8
-  FunctionCall@0..8
-    Atom@0..4 "func"
-    Whitespace@4..5 " "
-    FunctionCallParams@5..8
-      Atom@5..6 "a"
-      Whitespace@6..7 " "
-      Digits@7..8 "1""#,
+  Expr@0..8
+    FunctionCall@0..8
+      Atom@0..4 "func"
+      Whitespace@4..5 " "
+      FunctionCallParams@5..8
+        Expr@5..6
+          Atom@5..6 "a"
+        Whitespace@6..7 " "
+        Expr@7..8
+          Digits@7..8 "1""#,
         );
     }
 
@@ -187,9 +200,10 @@ Root@0..8
             "$var",
             r#"
 Root@0..4
-  BindingUsage@0..4
-    Dollar@0..1 "$"
-    Atom@1..4 "var""#,
+  Expr@0..4
+    BindingUsage@0..4
+      Dollar@0..1 "$"
+      Atom@1..4 "var""#,
         );
     }
 }
