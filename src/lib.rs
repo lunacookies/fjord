@@ -6,6 +6,7 @@ mod ast;
 mod lang;
 mod lexer;
 mod parser;
+mod val;
 
 type SyntaxNode = rowan::SyntaxNode<lang::Lang>;
 
