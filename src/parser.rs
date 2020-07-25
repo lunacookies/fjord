@@ -58,7 +58,10 @@ impl<'a> Parser<'a> {
         self.builder.start_node(SyntaxKind::Root.into());
 
         if !self.at_end() {
-            self.parse_expr();
+            match self.peek() {
+                Some(SyntaxKind::Let) => self.parse_statement(),
+                _ => self.parse_expr(),
+            }
         }
 
         self.builder.finish_node();
@@ -66,6 +69,34 @@ impl<'a> Parser<'a> {
         ParseOutput {
             green_node: self.builder.finish(),
         }
+    }
+
+    fn parse_statement(&mut self) {
+        assert_eq!(self.peek(), Some(SyntaxKind::Let));
+
+        self.builder.start_node(SyntaxKind::Statement.into());
+        self.bump();
+        self.skip_ws();
+
+        if let Some(SyntaxKind::Atom) = self.peek() {
+            self.bump();
+        } else {
+            panic!("expected binding name");
+        }
+
+        self.skip_ws();
+
+        if let Some(SyntaxKind::Equals) = self.peek() {
+            self.bump();
+        } else {
+            panic!("expected equals sign");
+        }
+
+        self.skip_ws();
+
+        self.parse_expr();
+
+        self.builder.finish_node();
     }
 
     fn parse_expr(&mut self) {
@@ -205,6 +236,38 @@ Root@0..4
     BindingUsage@0..4
       Dollar@0..1 "$"
       Atom@1..4 "var""#,
+        );
+    }
+
+    #[test]
+    fn parse_binding_definition() {
+        test(
+            r#"let foo = bar "baz" $quux 5"#,
+            r#"
+Root@0..27
+  Statement@0..27
+    Let@0..3 "let"
+    Whitespace@3..4 " "
+    Atom@4..7 "foo"
+    Whitespace@7..8 " "
+    Equals@8..9 "="
+    Whitespace@9..10 " "
+    Expr@10..27
+      FunctionCall@10..27
+        Atom@10..13 "bar"
+        Whitespace@13..14 " "
+        FunctionCallParams@14..27
+          Expr@14..19
+            StringLiteral@14..19 "\"baz\""
+          Whitespace@19..20 " "
+          Expr@20..25
+            BindingUsage@20..25
+              Dollar@20..21 "$"
+              Atom@21..25 "quux"
+          Whitespace@25..26 " "
+          Expr@26..27
+            Digits@26..27 "5"
+          "#,
         );
     }
 }
