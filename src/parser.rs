@@ -1,11 +1,14 @@
 mod expr;
+mod item;
 mod statement;
+
+use expr::parse_expr;
+use item::parse_item;
+use statement::parse_statement;
 
 use crate::lexer::{Lexer, SyntaxKind};
 use crate::SyntaxNode;
-use expr::parse_expr;
 use rowan::{GreenNode, GreenNodeBuilder};
-use statement::parse_statement;
 use std::iter::Peekable;
 
 /// The output of parsing Fjord code.
@@ -73,10 +76,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(SyntaxKind::Root.into());
 
         if !self.at_end() {
-            match self.peek() {
-                Some(SyntaxKind::Let) => parse_statement(&mut self),
-                _ => parse_expr(&mut self),
-            }
+            parse_item(&mut self);
         }
 
         self.builder.finish_node();
