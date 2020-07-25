@@ -3,6 +3,7 @@
 #![warn(missing_docs, rust_2018_idioms)]
 
 mod ast;
+mod env;
 mod lang;
 mod lexer;
 mod parser;
