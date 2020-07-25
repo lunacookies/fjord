@@ -138,6 +138,7 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     fn test(input: &str, expected_output: &str) {
         let parse_output = Parser::new(input).parse();
