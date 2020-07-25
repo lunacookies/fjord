@@ -13,6 +13,7 @@ pub(super) fn parse_expr(p: &mut Parser<'_>) {
 
     match p.peek() {
         Some(SyntaxKind::Atom) => parse_function_call(p),
+        Some(SyntaxKind::Pipe) => parse_lambda(p),
         _ => p.error("expected expression"),
     }
 
@@ -38,6 +39,42 @@ fn parse_function_call(p: &mut Parser<'_>) {
     }
 
     p.builder.finish_node();
+
+    p.builder.finish_node();
+}
+
+fn parse_lambda(p: &mut Parser<'_>) {
+    assert_eq!(p.peek(), Some(SyntaxKind::Pipe));
+
+    p.builder.start_node(SyntaxKind::Lambda.into());
+
+    p.builder.start_node(SyntaxKind::LambdaParams.into());
+
+    p.bump();
+    p.skip_ws();
+
+    loop {
+        if p.at_end() {
+            break;
+        }
+
+        match p.peek() {
+            Some(SyntaxKind::Atom) => p.bump(),
+            Some(SyntaxKind::Pipe) => {
+                p.bump();
+                break;
+            }
+            None => break,
+            _ => p.error("expected atom or pipe"),
+        }
+
+        p.skip_ws();
+    }
+
+    p.builder.finish_node();
+
+    p.skip_ws();
+    parse_expr(p);
 
     p.builder.finish_node();
 }
@@ -142,6 +179,36 @@ Root@0..4
     BindingUsage@0..4
       Dollar@0..1 "$"
       Error@1..4 "let""#,
+        );
+    }
+
+    #[test]
+    fn parse_lambda() {
+        test(
+            "|a b| a $b 5",
+            r#"
+Root@0..12
+  Expr@0..12
+    Lambda@0..12
+      LambdaParams@0..5
+        Pipe@0..1 "|"
+        Atom@1..2 "a"
+        Whitespace@2..3 " "
+        Atom@3..4 "b"
+        Pipe@4..5 "|"
+      Whitespace@5..6 " "
+      Expr@6..12
+        FunctionCall@6..12
+          Atom@6..7 "a"
+          Whitespace@7..8 " "
+          FunctionCallParams@8..12
+            Expr@8..10
+              BindingUsage@8..10
+                Dollar@8..9 "$"
+                Atom@9..10 "b"
+            Whitespace@10..11 " "
+            Expr@11..12
+              Digits@11..12 "5""#,
         );
     }
 }

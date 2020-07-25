@@ -7,7 +7,7 @@ pub(crate) enum SyntaxKind {
     #[token("let")]
     Let,
 
-    #[regex(r"([^\n $]|\\ )+")]
+    #[regex(r"([^\n \$\|]|\\ )+")]
     Atom,
 
     #[regex("[0-9]+", priority = 2)]
@@ -41,6 +41,8 @@ pub(crate) enum SyntaxKind {
     Expr,
     FunctionCall,
     FunctionCallParams,
+    Lambda,
+    LambdaParams,
     BindingUsage,
 }
 
