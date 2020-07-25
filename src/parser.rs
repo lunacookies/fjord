@@ -45,10 +45,6 @@ impl<'a> Parser<'a> {
         self.lexer.peek().map(|(kind, _)| *kind)
     }
 
-    fn at(&mut self, kind: SyntaxKind) -> bool {
-        self.peek() == Some(kind)
-    }
-
     fn at_end(&mut self) -> bool {
         self.lexer.peek().is_none()
     }
@@ -108,6 +104,7 @@ impl<'a> Parser<'a> {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
