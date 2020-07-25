@@ -19,20 +19,6 @@ pub(super) fn parse_expr(p: &mut Parser<'_>) {
     p.builder.finish_node();
 }
 
-fn parse_contained_expr(p: &mut Parser<'_>) {
-    p.builder.start_node(SyntaxKind::Expr.into());
-
-    match p.peek() {
-        Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) | Some(SyntaxKind::Atom) => {
-            p.bump()
-        }
-        Some(SyntaxKind::Dollar) => parse_binding_usage(p),
-        _ => p.error("expected expression"),
-    }
-
-    p.builder.finish_node();
-}
-
 fn parse_function_call(p: &mut Parser<'_>) {
     assert_eq!(p.peek(), Some(SyntaxKind::Atom));
 
@@ -52,6 +38,20 @@ fn parse_function_call(p: &mut Parser<'_>) {
     }
 
     p.builder.finish_node();
+
+    p.builder.finish_node();
+}
+
+fn parse_contained_expr(p: &mut Parser<'_>) {
+    p.builder.start_node(SyntaxKind::Expr.into());
+
+    match p.peek() {
+        Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) | Some(SyntaxKind::Atom) => {
+            p.bump()
+        }
+        Some(SyntaxKind::Dollar) => parse_binding_usage(p),
+        _ => p.error("expected expression"),
+    }
 
     p.builder.finish_node();
 }
