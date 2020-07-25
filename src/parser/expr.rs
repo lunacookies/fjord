@@ -3,20 +3,20 @@ use crate::lexer::SyntaxKind;
 
 pub(super) fn parse_expr(p: &mut Parser<'_>) {
     match p.peek() {
-        Some(SyntaxKind::Atom) => {
-            p.builder.start_node(SyntaxKind::Expr.into());
-            parse_function_call(p);
-            p.builder.finish_node();
-        }
         Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) | Some(SyntaxKind::Dollar) => {
-            parse_contained_expr(p)
+            return parse_contained_expr(p);
         }
-        _ => {
-            p.builder.start_node(SyntaxKind::Expr.into());
-            p.error("expected expression");
-            p.builder.finish_node();
-        }
+        _ => {}
     }
+
+    p.builder.start_node(SyntaxKind::Expr.into());
+
+    match p.peek() {
+        Some(SyntaxKind::Atom) => parse_function_call(p),
+        _ => p.error("expected expression"),
+    }
+
+    p.builder.finish_node();
 }
 
 fn parse_contained_expr(p: &mut Parser<'_>) {
