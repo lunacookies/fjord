@@ -107,10 +107,17 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
+
+    fn test(input: &'static str, expected_output: &'static str) {
+        let parser = Parser::new(input);
+        let parse_output = parser.parse();
+
+        assert_eq!(parse_output.debug_tree(), expected_output);
+    }
 
     #[test]
     fn parse_nothing() {
-        let parse_output = Parser::new("").parse();
-        assert_eq!(parse_output.debug_tree(), "Root@0..0");
+        test("", "Root@0..0");
     }
 }
