@@ -75,7 +75,7 @@ mod tests {
     use super::*;
 
     fn test(input: &'static str, expected_output: &'static str) {
-        Parser::test(parse_expr, input, expected_output)
+        Parser::test(parse_expr, input, expected_output);
     }
 
     #[test]
@@ -142,6 +142,6 @@ Root@0..4
     BindingUsage@0..4
       Dollar@0..1 "$"
       Error@1..4 "let""#,
-        )
+        );
     }
 }

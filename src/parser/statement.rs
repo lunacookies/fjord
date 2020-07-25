@@ -34,7 +34,7 @@ mod tests {
     use super::*;
 
     fn test(input: &'static str, expected_output: &'static str) {
-        Parser::test(parse_statement, input, expected_output)
+        Parser::test(parse_statement, input, expected_output);
     }
 
     #[test]
