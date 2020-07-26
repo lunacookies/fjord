@@ -191,6 +191,8 @@ macro_rules! ast_token {
     };
 }
 
+ast_token!(Atom, SyntaxKind::Atom);
+
 ast_token!(Digits, SyntaxKind::Digits);
 
 ast_token!(StringLiteral, SyntaxKind::StringLiteral);
