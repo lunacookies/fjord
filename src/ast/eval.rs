@@ -75,6 +75,6 @@ impl StringLiteral {
 
 impl Digits {
     fn eval(&self) -> Val {
-        todo!()
+        Val::Number(self.text().parse().unwrap())
     }
 }
