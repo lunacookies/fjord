@@ -3,15 +3,11 @@ use super::{parse_expr, parse_statement};
 use crate::lexer::SyntaxKind;
 
 pub(super) fn parse_item(p: &mut Parser<'_>) {
-    p.builder.start_node(SyntaxKind::Item.into());
-
     if p.peek() == Some(SyntaxKind::Let) {
         parse_statement(p);
     } else {
         parse_expr(p);
     }
-
-    p.builder.finish_node();
 }
 
 #[cfg(test)]
@@ -28,9 +24,8 @@ mod tests {
             "5",
             r#"
 Root@0..1
-  Item@0..1
-    Expr@0..1
-      Digits@0..1 "5""#,
+  Expr@0..1
+    Digits@0..1 "5""#,
         );
     }
 
@@ -40,18 +35,17 @@ Root@0..1
             "let x = $y",
             r#"
 Root@0..10
-  Item@0..10
-    Statement@0..10
-      Let@0..3 "let"
-      Whitespace@3..4 " "
-      Atom@4..5 "x"
-      Whitespace@5..6 " "
-      Equals@6..7 "="
-      Whitespace@7..8 " "
-      Expr@8..10
-        BindingUsage@8..10
-          Dollar@8..9 "$"
-          Atom@9..10 "y""#,
+  Statement@0..10
+    Let@0..3 "let"
+    Whitespace@3..4 " "
+    Atom@4..5 "x"
+    Whitespace@5..6 " "
+    Equals@6..7 "="
+    Whitespace@7..8 " "
+    Expr@8..10
+      BindingUsage@8..10
+        Dollar@8..9 "$"
+        Atom@9..10 "y""#,
         );
     }
 }
