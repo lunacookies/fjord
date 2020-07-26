@@ -21,6 +21,18 @@ macro_rules! ast_node {
 
 ast_node!(Root, SyntaxKind::Root);
 
+struct Item(SyntaxNode);
+
+impl Item {
+    fn cast(node: SyntaxNode) -> Option<Self> {
+        if Statement::cast(node.clone()).is_some() || Expr::cast(node.clone()).is_some() {
+            Some(Self(node))
+        } else {
+            None
+        }
+    }
+}
+
 ast_node!(Statement, SyntaxKind::Statement);
 
 ast_node!(BindingDef, SyntaxKind::BindingDef);
