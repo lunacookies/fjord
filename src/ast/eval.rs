@@ -53,7 +53,7 @@ impl FunctionCall {
 
 impl Lambda {
     fn eval(&self, env: &Env) -> Val {
-        todo!()
+        Val::Lambda(self.clone())
     }
 }
 
