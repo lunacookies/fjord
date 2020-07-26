@@ -8,6 +8,13 @@ pub(crate) struct Env<'parent> {
 }
 
 impl<'parent> Env<'parent> {
+    pub(crate) fn new() -> Self {
+        Self {
+            bindings: HashMap::new(),
+            parent: None,
+        }
+    }
+
     pub(crate) fn create_child(&'parent self) -> Self {
         Self {
             bindings: HashMap::new(),
