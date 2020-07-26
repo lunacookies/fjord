@@ -12,7 +12,7 @@ macro_rules! ast_node {
 
         impl $node {
             #[allow(unused)]
-            fn cast(node: SyntaxNode) -> Option<Self> {
+            pub(crate) fn cast(node: SyntaxNode) -> Option<Self> {
                 if node.kind() == $kind {
                     Some(Self(node))
                 } else {
@@ -182,7 +182,7 @@ macro_rules! ast_token {
 
         impl $token {
             #[allow(unused)]
-            fn cast(token: SyntaxToken) -> Option<Self> {
+            pub(crate) fn cast(token: SyntaxToken) -> Option<Self> {
                 if token.kind() == $kind {
                     Some(Self(token))
                 } else {
