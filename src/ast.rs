@@ -63,6 +63,10 @@ impl Statement {
             .next()
             .map(|token| token.text())
     }
+
+    fn expr(&self) -> Option<Expr> {
+        self.0.children().filter_map(Expr::cast).next()
+    }
 }
 
 ast_node!(BindingDef, SyntaxKind::BindingDef);
