@@ -7,11 +7,9 @@ use smol_str::SmolStr;
 macro_rules! ast_node {
     ($node:ident, $kind:expr) => {
         #[derive(Clone)]
-        #[allow(unused)]
-        pub(crate) struct $node(SyntaxNode);
+        pub struct $node(SyntaxNode);
 
         impl $node {
-            #[allow(unused)]
             pub(crate) fn cast(node: SyntaxNode) -> Option<Self> {
                 if node.kind() == $kind {
                     Some(Self(node))
@@ -177,11 +175,9 @@ impl BindingUsage {
 macro_rules! ast_token {
     ($token:ident, $kind:expr) => {
         #[derive(Clone)]
-        #[allow(unused)]
         pub(crate) struct $token(SyntaxToken);
 
         impl $token {
-            #[allow(unused)]
             pub(crate) fn cast(token: SyntaxToken) -> Option<Self> {
                 if token.kind() == $kind {
                     Some(Self(token))
@@ -190,7 +186,6 @@ macro_rules! ast_token {
                 }
             }
 
-            #[allow(unused)]
             fn text(&self) -> &SmolStr {
                 self.0.text()
             }
