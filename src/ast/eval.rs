@@ -59,7 +59,8 @@ impl Lambda {
 
 impl BindingUsage {
     fn eval(&self, env: &Env) -> Val {
-        todo!()
+        // TODO: Add proper error handling for if the binding does not exist.
+        env.get_binding(&self.binding_name().unwrap()).unwrap()
     }
 }
 
