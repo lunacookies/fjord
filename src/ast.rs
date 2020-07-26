@@ -121,6 +121,15 @@ impl Expr {
 
 ast_node!(FunctionCall, SyntaxKind::FunctionCall);
 
+impl FunctionCall {
+    fn name(&self) -> Option<SmolStr> {
+        self.0
+            .first_token()
+            .and_then(Atom::cast)
+            .map(|atom| atom.text().clone())
+    }
+}
+
 ast_node!(FunctionCallParams, SyntaxKind::FunctionCallParams);
 
 ast_node!(Lambda, SyntaxKind::Lambda);
