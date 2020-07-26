@@ -128,6 +128,16 @@ ast_node!(LambdaParams, SyntaxKind::LambdaParams);
 
 ast_node!(BindingUsage, SyntaxKind::BindingUsage);
 
+impl BindingUsage {
+    fn binding_name(&self) -> Option<SmolStr> {
+        self.0
+            .children_with_tokens()
+            .filter_map(|element| element.into_token())
+            .find(|token| token.kind() == SyntaxKind::Atom)
+            .map(|token| token.text().clone())
+    }
+}
+
 macro_rules! ast_token {
     ($token:ident, $kind:expr) => {
         #[allow(unused)]
