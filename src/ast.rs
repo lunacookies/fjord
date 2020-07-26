@@ -73,6 +73,14 @@ impl BindingDef {
 
 struct Expr(SyntaxElement);
 
+enum ExprKind {
+    FunctionCall(FunctionCall),
+    Lambda(Lambda),
+    BindingUsage(BindingUsage),
+    StringLiteral(StringLiteral),
+    NumberLiteral(Digits),
+}
+
 impl Expr {
     fn cast(element: SyntaxElement) -> Option<Self> {
         let is_expr = match element {
@@ -90,6 +98,20 @@ impl Expr {
             Some(Self(element))
         } else {
             None
+        }
+    }
+
+    fn kind(&self) -> ExprKind {
+        match &self.0 {
+            SyntaxElement::Node(node) => FunctionCall::cast(node.clone())
+                .map(ExprKind::FunctionCall)
+                .or_else(|| Lambda::cast(node.clone()).map(ExprKind::Lambda))
+                .or_else(|| BindingUsage::cast(node.clone()).map(ExprKind::BindingUsage))
+                .unwrap(),
+            SyntaxElement::Token(token) => StringLiteral::cast(token.clone())
+                .map(ExprKind::StringLiteral)
+                .or_else(|| Digits::cast(token.clone()).map(ExprKind::NumberLiteral))
+                .unwrap(),
         }
     }
 }
