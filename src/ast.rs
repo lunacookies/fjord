@@ -7,7 +7,7 @@ use smol_str::SmolStr;
 macro_rules! ast_node {
     ($node:ident, $kind:expr) => {
         #[allow(unused)]
-        struct $node(SyntaxNode);
+        pub(crate) struct $node(SyntaxNode);
 
         impl $node {
             #[allow(unused)]
@@ -141,7 +141,7 @@ impl BindingUsage {
 macro_rules! ast_token {
     ($token:ident, $kind:expr) => {
         #[allow(unused)]
-        struct $token(SyntaxToken);
+        pub(crate) struct $token(SyntaxToken);
 
         impl $token {
             #[allow(unused)]
