@@ -65,7 +65,10 @@ impl BindingUsage {
 
 impl StringLiteral {
     fn eval(&self) -> Val {
-        todo!()
+        let text = self.text();
+
+        // Slice off quotes.
+        Val::Str(text[1..text.len() - 1].to_string())
     }
 }
 
