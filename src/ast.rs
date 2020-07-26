@@ -29,6 +29,11 @@ impl Root {
 
 struct Item(SyntaxNode);
 
+enum ItemKind {
+    Statement(Statement),
+    Expr(Expr),
+}
+
 impl Item {
     fn cast(node: SyntaxNode) -> Option<Self> {
         if Statement::cast(node.clone()).is_some() || Expr::cast(node.clone()).is_some() {
@@ -36,6 +41,13 @@ impl Item {
         } else {
             None
         }
+    }
+
+    fn kind(&self) -> ItemKind {
+        Statement::cast(self.0.clone())
+            .map(ItemKind::Statement)
+            .or_else(|| Expr::cast(self.0.clone()).map(ItemKind::Expr))
+            .unwrap()
     }
 }
 
