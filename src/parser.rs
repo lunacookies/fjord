@@ -171,8 +171,7 @@ Root@0..31
     Whitespace@6..7 " "
     Equals@7..8 "="
     Whitespace@8..9 " "
-    Expr@9..14
-      StringLiteral@9..14 "\"dir\""
+    StringLiteral@9..14 "\"dir\""
   Eol@14..15 "\n"
   BindingDef@15..25
     Let@15..18 "let"
@@ -181,20 +180,17 @@ Root@0..31
     Whitespace@20..21 " "
     Equals@21..22 "="
     Whitespace@22..23 " "
-    Expr@23..25
-      BindingUsage@23..25
-        Dollar@23..24 "$"
-        Atom@24..25 "a"
+    BindingUsage@23..25
+      Dollar@23..24 "$"
+      Atom@24..25 "a"
   Eol@25..26 "\n"
-  Expr@26..31
-    FunctionCall@26..31
-      Atom@26..28 "ls"
-      Whitespace@28..29 " "
-      FunctionCallParams@29..31
-        Expr@29..31
-          BindingUsage@29..31
-            Dollar@29..30 "$"
-            Atom@30..31 "b""#,
+  FunctionCall@26..31
+    Atom@26..28 "ls"
+    Whitespace@28..29 " "
+    FunctionCallParams@29..31
+      BindingUsage@29..31
+        Dollar@29..30 "$"
+        Atom@30..31 "b""#,
         );
     }
 }

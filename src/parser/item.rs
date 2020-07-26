@@ -24,8 +24,7 @@ mod tests {
             "5",
             r#"
 Root@0..1
-  Expr@0..1
-    Digits@0..1 "5""#,
+  Digits@0..1 "5""#,
         );
     }
 
@@ -42,10 +41,9 @@ Root@0..10
     Whitespace@5..6 " "
     Equals@6..7 "="
     Whitespace@7..8 " "
-    Expr@8..10
-      BindingUsage@8..10
-        Dollar@8..9 "$"
-        Atom@9..10 "y""#,
+    BindingUsage@8..10
+      Dollar@8..9 "$"
+      Atom@9..10 "y""#,
         );
     }
 }

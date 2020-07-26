@@ -50,22 +50,17 @@ Root@0..27
     Whitespace@7..8 " "
     Equals@8..9 "="
     Whitespace@9..10 " "
-    Expr@10..27
-      FunctionCall@10..27
-        Atom@10..13 "bar"
-        Whitespace@13..14 " "
-        FunctionCallParams@14..27
-          Expr@14..19
-            StringLiteral@14..19 "\"baz\""
-          Whitespace@19..20 " "
-          Expr@20..25
-            BindingUsage@20..25
-              Dollar@20..21 "$"
-              Atom@21..25 "quux"
-          Whitespace@25..26 " "
-          Expr@26..27
-            Digits@26..27 "5"
-          "#,
+    FunctionCall@10..27
+      Atom@10..13 "bar"
+      Whitespace@13..14 " "
+      FunctionCallParams@14..27
+        StringLiteral@14..19 "\"baz\""
+        Whitespace@19..20 " "
+        BindingUsage@20..25
+          Dollar@20..21 "$"
+          Atom@21..25 "quux"
+        Whitespace@25..26 " "
+        Digits@26..27 "5""#,
         );
     }
 
@@ -82,8 +77,7 @@ Root@0..10
     Whitespace@5..6 " "
     Equals@6..7 "="
     Whitespace@7..8 " "
-    Expr@8..10
-      Digits@8..10 "10""#,
+    Digits@8..10 "10""#,
         );
     }
 
@@ -100,8 +94,7 @@ Root@0..10
     Whitespace@5..6 " "
     Error@6..7 "_"
     Whitespace@7..8 " "
-    Expr@8..10
-      Digits@8..10 "10""#,
+    Digits@8..10 "10""#,
         );
     }
 
@@ -118,8 +111,7 @@ Root@0..9
     Whitespace@5..6 " "
     Equals@6..7 "="
     Whitespace@7..8 " "
-    Expr@8..9
-      Error@8..9 "=""#,
+    Error@8..9 "=""#,
         );
     }
 }

@@ -10,5 +10,7 @@ mod parser;
 mod val;
 
 type SyntaxNode = rowan::SyntaxNode<lang::Lang>;
+type SyntaxToken = rowan::SyntaxToken<lang::Lang>;
+type SyntaxElement = rowan::NodeOrToken<SyntaxNode, SyntaxToken>;
 
 pub use parser::{ParseOutput, Parser};

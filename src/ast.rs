@@ -1,5 +1,5 @@
 use crate::lexer::SyntaxKind;
-use crate::SyntaxNode;
+use crate::{SyntaxElement, SyntaxNode};
 use smol_str::SmolStr;
 
 macro_rules! ast_node {
@@ -37,7 +37,7 @@ enum ItemKind {
 
 impl Item {
     fn cast(node: SyntaxNode) -> Option<Self> {
-        if BindingDef::cast(node.clone()).is_some() || Expr::cast(node.clone()).is_some() {
+        if BindingDef::cast(node.clone()).is_some() || Expr::cast(node.clone().into()).is_some() {
             Some(Self(node))
         } else {
             None
@@ -47,7 +47,7 @@ impl Item {
     fn kind(&self) -> ItemKind {
         BindingDef::cast(self.0.clone())
             .map(ItemKind::Statement)
-            .or_else(|| Expr::cast(self.0.clone()).map(ItemKind::Expr))
+            .or_else(|| Expr::cast(self.0.clone().into()).map(ItemKind::Expr))
             .unwrap()
     }
 }
@@ -64,11 +64,35 @@ impl BindingDef {
     }
 
     fn expr(&self) -> Option<Expr> {
-        self.0.children().filter_map(Expr::cast).next()
+        self.0
+            .children()
+            .filter_map(|node| Expr::cast(node.into()))
+            .next()
     }
 }
 
-ast_node!(Expr, SyntaxKind::Expr);
+struct Expr(SyntaxElement);
+
+impl Expr {
+    fn cast(element: SyntaxElement) -> Option<Self> {
+        let is_expr = match element {
+            SyntaxElement::Node(ref node) => {
+                FunctionCall::cast(node.clone()).is_some()
+                    || Lambda::cast(node.clone()).is_some()
+                    || BindingUsage::cast(node.clone()).is_some()
+    }
+            SyntaxElement::Token(ref token) => {
+                token.kind() == SyntaxKind::StringLiteral || token.kind() == SyntaxKind::Digits
+}
+        };
+
+        if is_expr {
+            Some(Self(element))
+        } else {
+            None
+        }
+    }
+}
 
 ast_node!(FunctionCall, SyntaxKind::FunctionCall);
 
