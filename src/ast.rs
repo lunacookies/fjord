@@ -21,6 +21,12 @@ macro_rules! ast_node {
 
 ast_node!(Root, SyntaxKind::Root);
 
+impl Root {
+    fn items(&self) -> impl Iterator<Item = Item> {
+        self.0.children().filter_map(Item::cast)
+    }
+}
+
 struct Item(SyntaxNode);
 
 impl Item {
