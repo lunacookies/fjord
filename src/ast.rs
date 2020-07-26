@@ -77,3 +77,5 @@ ast_node!(FunctionCallParams, SyntaxKind::FunctionCallParams);
 ast_node!(Lambda, SyntaxKind::Lambda);
 
 ast_node!(LambdaParams, SyntaxKind::LambdaParams);
+
+ast_node!(BindingUsage, SyntaxKind::BindingUsage);
