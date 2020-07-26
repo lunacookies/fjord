@@ -142,6 +142,11 @@ macro_rules! ast_token {
                     None
                 }
             }
+
+            #[allow(unused)]
+            fn text(&self) -> &SmolStr {
+                self.0.text()
+            }
         }
     };
 }
