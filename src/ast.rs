@@ -134,6 +134,25 @@ ast_node!(FunctionCallParams, SyntaxKind::FunctionCallParams);
 
 ast_node!(Lambda, SyntaxKind::Lambda);
 
+impl Lambda {
+    fn param_names(&self) -> Option<impl Iterator<Item = SmolStr>> {
+        let params = LambdaParams::cast(self.0.first_child()?)?;
+
+        Some(
+            params
+                .0
+                .children_with_tokens()
+                .filter_map(|element| element.into_token())
+                .filter_map(Atom::cast)
+                .map(|atom| atom.text().clone()),
+        )
+    }
+
+    fn body(&self) -> Option<Expr> {
+        self.0.children_with_tokens().filter_map(Expr::cast).next()
+    }
+}
+
 ast_node!(LambdaParams, SyntaxKind::LambdaParams);
 
 ast_node!(BindingUsage, SyntaxKind::BindingUsage);
