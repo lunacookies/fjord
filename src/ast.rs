@@ -128,6 +128,13 @@ impl FunctionCall {
             .and_then(Atom::cast)
             .map(|atom| atom.text().clone())
     }
+
+    fn params(&self) -> Option<impl Iterator<Item = Expr>> {
+        self.0
+            .children()
+            .find_map(FunctionCallParams::cast)
+            .map(|params| params.0.children_with_tokens().filter_map(Expr::cast))
+    }
 }
 
 ast_node!(FunctionCallParams, SyntaxKind::FunctionCallParams);
