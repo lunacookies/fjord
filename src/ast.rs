@@ -6,6 +6,7 @@ use smol_str::SmolStr;
 
 macro_rules! ast_node {
     ($node:ident, $kind:expr) => {
+        #[derive(Clone)]
         #[allow(unused)]
         pub(crate) struct $node(SyntaxNode);
 
@@ -140,6 +141,7 @@ impl BindingUsage {
 
 macro_rules! ast_token {
     ($token:ident, $kind:expr) => {
+        #[derive(Clone)]
         #[allow(unused)]
         pub(crate) struct $token(SyntaxToken);
 
