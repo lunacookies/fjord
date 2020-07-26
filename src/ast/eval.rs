@@ -6,7 +6,7 @@ use crate::env::Env;
 use crate::val::Val;
 
 impl Root {
-    fn eval(&self, env: &mut Env) -> Val {
+    fn eval(&self, env: &mut Env<'_>) -> Val {
         for item in self.items() {
             item.eval(env);
         }
@@ -16,7 +16,7 @@ impl Root {
 }
 
 impl Item {
-    fn eval(&self, env: &mut Env) -> Val {
+    fn eval(&self, env: &mut Env<'_>) -> Val {
         match self.kind() {
             ItemKind::Statement(binding_def) => {
                 binding_def.eval(env);
@@ -28,16 +28,16 @@ impl Item {
 }
 
 impl BindingDef {
-    fn eval(&self, env: &mut Env) {
+    fn eval(&self, env: &mut Env<'_>) {
         env.store_binding(self.binding_name().unwrap(), self.expr().unwrap().eval(env))
     }
 }
 
 impl Expr {
-    fn eval(&self, env: &Env) -> Val {
+    fn eval(&self, env: &Env<'_>) -> Val {
         match self.kind() {
             ExprKind::FunctionCall(function_call) => function_call.eval(env),
-            ExprKind::Lambda(lambda) => lambda.eval(env),
+            ExprKind::Lambda(lambda) => Val::Lambda(lambda),
             ExprKind::BindingUsage(binding_usage) => binding_usage.eval(env),
             ExprKind::StringLiteral(string_literal) => string_literal.eval(),
             ExprKind::NumberLiteral(digits) => digits.eval(),
@@ -46,19 +46,34 @@ impl Expr {
 }
 
 impl FunctionCall {
-    fn eval(&self, env: &Env) -> Val {
-        todo!()
+    fn eval(&self, env: &Env<'_>) -> Val {
+        // TODO: Add proper error handling for when function does not exist or is not a lambda.
+
+        let val = env.get_binding(&self.name().unwrap()).unwrap();
+
+        match val {
+            Val::Lambda(lambda) => {
+                lambda.eval(self.params().unwrap().map(|param| param.eval(env)), env)
+            }
+            _ => unreachable!(),
+        }
     }
 }
 
 impl Lambda {
-    fn eval(&self, env: &Env) -> Val {
-        Val::Lambda(self.clone())
+    fn eval(&self, params: impl Iterator<Item = Val>, env: &Env<'_>) -> Val {
+        let mut new_env = env.create_child();
+
+        for (param_name, param_val) in self.param_names().unwrap().zip(params) {
+            new_env.store_binding(param_name, param_val);
+        }
+
+        self.body().unwrap().eval(&new_env)
     }
 }
 
 impl BindingUsage {
-    fn eval(&self, env: &Env) -> Val {
+    fn eval(&self, env: &Env<'_>) -> Val {
         // TODO: Add proper error handling for if the binding does not exist.
         env.get_binding(&self.binding_name().unwrap()).unwrap()
     }
