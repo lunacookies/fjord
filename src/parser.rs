@@ -57,17 +57,37 @@ impl<'a> Parser<'a> {
         self.builder.token(kind.into(), text);
     }
 
-    fn skip_ws(&mut self) {
-        while let Some(SyntaxKind::Whitespace) = self.peek() {
-            self.bump();
+    fn skip(&mut self, kinds: &'static [SyntaxKind]) {
+        loop {
+            if self.at_end() {
+                break;
+            }
+
+            if kinds.contains(&self.peek().unwrap()) {
+                self.bump();
+            } else {
+                break;
+            }
         }
+    }
+
+    fn skip_ws(&mut self) {
+        self.skip(&[SyntaxKind::Whitespace]);
+    }
+
+    fn skip_ws_and_eol(&mut self) {
+        self.skip(&[SyntaxKind::Whitespace, SyntaxKind::Eol]);
     }
 
     fn error(&mut self, message: &'static str) {
         self.errors.push(message);
 
-        if let Some((_, text)) = self.lexer.next() {
-            self.builder.token(SyntaxKind::Error.into(), text)
+        match self.peek() {
+            Some(SyntaxKind::Eol) | None => {}
+            Some(_) => {
+                let (_, text) = self.lexer.next().unwrap();
+                self.builder.token(SyntaxKind::Error.into(), text);
+            }
         }
     }
 
@@ -75,8 +95,21 @@ impl<'a> Parser<'a> {
     pub fn parse(mut self) -> ParseOutput {
         self.builder.start_node(SyntaxKind::Root.into());
 
-        if !self.at_end() {
+        self.skip_ws_and_eol();
+
+        loop {
+            if self.at_end() {
+                break;
+            }
+
             parse_item(&mut self);
+            self.skip_ws();
+
+            match self.peek() {
+                Some(SyntaxKind::Eol) => self.bump(),
+                None => break,
+                _ => self.error("expected end of line"),
+            }
         }
 
         self.builder.finish_node();
@@ -113,11 +146,58 @@ mod tests {
         let parser = Parser::new(input);
         let parse_output = parser.parse();
 
-        assert_eq!(parse_output.debug_tree(), expected_output);
+        assert_eq!(parse_output.debug_tree(), expected_output.trim());
     }
 
     #[test]
     fn parse_nothing() {
         test("", "Root@0..0");
+    }
+
+    #[test]
+    fn parse_multiple_items() {
+        test(
+            r#"
+let a = "dir"
+let b = $a
+ls $b"#,
+            r#"
+Root@0..31
+  Eol@0..1 "\n"
+  Item@1..14
+    Statement@1..14
+      Let@1..4 "let"
+      Whitespace@4..5 " "
+      Atom@5..6 "a"
+      Whitespace@6..7 " "
+      Equals@7..8 "="
+      Whitespace@8..9 " "
+      Expr@9..14
+        StringLiteral@9..14 "\"dir\""
+  Eol@14..15 "\n"
+  Item@15..25
+    Statement@15..25
+      Let@15..18 "let"
+      Whitespace@18..19 " "
+      Atom@19..20 "b"
+      Whitespace@20..21 " "
+      Equals@21..22 "="
+      Whitespace@22..23 " "
+      Expr@23..25
+        BindingUsage@23..25
+          Dollar@23..24 "$"
+          Atom@24..25 "a"
+  Eol@25..26 "\n"
+  Item@26..31
+    Expr@26..31
+      FunctionCall@26..31
+        Atom@26..28 "ls"
+        Whitespace@28..29 " "
+        FunctionCallParams@29..31
+          Expr@29..31
+            BindingUsage@29..31
+              Dollar@29..30 "$"
+              Atom@30..31 "b""#,
+        );
     }
 }
