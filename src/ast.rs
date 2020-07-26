@@ -1,3 +1,5 @@
+mod eval;
+
 use crate::lexer::SyntaxKind;
 use crate::{SyntaxElement, SyntaxNode, SyntaxToken};
 use smol_str::SmolStr;
@@ -88,10 +90,10 @@ impl Expr {
                 FunctionCall::cast(node.clone()).is_some()
                     || Lambda::cast(node.clone()).is_some()
                     || BindingUsage::cast(node.clone()).is_some()
-    }
+            }
             SyntaxElement::Token(ref token) => {
                 token.kind() == SyntaxKind::StringLiteral || token.kind() == SyntaxKind::Digits
-}
+            }
         };
 
         if is_expr {
