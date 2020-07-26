@@ -6,7 +6,7 @@ use crate::env::Env;
 use crate::val::Val;
 
 impl Root {
-    fn eval(&self, env: &mut Env<'_>) -> Val {
+    pub(crate) fn eval(&self, env: &mut Env<'_>) -> Val {
         for item in self.items() {
             item.eval(env);
         }

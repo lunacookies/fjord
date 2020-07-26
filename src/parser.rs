@@ -6,7 +6,10 @@ use expr::parse_expr;
 use item::parse_item;
 use statement::parse_statement;
 
+use crate::ast::Root;
+use crate::env::Env;
 use crate::lexer::{Lexer, SyntaxKind};
+use crate::val::Val;
 use crate::SyntaxNode;
 use rowan::{GreenNode, GreenNodeBuilder};
 use std::iter::Peekable;
@@ -16,12 +19,19 @@ pub struct ParseOutput {
     green_node: GreenNode,
 }
 
-#[cfg(test)]
 impl ParseOutput {
+    pub(crate) fn eval(&self) -> Option<Val> {
+        let mut env = Env::new();
+        let root = Root::cast(self.syntax())?;
+
+        Some(root.eval(&mut env))
+    }
+
     fn syntax(&self) -> SyntaxNode {
         SyntaxNode::new_root(self.green_node.clone())
     }
 
+    #[cfg(test)]
     fn debug_tree(&self) -> String {
         format!("{:#?}", self.syntax()).trim().to_string()
     }
