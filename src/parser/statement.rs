@@ -4,7 +4,7 @@ use crate::lexer::SyntaxKind;
 pub(super) fn parse_statement(p: &mut Parser<'_>) {
     assert_eq!(p.peek(), Some(SyntaxKind::Let));
 
-    p.builder.start_node(SyntaxKind::Statement.into());
+    p.builder.start_node(SyntaxKind::BindingDef.into());
     p.bump();
     p.skip_ws();
 
@@ -43,7 +43,7 @@ mod tests {
             r#"let foo = bar "baz" $quux 5"#,
             r#"
 Root@0..27
-  Statement@0..27
+  BindingDef@0..27
     Let@0..3 "let"
     Whitespace@3..4 " "
     Atom@4..7 "foo"
@@ -75,7 +75,7 @@ Root@0..27
             "let 5 = 10",
             r#"
 Root@0..10
-  Statement@0..10
+  BindingDef@0..10
     Let@0..3 "let"
     Whitespace@3..4 " "
     Error@4..5 "5"
@@ -93,7 +93,7 @@ Root@0..10
             "let x _ 10",
             r#"
 Root@0..10
-  Statement@0..10
+  BindingDef@0..10
     Let@0..3 "let"
     Whitespace@3..4 " "
     Atom@4..5 "x"
@@ -111,7 +111,7 @@ Root@0..10
             "let a = =",
             r#"
 Root@0..9
-  Statement@0..9
+  BindingDef@0..9
     Let@0..3 "let"
     Whitespace@3..4 " "
     Atom@4..5 "a"

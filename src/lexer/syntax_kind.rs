@@ -36,7 +36,6 @@ pub(crate) enum SyntaxKind {
 
     // Compound variants
     Root,
-    Statement,
     BindingDef,
     Expr,
     FunctionCall,

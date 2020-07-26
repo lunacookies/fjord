@@ -35,7 +35,7 @@ Root@0..1
             "let x = $y",
             r#"
 Root@0..10
-  Statement@0..10
+  BindingDef@0..10
     Let@0..3 "let"
     Whitespace@3..4 " "
     Atom@4..5 "x"

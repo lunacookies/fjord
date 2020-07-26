@@ -164,7 +164,7 @@ ls $b"#,
             r#"
 Root@0..31
   Eol@0..1 "\n"
-  Statement@1..14
+  BindingDef@1..14
     Let@1..4 "let"
     Whitespace@4..5 " "
     Atom@5..6 "a"
@@ -174,7 +174,7 @@ Root@0..31
     Expr@9..14
       StringLiteral@9..14 "\"dir\""
   Eol@14..15 "\n"
-  Statement@15..25
+  BindingDef@15..25
     Let@15..18 "let"
     Whitespace@18..19 " "
     Atom@19..20 "b"

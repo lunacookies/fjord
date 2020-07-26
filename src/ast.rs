@@ -31,13 +31,13 @@ impl Root {
 struct Item(SyntaxNode);
 
 enum ItemKind {
-    Statement(Statement),
+    Statement(BindingDef),
     Expr(Expr),
 }
 
 impl Item {
     fn cast(node: SyntaxNode) -> Option<Self> {
-        if Statement::cast(node.clone()).is_some() || Expr::cast(node.clone()).is_some() {
+        if BindingDef::cast(node.clone()).is_some() || Expr::cast(node.clone()).is_some() {
             Some(Self(node))
         } else {
             None
@@ -45,31 +45,28 @@ impl Item {
     }
 
     fn kind(&self) -> ItemKind {
-        Statement::cast(self.0.clone())
+        BindingDef::cast(self.0.clone())
             .map(ItemKind::Statement)
             .or_else(|| Expr::cast(self.0.clone()).map(ItemKind::Expr))
             .unwrap()
     }
 }
 
-ast_node!(Statement, SyntaxKind::Statement);
+ast_node!(BindingDef, SyntaxKind::BindingDef);
 
-impl Statement {
-    fn binding_name(&self) -> Option<&SmolStr> {
+impl BindingDef {
+    fn binding_name(&self) -> Option<SmolStr> {
         self.0
             .children_with_tokens()
             .filter_map(|element| element.into_token())
-            .filter(|token| token.kind() == SyntaxKind::Atom)
-            .next()
-            .map(|token| token.text())
+            .find(|token| token.kind() == SyntaxKind::Atom)
+            .map(|token| token.text().clone())
     }
 
     fn expr(&self) -> Option<Expr> {
         self.0.children().filter_map(Expr::cast).next()
     }
 }
-
-ast_node!(BindingDef, SyntaxKind::BindingDef);
 
 ast_node!(Expr, SyntaxKind::Expr);
 
