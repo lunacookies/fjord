@@ -27,6 +27,9 @@ impl<'parent> Env<'parent> {
     }
 
     pub(crate) fn get_binding(&self, name: &SmolStr) -> Option<Val> {
-        self.bindings.get(name).cloned()
+        self.bindings
+            .get(name)
+            .cloned()
+            .or_else(|| self.parent.and_then(|parent| parent.get_binding(name)))
     }
 }
