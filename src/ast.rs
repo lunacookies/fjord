@@ -1,5 +1,5 @@
 use crate::lexer::SyntaxKind;
-use crate::{SyntaxElement, SyntaxNode};
+use crate::{SyntaxElement, SyntaxNode, SyntaxToken};
 use smol_str::SmolStr;
 
 macro_rules! ast_node {
@@ -103,3 +103,25 @@ ast_node!(Lambda, SyntaxKind::Lambda);
 ast_node!(LambdaParams, SyntaxKind::LambdaParams);
 
 ast_node!(BindingUsage, SyntaxKind::BindingUsage);
+
+macro_rules! ast_token {
+    ($token:ident, $kind:expr) => {
+        #[allow(unused)]
+        struct $token(SyntaxToken);
+
+        impl $token {
+            #[allow(unused)]
+            fn cast(token: SyntaxToken) -> Option<Self> {
+                if token.kind() == $kind {
+                    Some(Self(token))
+                } else {
+                    None
+                }
+            }
+        }
+    };
+}
+
+ast_token!(Digits, SyntaxKind::Digits);
+
+ast_token!(StringLiteral, SyntaxKind::StringLiteral);
