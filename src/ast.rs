@@ -21,11 +21,11 @@ macro_rules! ast_node {
 
 ast_node!(Root, SyntaxKind::Root);
 
-ast_node!(Expr, SyntaxKind::Expr);
-
 ast_node!(Statement, SyntaxKind::Statement);
 
 ast_node!(BindingDef, SyntaxKind::BindingDef);
+
+ast_node!(Expr, SyntaxKind::Expr);
 
 ast_node!(FunctionCall, SyntaxKind::FunctionCall);
 
