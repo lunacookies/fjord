@@ -1,5 +1,6 @@
 use crate::lexer::SyntaxKind;
 use crate::SyntaxNode;
+use smol_str::SmolStr;
 
 macro_rules! ast_node {
     ($node:ident, $kind:expr) => {
@@ -52,6 +53,17 @@ impl Item {
 }
 
 ast_node!(Statement, SyntaxKind::Statement);
+
+impl Statement {
+    fn binding_name(&self) -> Option<&SmolStr> {
+        self.0
+            .children_with_tokens()
+            .filter_map(|element| element.into_token())
+            .filter(|token| token.kind() == SyntaxKind::Atom)
+            .next()
+            .map(|token| token.text())
+    }
+}
 
 ast_node!(BindingDef, SyntaxKind::BindingDef);
 
