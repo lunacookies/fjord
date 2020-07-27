@@ -1,3 +1,5 @@
+//! Parsing and the results thereof.
+
 mod expr;
 mod item;
 mod statement;
