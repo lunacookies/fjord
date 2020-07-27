@@ -17,6 +17,7 @@ use rowan::{GreenNode, GreenNodeBuilder};
 use std::iter::Peekable;
 
 /// The output of parsing Fjord code.
+#[derive(Debug)]
 pub struct ParseOutput {
     green_node: GreenNode,
 }
