@@ -2,11 +2,11 @@
 
 #![warn(missing_docs, rust_2018_idioms)]
 
-mod env;
 mod lang;
 mod lexer;
 
 pub mod ast;
+pub mod env;
 pub mod parser;
 pub mod val;
 

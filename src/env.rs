@@ -1,15 +1,19 @@
+//! The evaluation environment, which holds all state needed to evaluate Fjord code.
+
 use crate::val::Val;
 use smol_str::SmolStr;
 use std::collections::HashMap;
 
+/// See the module-level documentation.
 #[derive(Debug)]
-pub(crate) struct Env<'parent> {
+pub struct Env<'parent> {
     bindings: HashMap<SmolStr, Val>,
     parent: Option<&'parent Self>,
 }
 
 impl<'parent> Env<'parent> {
-    pub(crate) fn new() -> Self {
+    /// Constructs a new empty evaluation environment.
+    pub fn new() -> Self {
         Self {
             bindings: HashMap::new(),
             parent: None,
