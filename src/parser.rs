@@ -35,8 +35,8 @@ impl ParseOutput {
         SyntaxNode::new_root(self.green_node.clone())
     }
 
-    #[cfg(test)]
-    fn debug_tree(&self) -> String {
+    /// Returns a representation of the underlying syntax tree suitable for debugging purposes.
+    pub fn debug_tree(&self) -> String {
         format!("{:#?}", self.syntax()).trim().to_string()
     }
 }
