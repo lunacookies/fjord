@@ -22,7 +22,7 @@ fn parse_function_call(p: &mut Parser<'_>) {
     p.builder.start_node(SyntaxKind::FunctionCallParams.into());
 
     loop {
-        if p.at_end() {
+        if p.at_end_or_eol() {
             break;
         }
 
@@ -136,6 +136,22 @@ Root@0..8
       Atom@5..6 "a"
       Whitespace@6..7 " "
       Digits@7..8 "1""#,
+        );
+    }
+
+    #[test]
+    fn stop_parsing_function_call_at_end_of_line() {
+        test(
+            "ls $dir\n",
+            r#"
+Root@0..7
+  FunctionCall@0..7
+    Atom@0..2 "ls"
+    Whitespace@2..3 " "
+    FunctionCallParams@3..7
+      BindingUsage@3..7
+        Dollar@3..4 "$"
+        Atom@4..7 "dir""#,
         );
     }
 

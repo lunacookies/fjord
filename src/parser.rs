@@ -66,6 +66,10 @@ impl<'a> Parser<'a> {
         self.lexer.peek().is_none()
     }
 
+    fn at_end_or_eol(&mut self) -> bool {
+        self.at_end() || self.peek() == Some(SyntaxKind::Eol)
+    }
+
     fn bump(&mut self) {
         let (kind, text) = self.lexer.next().unwrap();
         self.builder.token(kind.into(), text);
