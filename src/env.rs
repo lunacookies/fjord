@@ -2,6 +2,7 @@ use crate::val::Val;
 use smol_str::SmolStr;
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub(crate) struct Env<'parent> {
     bindings: HashMap<SmolStr, Val>,
     parent: Option<&'parent Self>,
