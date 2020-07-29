@@ -5,7 +5,7 @@ use smol_str::SmolStr;
 use std::collections::HashMap;
 
 /// See the module-level documentation.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Env<'parent> {
     bindings: HashMap<SmolStr, Val>,
     parent: Option<&'parent Self>,
