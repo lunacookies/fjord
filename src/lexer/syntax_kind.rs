@@ -7,6 +7,9 @@ pub(crate) enum SyntaxKind {
     #[token("let")]
     Let,
 
+    #[token("return")]
+    Return,
+
     #[regex(r"([^\n \$\|]|\\ )+")]
     Atom,
 
@@ -69,6 +72,11 @@ mod tests {
     #[test]
     fn lex_let_keyword() {
         test("let", SyntaxKind::Let);
+    }
+
+    #[test]
+    fn lex_return_keyword() {
+        test("return", SyntaxKind::Return);
     }
 
     #[test]
