@@ -30,11 +30,11 @@ ast_node!(Root, SyntaxKind::Root);
 
 impl Root {
     fn items(&self) -> impl Iterator<Item = Item> {
-        self.0.children().filter_map(Item::cast)
+        self.0.children_with_tokens().filter_map(Item::cast)
     }
 }
 
-struct Item(SyntaxNode);
+struct Item(SyntaxElement);
 
 enum ItemKind {
     Statement(BindingDef),
@@ -42,18 +42,23 @@ enum ItemKind {
 }
 
 impl Item {
-    fn cast(node: SyntaxNode) -> Option<Self> {
-        if BindingDef::cast(node.clone()).is_some() || Expr::cast(node.clone().into()).is_some() {
-            Some(Self(node))
+    fn cast(element: SyntaxElement) -> Option<Self> {
+        if element.clone().into_node().map(BindingDef::cast).is_some()
+            || Expr::cast(element.clone()).is_some()
+        {
+            Some(Self(element))
         } else {
             None
         }
     }
 
     fn kind(&self) -> ItemKind {
-        BindingDef::cast(self.0.clone())
+        self.0
+            .clone()
+            .into_node()
+            .and_then(BindingDef::cast)
             .map(ItemKind::Statement)
-            .or_else(|| Expr::cast(self.0.clone().into()).map(ItemKind::Expr))
+            .or_else(|| Expr::cast(self.0.clone()).map(ItemKind::Expr))
             .unwrap()
     }
 }
