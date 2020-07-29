@@ -23,12 +23,10 @@ pub struct ParseOutput {
 }
 
 impl ParseOutput {
-    /// Evaluates the parsed syntax tree.
-    pub fn eval(&self) -> Option<Val> {
-        let mut env = Env::new();
+    /// Evaluates the parsed syntax tree with the given environment.
+    pub fn eval(&self, env: &mut Env<'_>) -> Option<Val> {
         let root = Root::cast(self.syntax())?;
-
-        Some(root.eval(&mut env))
+        Some(root.eval(env))
     }
 
     fn syntax(&self) -> SyntaxNode {
