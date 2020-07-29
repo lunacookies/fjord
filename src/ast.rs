@@ -70,10 +70,7 @@ impl BindingDef {
     }
 
     fn expr(&self) -> Option<Expr> {
-        self.0
-            .children()
-            .filter_map(|node| Expr::cast(node.into()))
-            .next()
+        self.0.children_with_tokens().filter_map(Expr::cast).next()
     }
 }
 
