@@ -106,6 +106,12 @@ impl BindingDef {
 
 ast_node!(ReturnStatement, SyntaxKind::ReturnStatement);
 
+impl ReturnStatement {
+    fn val(&self) -> Option<Expr> {
+        self.0.children_with_tokens().find_map(Expr::cast)
+    }
+}
+
 struct Expr(SyntaxElement);
 
 enum ExprKind {
