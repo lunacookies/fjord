@@ -37,13 +37,13 @@ impl Root {
 struct Item(SyntaxElement);
 
 enum ItemKind {
-    Statement(BindingDef),
+    Statement(Statement),
     Expr(Expr),
 }
 
 impl Item {
     fn cast(element: SyntaxElement) -> Option<Self> {
-        if element.clone().into_node().map(BindingDef::cast).is_some()
+        if element.clone().into_node().map(Statement::cast).is_some()
             || Expr::cast(element.clone()).is_some()
         {
             Some(Self(element))
@@ -56,9 +56,34 @@ impl Item {
         self.0
             .clone()
             .into_node()
-            .and_then(BindingDef::cast)
+            .and_then(Statement::cast)
             .map(ItemKind::Statement)
             .or_else(|| Expr::cast(self.0.clone()).map(ItemKind::Expr))
+            .unwrap()
+    }
+}
+
+struct Statement(SyntaxNode);
+
+enum StatementKind {
+    BindingDef(BindingDef),
+    ReturnStatement(ReturnStatement),
+}
+
+impl Statement {
+    fn cast(node: SyntaxNode) -> Option<Self> {
+        if BindingDef::cast(node.clone()).is_some() || ReturnStatement::cast(node.clone()).is_some()
+        {
+            Some(Self(node))
+        } else {
+            None
+        }
+    }
+
+    fn kind(&self) -> StatementKind {
+        BindingDef::cast(self.0.clone())
+            .map(StatementKind::BindingDef)
+            .or_else(|| ReturnStatement::cast(self.0.clone()).map(StatementKind::ReturnStatement))
             .unwrap()
     }
 }
