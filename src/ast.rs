@@ -79,6 +79,8 @@ impl BindingDef {
     }
 }
 
+ast_node!(ReturnStatement, SyntaxKind::ReturnStatement);
+
 struct Expr(SyntaxElement);
 
 enum ExprKind {
