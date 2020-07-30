@@ -8,10 +8,19 @@ use crate::val::Val;
 impl Root {
     pub(crate) fn eval(&self, env: &mut Env<'_>) -> Val {
         for item in self.items() {
+            if let ItemKind::Statement(statement) = item.kind() {
+                if let StatementKind::ReturnStatement(return_statement) = statement.kind() {
+                    return return_statement
+                        .val()
+                        .map(|expr| expr.eval(env))
+                        .unwrap_or(Val::Nil);
+                }
+            }
+
             item.eval(env);
         }
 
-        todo!()
+        Val::Nil
     }
 }
 
