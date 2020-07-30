@@ -100,7 +100,7 @@ impl BindingDef {
     }
 
     fn expr(&self) -> Option<Expr> {
-        self.0.children_with_tokens().filter_map(Expr::cast).next()
+        self.0.children_with_tokens().find_map(Expr::cast)
     }
 }
 
@@ -188,7 +188,7 @@ impl Lambda {
     }
 
     fn body(&self) -> Option<Expr> {
-        self.0.children_with_tokens().filter_map(Expr::cast).next()
+        self.0.children_with_tokens().find_map(Expr::cast)
     }
 }
 
