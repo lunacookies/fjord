@@ -2,6 +2,14 @@ use super::{parse_expr, Parser};
 use crate::lexer::SyntaxKind;
 
 pub(super) fn parse_statement(p: &mut Parser<'_>) {
+    match p.peek() {
+        Some(SyntaxKind::Let) => parse_let_statement(p),
+        Some(SyntaxKind::Return) => parse_return_statement(p),
+        _ => p.error("expected let or return"),
+    }
+}
+
+fn parse_let_statement(p: &mut Parser<'_>) {
     assert_eq!(p.peek(), Some(SyntaxKind::Let));
 
     p.builder.start_node(SyntaxKind::BindingDef.into());
@@ -22,6 +30,18 @@ pub(super) fn parse_statement(p: &mut Parser<'_>) {
         p.error("expected equals sign");
     }
 
+    p.skip_ws();
+
+    parse_expr(p);
+
+    p.builder.finish_node();
+}
+
+fn parse_return_statement(p: &mut Parser<'_>) {
+    assert_eq!(p.peek(), Some(SyntaxKind::Return));
+
+    p.builder.start_node(SyntaxKind::ReturnStatement.into());
+    p.bump();
     p.skip_ws();
 
     parse_expr(p);
@@ -112,6 +132,23 @@ Root@0..9
     Equals@6..7 "="
     Whitespace@7..8 " "
     Error@8..9 "=""#,
+        );
+    }
+
+    #[test]
+    fn parse_return_statement() {
+        test(
+            "return ls ~/Documents",
+            r#"
+Root@0..21
+  ReturnStatement@0..21
+    Return@0..6 "return"
+    Whitespace@6..7 " "
+    FunctionCall@7..21
+      Atom@7..9 "ls"
+      Whitespace@9..10 " "
+      FunctionCallParams@10..21
+        Atom@10..21 "~/Documents""#,
         );
     }
 }
