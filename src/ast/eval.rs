@@ -1,6 +1,6 @@
 use super::{
     BindingDef, BindingUsage, Digits, Expr, ExprKind, FunctionCall, Item, ItemKind, Lambda, Root,
-    StringLiteral,
+    Statement, StatementKind, StringLiteral,
 };
 use crate::env::Env;
 use crate::val::Val;
@@ -18,11 +18,20 @@ impl Root {
 impl Item {
     fn eval(&self, env: &mut Env<'_>) -> Val {
         match self.kind() {
-            ItemKind::Statement(binding_def) => {
-                binding_def.eval(env);
+            ItemKind::Statement(statement) => {
+                statement.eval(env);
                 Val::Nil
             }
             ItemKind::Expr(expr) => expr.eval(env),
+        }
+    }
+}
+
+impl Statement {
+    fn eval(&self, env: &mut Env<'_>) {
+        match self.kind() {
+            StatementKind::BindingDef(binding_def) => binding_def.eval(env),
+            StatementKind::ReturnStatement(_) => {}
         }
     }
 }
