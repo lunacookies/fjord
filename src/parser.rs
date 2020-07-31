@@ -1,9 +1,11 @@
 //! Parsing and the results thereof.
 
+mod error;
 mod expr;
 mod item;
 mod statement;
 
+use error::SyntaxError;
 use expr::parse_expr;
 use item::parse_item;
 use statement::parse_statement;
@@ -20,7 +22,7 @@ use std::iter::Peekable;
 #[derive(Debug)]
 pub struct ParseOutput {
     green_node: GreenNode,
-    errors: Vec<&'static str>,
+    errors: Vec<SyntaxError>,
 }
 
 impl ParseOutput {
@@ -44,7 +46,7 @@ impl ParseOutput {
 pub struct Parser<'a> {
     lexer: Peekable<Lexer<'a>>,
     builder: GreenNodeBuilder<'static>,
-    errors: Vec<&'static str>,
+    errors: Vec<SyntaxError>,
 }
 
 impl<'a> Parser<'a> {
@@ -97,7 +99,7 @@ impl<'a> Parser<'a> {
     }
 
     fn error(&mut self, message: &'static str) {
-        self.errors.push(message);
+        self.errors.push(SyntaxError { message });
 
         match self.peek() {
             Some(SyntaxKind::Eol) | None => {}
