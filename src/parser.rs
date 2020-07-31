@@ -104,8 +104,6 @@ impl<'a> Parser<'a> {
     }
 
     fn error(&mut self, message: &'static str) {
-        self.errors.push(SyntaxError { message });
-
         match self.peek() {
             Some(SyntaxKind::Eol) | None => {}
             Some(_) => {
@@ -115,6 +113,11 @@ impl<'a> Parser<'a> {
                 self.last_lexeme_range = lexeme.range;
             }
         }
+
+        self.errors.push(SyntaxError {
+            message,
+            range: self.last_lexeme_range,
+        });
     }
 
     /// Parses the input the `Parser` was constructed with.
