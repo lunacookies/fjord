@@ -19,20 +19,41 @@ use rowan::{GreenNode, GreenNodeBuilder};
 use std::iter::Peekable;
 use text_size::TextRange;
 
+/// A type representing the state of a `ParseOutput` containing no errors.
+pub struct NoErrors;
+
+/// A type representing the state of a `ParseOutput` containing some number of errors.
+pub struct ContainsErrors(Vec<SyntaxError>);
+
+/// The state of a `ParseOutput`. This trait is sealed, and as such cannot be implemented outside of
+/// this crate.
+///
+/// Due to its sealed nature, `ParseOutputState` functions somewhat similarly to an enum, because
+/// all its implementors (variants to continue the enum analogy) are a fixed set (i.e. all the
+/// possible implementors are known statically).
+///
+/// # Implementors
+///
+/// - `NoErrors`
+/// - `ContainsErrors`
+pub trait ParseOutputState: crate::private::Sealed {}
+impl ParseOutputState for NoErrors {}
+impl crate::private::Sealed for NoErrors {}
+impl ParseOutputState for ContainsErrors {}
+impl crate::private::Sealed for ContainsErrors {}
+
 /// The output of parsing Fjord code.
+///
+/// The `State` type parameter is used to restrict the use of the `eval` method to when no syntax
+/// errors are present through the type system. This is a usage of [the typestate
+/// pattern](http://cliffle.com/blog/rust-typestate/).
 #[derive(Debug)]
-pub struct ParseOutput {
+pub struct ParseOutput<State: ParseOutputState> {
     green_node: GreenNode,
-    errors: Vec<SyntaxError>,
+    state: State,
 }
 
-impl ParseOutput {
-    /// Evaluates the parsed syntax tree with the given environment.
-    pub fn eval(&self, env: &mut Env<'_>) -> Option<Val> {
-        let root = Root::cast(self.syntax())?;
-        Some(root.eval(env))
-    }
-
+impl<State: ParseOutputState> ParseOutput<State> {
     fn syntax(&self) -> SyntaxNode {
         SyntaxNode::new_root(self.green_node.clone())
     }
@@ -40,6 +61,17 @@ impl ParseOutput {
     /// Returns a representation of the underlying syntax tree suitable for debugging purposes.
     pub fn debug_tree(&self) -> String {
         format!("{:#?}", self.syntax()).trim().to_string()
+    }
+}
+
+impl ParseOutput<NoErrors> {
+    /// Evaluates the parsed syntax tree with the given environment. This is only implemented for
+    /// the case in which the `ParseOutput` contains no errors, because evaluating a `ParseOutput`
+    /// with syntax errors is likely to both lead to confusing errors, and because this adds a lot
+    /// of complexity to the interpreter.
+    pub fn eval(&self, env: &mut Env<'_>) -> Option<Val> {
+        let root = Root::cast(self.syntax())?;
+        Some(root.eval(env))
     }
 }
 
@@ -121,7 +153,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses the input the `Parser` was constructed with.
-    pub fn parse(mut self) -> ParseOutput {
+    pub fn parse(mut self) -> ParseOutput<ContainsErrors> {
         self.builder.start_node(SyntaxKind::Root.into());
 
         self.skip_ws_and_eol();
@@ -145,7 +177,7 @@ impl<'a> Parser<'a> {
 
         ParseOutput {
             green_node: self.builder.finish(),
-            errors: self.errors,
+            state: ContainsErrors(self.errors),
         }
     }
 
@@ -161,7 +193,7 @@ impl<'a> Parser<'a> {
 
         let parse_output = ParseOutput {
             green_node: p.builder.finish(),
-            errors: p.errors,
+            state: ContainsErrors(p.errors),
         };
 
         assert_eq!(parse_output.debug_tree(), expected_output.trim());

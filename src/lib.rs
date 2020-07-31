@@ -13,3 +13,7 @@ pub mod val;
 type SyntaxNode = rowan::SyntaxNode<lang::Lang>;
 type SyntaxToken = rowan::SyntaxToken<lang::Lang>;
 type SyntaxElement = rowan::NodeOrToken<SyntaxNode, SyntaxToken>;
+
+mod private {
+    pub trait Sealed {}
+}
