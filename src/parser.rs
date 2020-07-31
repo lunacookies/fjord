@@ -20,6 +20,7 @@ use std::iter::Peekable;
 #[derive(Debug)]
 pub struct ParseOutput {
     green_node: GreenNode,
+    errors: Vec<&'static str>,
 }
 
 impl ParseOutput {
@@ -132,6 +133,7 @@ impl<'a> Parser<'a> {
 
         ParseOutput {
             green_node: self.builder.finish(),
+            errors: self.errors,
         }
     }
 
@@ -147,6 +149,7 @@ impl<'a> Parser<'a> {
 
         let parse_output = ParseOutput {
             green_node: p.builder.finish(),
+            errors: p.errors,
         };
 
         assert_eq!(parse_output.debug_tree(), expected_output.trim());
