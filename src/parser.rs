@@ -5,6 +5,8 @@ mod expr;
 mod item;
 mod statement;
 
+pub use error::SyntaxError;
+
 use crate::ast::Root;
 use crate::env::Env;
 use crate::eval::EvalError;
@@ -14,8 +16,6 @@ use crate::SyntaxNode;
 use rowan::{GreenNode, GreenNodeBuilder};
 use std::iter::Peekable;
 use text_size::TextRange;
-
-pub use error::SyntaxError;
 
 /// A type representing the state of a `ParseOutput` containing no errors.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
