@@ -32,12 +32,7 @@ impl Root {
         }
 
         let last_item = items.last().unwrap();
-
-        if let ItemKind::Expr(expr) = last_item.kind() {
-            expr.eval(env)
-        } else {
-            Val::Nil
-        }
+        last_item.eval(env)
     }
 }
 
