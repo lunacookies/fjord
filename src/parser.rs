@@ -12,7 +12,7 @@ use statement::parse_statement;
 
 use crate::ast::Root;
 use crate::env::Env;
-use crate::lexer::{Lexer, SyntaxKind};
+use crate::lexer::{Lexeme, Lexer, SyntaxKind};
 use crate::val::Val;
 use crate::SyntaxNode;
 use rowan::{GreenNode, GreenNodeBuilder};
@@ -60,7 +60,7 @@ impl<'a> Parser<'a> {
     }
 
     fn peek(&mut self) -> Option<SyntaxKind> {
-        self.lexer.peek().map(|(kind, _)| *kind)
+        self.lexer.peek().map(|Lexeme { kind, .. }| *kind)
     }
 
     fn at_end(&mut self) -> bool {
@@ -72,8 +72,8 @@ impl<'a> Parser<'a> {
     }
 
     fn bump(&mut self) {
-        let (kind, text) = self.lexer.next().unwrap();
-        self.builder.token(kind.into(), text);
+        let lexeme = self.lexer.next().unwrap();
+        self.builder.token(lexeme.kind.into(), lexeme.text);
     }
 
     fn skip(&mut self, kinds: &'static [SyntaxKind]) {
@@ -104,8 +104,8 @@ impl<'a> Parser<'a> {
         match self.peek() {
             Some(SyntaxKind::Eol) | None => {}
             Some(_) => {
-                let (_, text) = self.lexer.next().unwrap();
-                self.builder.token(SyntaxKind::Error.into(), text);
+                let lexeme = self.lexer.next().unwrap();
+                self.builder.token(SyntaxKind::Error.into(), lexeme.text);
             }
         }
     }
