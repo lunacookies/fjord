@@ -11,7 +11,7 @@ use smol_str::SmolStr;
 macro_rules! ast_node {
     ($node:ident, $kind:expr) => {
         #[allow(missing_docs)]
-        #[derive(Debug, Clone)]
+        #[derive(Debug, Clone, Eq, PartialEq, Hash)]
         pub struct $node(SyntaxNode);
 
         impl $node {

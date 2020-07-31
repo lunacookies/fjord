@@ -20,9 +20,11 @@ use std::iter::Peekable;
 use text_size::TextRange;
 
 /// A type representing the state of a `ParseOutput` containing no errors.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct NoErrors;
 
 /// A type representing the state of a `ParseOutput` containing some number of errors.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct ContainsErrors(Vec<SyntaxError>);
 
 /// The state of a `ParseOutput`. This trait is sealed, and as such cannot be implemented outside of
@@ -44,7 +46,7 @@ impl crate::private::Sealed for ContainsErrors {}
 /// The `State` type parameter is used to restrict the use of the `eval` method to when no syntax
 /// errors are present through the type system. This is a usage of [the typestate
 /// pattern](http://cliffle.com/blog/rust-typestate/).
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct ParseOutput<State: ParseOutputState> {
     green_node: GreenNode,
     state: State,
