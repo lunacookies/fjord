@@ -124,9 +124,10 @@ impl Lambda {
 
 impl BindingUsage {
     fn eval(&self, env: &Env<'_>) -> Result<Val, EvalError> {
-        let binding_name = self.binding_name().ok_or(EvalError::BindingDoesNotExist)?;
+        let binding_name = self.binding_name().unwrap();
 
-        Ok(env.get_binding(&binding_name).unwrap())
+        env.get_binding(&binding_name)
+            .ok_or(EvalError::BindingDoesNotExist)
     }
 }
 
