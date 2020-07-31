@@ -173,4 +173,16 @@ Root@0..6
     Return@0..6 "return""#,
         );
     }
+
+    #[test]
+    fn parse_return_statement_without_val_followed_by_whitespace_then_eol() {
+        test(
+            "return   \nfoobar",
+            r#"
+Root@0..9
+  ReturnStatement@0..9
+    Return@0..6 "return"
+    Whitespace@6..9 "   ""#,
+        );
+    }
 }
