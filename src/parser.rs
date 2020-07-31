@@ -5,7 +5,6 @@ mod expr;
 mod item;
 mod statement;
 
-use error::SyntaxError;
 use expr::parse_expr;
 use item::parse_item;
 use statement::parse_statement;
@@ -18,6 +17,8 @@ use crate::SyntaxNode;
 use rowan::{GreenNode, GreenNodeBuilder};
 use std::iter::Peekable;
 use text_size::TextRange;
+
+pub use error::SyntaxError;
 
 /// A type representing the state of a `ParseOutput` containing no errors.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -87,6 +88,11 @@ impl ParseOutput<ContainsErrors> {
         } else {
             None
         }
+    }
+
+    /// Returns all the syntax errors found throughout the parsing process.
+    pub fn errors(&self) -> &[SyntaxError] {
+        &self.state.0
     }
 }
 
