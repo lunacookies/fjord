@@ -7,9 +7,20 @@ use crate::val::Val;
 
 impl Root {
     pub(crate) fn eval(&self, env: &mut Env<'_>) -> Val {
-        for item in self.items() {
+        let items: Vec<_> = self.items().collect();
+
+        if items.is_empty() {
+            return Val::Nil;
+        }
+
+        // We process the last item seperately to allow for implicit return.
+
+        for item in &items[1..] {
+            // If we’re at a return statement, we early return with the value of the return
+            // statement.
             if let ItemKind::Statement(statement) = item.kind() {
                 if let StatementKind::ReturnStatement(return_statement) = statement.kind() {
+                    // If the return statement does not have a value, we return with Nil.
                     return return_statement
                         .val()
                         .map(|expr| expr.eval(env))
@@ -20,7 +31,13 @@ impl Root {
             item.eval(env);
         }
 
-        Val::Nil
+        let last_item = items.last().unwrap();
+
+        if let ItemKind::Expr(expr) = last_item.kind() {
+            expr.eval(env)
+        } else {
+            Val::Nil
+        }
     }
 }
 
