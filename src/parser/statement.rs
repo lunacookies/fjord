@@ -2,7 +2,7 @@ use super::expr::parse_expr;
 use super::Parser;
 use crate::lexer::SyntaxKind;
 
-pub(super) fn parse_statement(p: &mut Parser<'_>) {
+pub(crate) fn parse_statement(p: &mut Parser<'_>) {
     match p.peek() {
         Some(SyntaxKind::Let) => parse_let_statement(p),
         Some(SyntaxKind::Return) => parse_return_statement(p),
@@ -10,7 +10,7 @@ pub(super) fn parse_statement(p: &mut Parser<'_>) {
     }
 }
 
-fn parse_let_statement(p: &mut Parser<'_>) {
+pub(crate) fn parse_let_statement(p: &mut Parser<'_>) {
     assert_eq!(p.peek(), Some(SyntaxKind::Let));
 
     p.builder.start_node(SyntaxKind::BindingDef.into());
@@ -38,7 +38,7 @@ fn parse_let_statement(p: &mut Parser<'_>) {
     p.builder.finish_node();
 }
 
-fn parse_return_statement(p: &mut Parser<'_>) {
+pub(crate) fn parse_return_statement(p: &mut Parser<'_>) {
     assert_eq!(p.peek(), Some(SyntaxKind::Return));
 
     p.builder.start_node(SyntaxKind::ReturnStatement.into());

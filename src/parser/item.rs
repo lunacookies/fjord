@@ -3,7 +3,7 @@ use super::statement::parse_statement;
 use super::Parser;
 use crate::lexer::SyntaxKind;
 
-pub(super) fn parse_item(p: &mut Parser<'_>) {
+pub(crate) fn parse_item(p: &mut Parser<'_>) {
     if p.peek() == Some(SyntaxKind::Let) {
         parse_statement(p);
     } else {

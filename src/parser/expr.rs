@@ -1,7 +1,7 @@
 use super::Parser;
 use crate::lexer::SyntaxKind;
 
-pub(super) fn parse_expr(p: &mut Parser<'_>) {
+pub(crate) fn parse_expr(p: &mut Parser<'_>) {
     match p.peek() {
         Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) | Some(SyntaxKind::Dollar) => {
             parse_contained_expr(p)
@@ -12,7 +12,7 @@ pub(super) fn parse_expr(p: &mut Parser<'_>) {
     }
 }
 
-fn parse_function_call(p: &mut Parser<'_>) {
+pub(crate) fn parse_function_call(p: &mut Parser<'_>) {
     assert_eq!(p.peek(), Some(SyntaxKind::Atom));
 
     p.builder.start_node(SyntaxKind::FunctionCall.into());
@@ -35,7 +35,7 @@ fn parse_function_call(p: &mut Parser<'_>) {
     p.builder.finish_node();
 }
 
-fn parse_lambda(p: &mut Parser<'_>) {
+pub(crate) fn parse_lambda(p: &mut Parser<'_>) {
     assert_eq!(p.peek(), Some(SyntaxKind::Pipe));
 
     p.builder.start_node(SyntaxKind::Lambda.into());
@@ -81,7 +81,7 @@ fn parse_contained_expr(p: &mut Parser<'_>) {
     }
 }
 
-fn parse_binding_usage(p: &mut Parser<'_>) {
+pub(crate) fn parse_binding_usage(p: &mut Parser<'_>) {
     assert_eq!(p.peek(), Some(SyntaxKind::Dollar));
 
     p.builder.start_node(SyntaxKind::BindingUsage.into());

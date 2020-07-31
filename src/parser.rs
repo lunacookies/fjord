@@ -1,11 +1,11 @@
 //! Parsing and the results thereof.
 
 mod error;
-mod expr;
-mod item;
-mod statement;
-
 pub use error::SyntaxError;
+
+pub(crate) mod expr;
+pub(crate) mod item;
+pub(crate) mod statement;
 
 use crate::ast::Root;
 use crate::env::Env;
