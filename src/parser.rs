@@ -75,6 +75,22 @@ impl ParseOutput<NoErrors> {
     }
 }
 
+impl ParseOutput<ContainsErrors> {
+    /// Converts a `ParseOutput` that contains errors into one that does not.
+    ///
+    /// This method returns `None` if errors are present.
+    pub fn into_no_errors(self) -> Option<ParseOutput<NoErrors>> {
+        if self.state.0.is_empty() {
+            Some(ParseOutput {
+                green_node: self.green_node,
+                state: NoErrors,
+            })
+        } else {
+            None
+        }
+    }
+}
+
 /// Parses Fjord code.
 pub struct Parser<'a> {
     lexer: Peekable<Lexer<'a>>,
