@@ -5,10 +5,6 @@ mod expr;
 mod item;
 mod statement;
 
-use expr::parse_expr;
-use item::parse_item;
-use statement::parse_statement;
-
 use crate::ast::Root;
 use crate::env::Env;
 use crate::eval::EvalError;
@@ -188,7 +184,7 @@ impl<'a> Parser<'a> {
                 break;
             }
 
-            parse_item(&mut self);
+            item::parse_item(&mut self);
             self.skip_ws();
 
             match self.peek() {

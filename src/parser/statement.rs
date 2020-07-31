@@ -1,4 +1,5 @@
-use super::{parse_expr, Parser};
+use super::expr::parse_expr;
+use super::Parser;
 use crate::lexer::SyntaxKind;
 
 pub(super) fn parse_statement(p: &mut Parser<'_>) {
