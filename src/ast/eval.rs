@@ -1,3 +1,6 @@
+mod error;
+pub(crate) use error::EvalError;
+
 use super::{
     BindingDef, BindingUsage, Digits, Expr, ExprKind, FunctionCall, Item, ItemKind, Lambda, Root,
     Statement, StatementKind, StringLiteral,
@@ -6,11 +9,11 @@ use crate::env::Env;
 use crate::val::Val;
 
 impl Root {
-    pub(crate) fn eval(&self, env: &mut Env<'_>) -> Val {
+    pub(crate) fn eval(&self, env: &mut Env<'_>) -> Result<Val, EvalError> {
         let items: Vec<_> = self.items().collect();
 
         if items.is_empty() {
-            return Val::Nil;
+            return Ok(Val::Nil);
         }
 
         // We process the last item seperately to allow for implicit return.
@@ -24,7 +27,7 @@ impl Root {
                     return return_statement
                         .val()
                         .map(|expr| expr.eval(env))
-                        .unwrap_or(Val::Nil);
+                        .unwrap_or(Ok(Val::Nil));
                 }
             }
 
@@ -37,11 +40,11 @@ impl Root {
 }
 
 impl Item {
-    fn eval(&self, env: &mut Env<'_>) -> Val {
+    fn eval(&self, env: &mut Env<'_>) -> Result<Val, EvalError> {
         match self.kind() {
             ItemKind::Statement(statement) => {
                 statement.eval(env);
-                Val::Nil
+                Ok(Val::Nil)
             }
             ItemKind::Expr(expr) => expr.eval(env),
         }
@@ -49,41 +52,53 @@ impl Item {
 }
 
 impl Statement {
-    fn eval(&self, env: &mut Env<'_>) {
+    fn eval(&self, env: &mut Env<'_>) -> Result<(), EvalError> {
         match self.kind() {
             StatementKind::BindingDef(binding_def) => binding_def.eval(env),
-            StatementKind::ReturnStatement(_) => {}
+            StatementKind::ReturnStatement(_) => Ok(()),
         }
     }
 }
 
 impl BindingDef {
-    fn eval(&self, env: &mut Env<'_>) {
-        env.store_binding(self.binding_name().unwrap(), self.expr().unwrap().eval(env))
+    fn eval(&self, env: &mut Env<'_>) -> Result<(), EvalError> {
+        let expr = self.expr().unwrap().eval(env)?;
+
+        Ok(env.store_binding(self.binding_name().unwrap(), expr))
     }
 }
 
 impl Expr {
-    fn eval(&self, env: &Env<'_>) -> Val {
+    fn eval(&self, env: &Env<'_>) -> Result<Val, EvalError> {
         match self.kind() {
             ExprKind::FunctionCall(function_call) => function_call.eval(env),
-            ExprKind::Lambda(lambda) => Val::Lambda(lambda),
+            ExprKind::Lambda(lambda) => Ok(Val::Lambda(lambda)),
             ExprKind::BindingUsage(binding_usage) => binding_usage.eval(env),
-            ExprKind::StringLiteral(string_literal) => string_literal.eval(),
-            ExprKind::NumberLiteral(digits) => digits.eval(),
+            ExprKind::StringLiteral(string_literal) => Ok(string_literal.eval()),
+            ExprKind::NumberLiteral(digits) => Ok(digits.eval()),
         }
     }
 }
 
 impl FunctionCall {
-    fn eval(&self, env: &Env<'_>) -> Val {
-        // TODO: Add proper error handling for when function does not exist or is not a lambda.
+    fn eval(&self, env: &Env<'_>) -> Result<Val, EvalError> {
+        // TODO: Add proper error handling for when function is not a lambda.
 
-        let val = env.get_binding(&self.name().unwrap()).unwrap();
+        let val = env
+            .get_binding(&self.name().unwrap())
+            .ok_or(EvalError::BindingDoesNotExist)?;
 
         match val {
             Val::Lambda(lambda) => {
-                lambda.eval(self.params().unwrap().map(|param| param.eval(env)), env)
+                let params: Result<Vec<_>, _> = self
+                    .params()
+                    .unwrap()
+                    .map(|param| param.eval(env))
+                    .collect();
+
+                let params = params?;
+
+                lambda.eval(params.into_iter(), env)
             }
             _ => unreachable!(),
         }
@@ -91,7 +106,7 @@ impl FunctionCall {
 }
 
 impl Lambda {
-    fn eval(&self, params: impl Iterator<Item = Val>, env: &Env<'_>) -> Val {
+    fn eval(&self, params: impl Iterator<Item = Val>, env: &Env<'_>) -> Result<Val, EvalError> {
         let mut new_env = env.create_child();
 
         for (param_name, param_val) in self.param_names().unwrap().zip(params) {
@@ -103,9 +118,10 @@ impl Lambda {
 }
 
 impl BindingUsage {
-    fn eval(&self, env: &Env<'_>) -> Val {
-        // TODO: Add proper error handling for if the binding does not exist.
-        env.get_binding(&self.binding_name().unwrap()).unwrap()
+    fn eval(&self, env: &Env<'_>) -> Result<Val, EvalError> {
+        let binding_name = self.binding_name().ok_or(EvalError::BindingDoesNotExist)?;
+
+        Ok(env.get_binding(&binding_name).unwrap())
     }
 }
 
