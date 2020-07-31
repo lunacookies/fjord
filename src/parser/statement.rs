@@ -162,4 +162,15 @@ Root@0..6
     Return@0..6 "return""#,
         );
     }
+
+    #[test]
+    fn parse_return_statement_without_val_followed_by_eol() {
+        test(
+            "return\nblah",
+            r#"
+Root@0..6
+  ReturnStatement@0..6
+    Return@0..6 "return""#,
+        );
+    }
 }
