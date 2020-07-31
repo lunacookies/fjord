@@ -31,11 +31,6 @@ pub struct ContainsErrors(Vec<SyntaxError>);
 /// Due to its sealed nature, `ParseOutputState` functions somewhat similarly to an enum, because
 /// all its implementors (variants to continue the enum analogy) are a fixed set (i.e. all the
 /// possible implementors are known statically).
-///
-/// # Implementors
-///
-/// - `NoErrors`
-/// - `ContainsErrors`
 pub trait ParseOutputState: crate::private::Sealed {}
 impl ParseOutputState for NoErrors {}
 impl crate::private::Sealed for NoErrors {}
