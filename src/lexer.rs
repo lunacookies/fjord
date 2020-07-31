@@ -3,10 +3,13 @@ pub(crate) use syntax_kind::SyntaxKind;
 
 use logos::Logos;
 use smol_str::SmolStr;
+use std::{convert::TryFrom, ops::Range};
+use text_size::{TextRange, TextSize};
 
 pub(crate) struct Lexeme {
     pub(crate) kind: SyntaxKind,
     pub(crate) text: SmolStr,
+    pub(crate) range: TextRange,
 }
 
 pub(crate) struct Lexer<'a> {
@@ -28,6 +31,11 @@ impl Iterator for Lexer<'_> {
         let kind = self.inner.next()?;
         let text = self.inner.slice().into();
 
-        Some(Lexeme { kind, text })
+        let Range { start, end } = self.inner.span();
+        let start = TextSize::try_from(start).unwrap();
+        let end = TextSize::try_from(end).unwrap();
+        let range = TextRange::new(start, end);
+
+        Some(Lexeme { kind, text, range })
     }
 }
