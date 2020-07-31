@@ -11,6 +11,7 @@ use statement::parse_statement;
 
 use crate::ast::Root;
 use crate::env::Env;
+use crate::eval::EvalError;
 use crate::lexer::{Lexeme, Lexer, SyntaxKind};
 use crate::val::Val;
 use crate::SyntaxNode;
@@ -69,9 +70,12 @@ impl ParseOutput<NoErrors> {
     /// the case in which the `ParseOutput` contains no errors, because evaluating a `ParseOutput`
     /// with syntax errors is likely to both lead to confusing errors, and because this adds a lot
     /// of complexity to the interpreter.
-    pub fn eval(&self, env: &mut Env<'_>) -> Option<Val> {
-        let root = Root::cast(self.syntax())?;
-        Some(root.eval(env))
+    pub fn eval(&self, env: &mut Env<'_>) -> Result<Val, EvalError> {
+        // The parser always emits a syntax tree with a Root node at the top, so we can safely
+        // unwrap.
+        let root = Root::cast(self.syntax()).unwrap();
+
+        root.eval(env)
     }
 }
 

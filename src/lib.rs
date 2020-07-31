@@ -7,6 +7,7 @@ mod lexer;
 
 pub mod ast;
 pub mod env;
+pub mod eval;
 pub mod parser;
 pub mod val;
 

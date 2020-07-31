@@ -2,8 +2,6 @@
 //!
 //! The nodes here are partially auto-generated, and as such lack documentation.
 
-mod eval;
-
 use crate::lexer::SyntaxKind;
 use crate::{SyntaxElement, SyntaxNode, SyntaxToken};
 use smol_str::SmolStr;
@@ -29,14 +27,14 @@ macro_rules! ast_node {
 ast_node!(Root, SyntaxKind::Root);
 
 impl Root {
-    fn items(&self) -> impl Iterator<Item = Item> {
+    pub(crate) fn items(&self) -> impl Iterator<Item = Item> {
         self.0.children_with_tokens().filter_map(Item::cast)
     }
 }
 
-struct Item(SyntaxElement);
+pub(crate) struct Item(SyntaxElement);
 
-enum ItemKind {
+pub(crate) enum ItemKind {
     Statement(Statement),
     Expr(Expr),
 }
@@ -52,7 +50,7 @@ impl Item {
         }
     }
 
-    fn kind(&self) -> ItemKind {
+    pub(crate) fn kind(&self) -> ItemKind {
         self.0
             .clone()
             .into_node()
@@ -63,9 +61,9 @@ impl Item {
     }
 }
 
-struct Statement(SyntaxNode);
+pub(crate) struct Statement(SyntaxNode);
 
-enum StatementKind {
+pub(crate) enum StatementKind {
     BindingDef(BindingDef),
     ReturnStatement(ReturnStatement),
 }
@@ -80,7 +78,7 @@ impl Statement {
         }
     }
 
-    fn kind(&self) -> StatementKind {
+    pub(crate) fn kind(&self) -> StatementKind {
         BindingDef::cast(self.0.clone())
             .map(StatementKind::BindingDef)
             .or_else(|| ReturnStatement::cast(self.0.clone()).map(StatementKind::ReturnStatement))
@@ -91,7 +89,7 @@ impl Statement {
 ast_node!(BindingDef, SyntaxKind::BindingDef);
 
 impl BindingDef {
-    fn binding_name(&self) -> Option<SmolStr> {
+    pub(crate) fn binding_name(&self) -> Option<SmolStr> {
         self.0
             .children_with_tokens()
             .filter_map(|element| element.into_token())
@@ -99,7 +97,7 @@ impl BindingDef {
             .map(|token| token.text().clone())
     }
 
-    fn expr(&self) -> Option<Expr> {
+    pub(crate) fn expr(&self) -> Option<Expr> {
         self.0.children_with_tokens().find_map(Expr::cast)
     }
 }
@@ -107,14 +105,14 @@ impl BindingDef {
 ast_node!(ReturnStatement, SyntaxKind::ReturnStatement);
 
 impl ReturnStatement {
-    fn val(&self) -> Option<Expr> {
+    pub(crate) fn val(&self) -> Option<Expr> {
         self.0.children_with_tokens().find_map(Expr::cast)
     }
 }
 
-struct Expr(SyntaxElement);
+pub(crate) struct Expr(SyntaxElement);
 
-enum ExprKind {
+pub(crate) enum ExprKind {
     FunctionCall(FunctionCall),
     Lambda(Lambda),
     BindingUsage(BindingUsage),
@@ -142,7 +140,7 @@ impl Expr {
         }
     }
 
-    fn kind(&self) -> ExprKind {
+    pub(crate) fn kind(&self) -> ExprKind {
         match &self.0 {
             SyntaxElement::Node(node) => FunctionCall::cast(node.clone())
                 .map(ExprKind::FunctionCall)
@@ -160,14 +158,14 @@ impl Expr {
 ast_node!(FunctionCall, SyntaxKind::FunctionCall);
 
 impl FunctionCall {
-    fn name(&self) -> Option<SmolStr> {
+    pub(crate) fn name(&self) -> Option<SmolStr> {
         self.0
             .first_token()
             .and_then(Atom::cast)
             .map(|atom| atom.text().clone())
     }
 
-    fn params(&self) -> Option<impl Iterator<Item = Expr>> {
+    pub(crate) fn params(&self) -> Option<impl Iterator<Item = Expr>> {
         self.0
             .children()
             .find_map(FunctionCallParams::cast)
@@ -180,7 +178,7 @@ ast_node!(FunctionCallParams, SyntaxKind::FunctionCallParams);
 ast_node!(Lambda, SyntaxKind::Lambda);
 
 impl Lambda {
-    fn param_names(&self) -> Option<impl Iterator<Item = SmolStr>> {
+    pub(crate) fn param_names(&self) -> Option<impl Iterator<Item = SmolStr>> {
         let params = LambdaParams::cast(self.0.first_child()?)?;
 
         Some(
@@ -193,7 +191,7 @@ impl Lambda {
         )
     }
 
-    fn body(&self) -> Option<Expr> {
+    pub(crate) fn body(&self) -> Option<Expr> {
         self.0.children_with_tokens().find_map(Expr::cast)
     }
 }
@@ -203,7 +201,7 @@ ast_node!(LambdaParams, SyntaxKind::LambdaParams);
 ast_node!(BindingUsage, SyntaxKind::BindingUsage);
 
 impl BindingUsage {
-    fn binding_name(&self) -> Option<SmolStr> {
+    pub(crate) fn binding_name(&self) -> Option<SmolStr> {
         self.0
             .children_with_tokens()
             .filter_map(|element| element.into_token())
@@ -226,7 +224,7 @@ macro_rules! ast_token {
                 }
             }
 
-            fn text(&self) -> &SmolStr {
+            pub(crate) fn text(&self) -> &SmolStr {
                 self.0.text()
             }
         }

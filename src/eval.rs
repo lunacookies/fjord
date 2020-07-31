@@ -1,7 +1,9 @@
-mod error;
-pub(crate) use error::EvalError;
+//! Implementation of the Fjord interpreter and related types.
 
-use super::{
+mod error;
+pub use error::EvalError;
+
+use crate::ast::{
     BindingDef, BindingUsage, Digits, Expr, ExprKind, FunctionCall, Item, ItemKind, Lambda, Root,
     Statement, StatementKind, StringLiteral,
 };
@@ -31,7 +33,7 @@ impl Root {
                 }
             }
 
-            item.eval(env);
+            item.eval(env)?;
         }
 
         let last_item = items.last().unwrap();
@@ -43,7 +45,7 @@ impl Item {
     fn eval(&self, env: &mut Env<'_>) -> Result<Val, EvalError> {
         match self.kind() {
             ItemKind::Statement(statement) => {
-                statement.eval(env);
+                statement.eval(env)?;
                 Ok(Val::Nil)
             }
             ItemKind::Expr(expr) => expr.eval(env),
@@ -63,8 +65,11 @@ impl Statement {
 impl BindingDef {
     fn eval(&self, env: &mut Env<'_>) -> Result<(), EvalError> {
         let expr = self.expr().unwrap().eval(env)?;
+        let name = self.binding_name().unwrap();
 
-        Ok(env.store_binding(self.binding_name().unwrap(), expr))
+        env.store_binding(name, expr);
+
+        Ok(())
     }
 }
 
