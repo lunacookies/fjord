@@ -17,6 +17,7 @@ use crate::val::Val;
 use crate::SyntaxNode;
 use rowan::{GreenNode, GreenNodeBuilder};
 use std::iter::Peekable;
+use text_size::TextRange;
 
 /// The output of parsing Fjord code.
 #[derive(Debug)]
@@ -47,6 +48,7 @@ pub struct Parser<'a> {
     lexer: Peekable<Lexer<'a>>,
     builder: GreenNodeBuilder<'static>,
     errors: Vec<SyntaxError>,
+    last_lexeme_range: TextRange,
 }
 
 impl<'a> Parser<'a> {
@@ -56,6 +58,7 @@ impl<'a> Parser<'a> {
             lexer: Lexer::new(input).peekable(),
             builder: GreenNodeBuilder::new(),
             errors: Vec::new(),
+            last_lexeme_range: TextRange::default(),
         }
     }
 
@@ -74,6 +77,8 @@ impl<'a> Parser<'a> {
     fn bump(&mut self) {
         let lexeme = self.lexer.next().unwrap();
         self.builder.token(lexeme.kind.into(), lexeme.text);
+
+        self.last_lexeme_range = lexeme.range;
     }
 
     fn skip(&mut self, kinds: &'static [SyntaxKind]) {
@@ -106,6 +111,8 @@ impl<'a> Parser<'a> {
             Some(_) => {
                 let lexeme = self.lexer.next().unwrap();
                 self.builder.token(SyntaxKind::Error.into(), lexeme.text);
+
+                self.last_lexeme_range = lexeme.range;
             }
         }
     }
