@@ -145,3 +145,26 @@ impl Digits {
         Val::Number(self.text().parse().unwrap())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parser::expr::parse_binding_usage;
+    use crate::parser::Parser;
+
+    #[test]
+    fn evaluate_non_existent_binding_usage() {
+        let mut p = Parser::new("$test");
+        parse_binding_usage(&mut p);
+
+        let syntax_node = p.finish_and_get_syntax();
+        let binding_usage = BindingUsage::cast(syntax_node).unwrap();
+
+        let env = Env::new();
+
+        assert_eq!(
+            binding_usage.eval(&env),
+            Err(EvalError::BindingDoesNotExist)
+        );
+    }
+}
