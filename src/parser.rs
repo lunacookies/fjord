@@ -173,6 +173,12 @@ impl<'a> Parser<'a> {
         });
     }
 
+    #[cfg(test)]
+    pub(crate) fn finish_and_get_syntax(self) -> SyntaxNode {
+        let green = self.builder.finish();
+        SyntaxNode::new_root(green)
+    }
+
     /// Parses the input the `Parser` was constructed with.
     pub fn parse(mut self) -> ParseOutput<ContainsErrors> {
         self.builder.start_node(SyntaxKind::Root.into());
