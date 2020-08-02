@@ -149,7 +149,7 @@ impl Digits {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::expr::parse_binding_usage;
+    use crate::parser::expr::{parse_binding_usage, parse_lambda};
     use crate::parser::Parser;
 
     #[test]
@@ -180,5 +180,37 @@ mod tests {
         env.store_binding("foo-bar".into(), Val::Number(5));
 
         assert_eq!(binding_usage.eval(&env), Ok(Val::Number(5)));
+    }
+
+    #[test]
+    fn evaluate_lambda() {
+        let id_lambda = {
+            let mut p = Parser::new("|x| $x");
+            parse_lambda(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+
+            Lambda::cast(syntax_node).unwrap()
+        };
+
+        let apply_a_to_b_lambda = {
+            let mut p = Parser::new("|a b| a $b");
+            parse_lambda(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+
+            Lambda::cast(syntax_node).unwrap()
+        };
+
+        let env = Env::new();
+
+        // Applying id lambda to "hello" gives "hello".
+        assert_eq!(
+            apply_a_to_b_lambda.eval(
+                vec![Val::Lambda(id_lambda), Val::Str("hello".to_string())].into_iter(),
+                &env,
+            ),
+            Ok(Val::Str("hello".to_string())),
+        );
     }
 }
