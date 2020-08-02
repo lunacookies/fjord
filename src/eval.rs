@@ -167,4 +167,18 @@ mod tests {
             Err(EvalError::BindingDoesNotExist)
         );
     }
+
+    #[test]
+    fn evaluate_binding_usage_that_does_exist() {
+        let mut p = Parser::new("$foo-bar");
+        parse_binding_usage(&mut p);
+
+        let syntax_node = p.finish_and_get_syntax();
+        let binding_usage = BindingUsage::cast(syntax_node).unwrap();
+
+        let mut env = Env::new();
+        env.store_binding("foo-bar".into(), Val::Number(5));
+
+        assert_eq!(binding_usage.eval(&env), Ok(Val::Number(5)));
+    }
 }
