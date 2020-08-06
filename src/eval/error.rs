@@ -3,4 +3,6 @@
 pub enum EvalError {
     /// when a binding is used that has not been defined
     BindingDoesNotExist,
+    /// when too many parameters are supplied to a function
+    TooManyParams,
 }

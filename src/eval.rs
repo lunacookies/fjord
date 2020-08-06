@@ -111,8 +111,16 @@ impl FunctionCall {
 }
 
 impl Lambda {
-    fn eval(&self, params: impl Iterator<Item = Val>, env: &Env<'_>) -> Result<Val, EvalError> {
+    fn eval(
+        &self,
+        params: impl ExactSizeIterator<Item = Val>,
+        env: &Env<'_>,
+    ) -> Result<Val, EvalError> {
         let mut new_env = env.create_child();
+
+        if params.len() > self.param_names().unwrap().count() {
+            return Err(EvalError::TooManyParams);
+        }
 
         for (param_name, param_val) in self.param_names().unwrap().zip(params) {
             new_env.store_binding(param_name, param_val);
@@ -211,6 +219,28 @@ mod tests {
                 &env,
             ),
             Ok(Val::Str("hello".to_string())),
+        );
+    }
+
+    #[test]
+    fn evaluate_lambda_with_too_many_params() {
+        let id_lambda = {
+            let mut p = Parser::new("|a| $a");
+            parse_lambda(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+
+            Lambda::cast(syntax_node).unwrap()
+        };
+
+        let env = Env::new();
+
+        assert_eq!(
+            id_lambda.eval(
+                vec![Val::Number(5), Val::Str("test".to_string())].into_iter(),
+                &env,
+            ),
+            Err(EvalError::TooManyParams),
         );
     }
 }
