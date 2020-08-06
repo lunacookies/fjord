@@ -22,4 +22,6 @@ pub(super) enum EvalErrorKind {
     TooManyParams,
     /// when too few parameters are supplied to a function
     TooFewParams,
+    /// when something that is not a lambda is called
+    CallNonLambda,
 }

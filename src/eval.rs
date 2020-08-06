@@ -90,28 +90,28 @@ impl Expr {
 
 impl FunctionCall {
     fn eval(&self, env: &Env<'_>) -> Result<Val, EvalError> {
-        // TODO: Add proper error handling for when function is not a lambda.
-
         let name = self.name().unwrap();
 
         let val = env
             .get_binding(name.text())
             .ok_or_else(|| EvalError::new(EvalErrorKind::BindingDoesNotExist, name.text_range()))?;
 
-        match val {
-            Val::Lambda(lambda) => {
-                let params: Result<Vec<_>, _> = self
-                    .param_exprs()
-                    .unwrap()
-                    .map(|param| param.eval(env))
-                    .collect();
+        if let Val::Lambda(lambda) = val {
+            let params: Result<Vec<_>, _> = self
+                .param_exprs()
+                .unwrap()
+                .map(|param| param.eval(env))
+                .collect();
 
-                let params = params?;
-                let params_range = self.params().unwrap().text_range();
+            let params = params?;
+            let params_range = self.params().unwrap().text_range();
 
-                lambda.eval(params_range, params.into_iter(), env)
-            }
-            _ => unreachable!(),
+            lambda.eval(params_range, params.into_iter(), env)
+        } else {
+            Err(EvalError::new(
+                EvalErrorKind::CallNonLambda,
+                name.text_range(),
+            ))
         }
     }
 }
@@ -176,7 +176,7 @@ impl Digits {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::expr::{parse_binding_usage, parse_lambda};
+    use crate::parser::expr::{parse_binding_usage, parse_function_call, parse_lambda};
     use crate::parser::Parser;
 
     #[test]
@@ -294,6 +294,29 @@ mod tests {
                 &env,
             ),
             Err(EvalError::new(EvalErrorKind::TooFewParams, call_range)),
+        );
+    }
+
+    #[test]
+    fn call_non_lambda() {
+        let mut env = Env::new();
+        env.store_binding("foo".into(), Val::Number(100));
+
+        let call = {
+            let mut p = Parser::new("foo 10");
+            parse_function_call(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+
+            FunctionCall::cast(syntax_node).unwrap()
+        };
+
+        assert_eq!(
+            call.eval(&env),
+            Err(EvalError::new(
+                EvalErrorKind::CallNonLambda,
+                TextRange::new(0.into(), 3.into()),
+            )),
         );
     }
 }
