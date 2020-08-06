@@ -5,6 +5,7 @@
 use crate::lexer::SyntaxKind;
 use crate::{SyntaxElement, SyntaxNode, SyntaxToken};
 use smol_str::SmolStr;
+use text_size::TextRange;
 
 macro_rules! ast_node {
     ($node:ident, $kind:expr) => {
@@ -20,6 +21,11 @@ macro_rules! ast_node {
                     None
                 }
             }
+
+            #[allow(unused)]
+            pub(crate) fn text_range(&self) -> TextRange {
+                self.0.text_range()
+        }
         }
     };
 }
@@ -226,6 +232,11 @@ macro_rules! ast_token {
 
             pub(crate) fn text(&self) -> &SmolStr {
                 self.0.text()
+            }
+
+            #[allow(unused)]
+            pub(crate) fn text_range(&self) -> TextRange {
+                self.0.text_range()
             }
         }
     };
