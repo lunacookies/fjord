@@ -2,6 +2,7 @@
 
 mod error;
 pub use error::EvalError;
+use error::EvalErrorKind;
 
 use crate::ast::{
     BindingDef, BindingUsage, Digits, Expr, ExprKind, FunctionCall, Item, ItemKind, Lambda, Root,
@@ -10,6 +11,7 @@ use crate::ast::{
 use crate::env::Env;
 use crate::val::Val;
 use std::cmp::Ordering;
+use text_size::TextRange;
 
 impl Root {
     pub(crate) fn eval(&self, env: &mut Env<'_>) -> Result<Val, EvalError> {
@@ -90,21 +92,24 @@ impl FunctionCall {
     fn eval(&self, env: &Env<'_>) -> Result<Val, EvalError> {
         // TODO: Add proper error handling for when function is not a lambda.
 
+        let name = self.name().unwrap();
+
         let val = env
-            .get_binding(&self.name().unwrap())
-            .ok_or(EvalError::BindingDoesNotExist)?;
+            .get_binding(name.text())
+            .ok_or_else(|| EvalError::new(EvalErrorKind::BindingDoesNotExist, name.text_range()))?;
 
         match val {
             Val::Lambda(lambda) => {
                 let params: Result<Vec<_>, _> = self
-                    .params()
+                    .param_exprs()
                     .unwrap()
                     .map(|param| param.eval(env))
                     .collect();
 
                 let params = params?;
+                let params_range = self.params().unwrap().text_range();
 
-                lambda.eval(params.into_iter(), env)
+                lambda.eval(params_range, params.into_iter(), env)
             }
             _ => unreachable!(),
         }
@@ -114,14 +119,25 @@ impl FunctionCall {
 impl Lambda {
     fn eval(
         &self,
+        call_params_range: TextRange,
         params: impl ExactSizeIterator<Item = Val>,
         env: &Env<'_>,
     ) -> Result<Val, EvalError> {
         let mut new_env = env.create_child();
 
         match params.len().cmp(&self.param_names().unwrap().count()) {
-            Ordering::Less => return Err(EvalError::TooFewParams),
-            Ordering::Greater => return Err(EvalError::TooManyParams),
+            Ordering::Less => {
+                return Err(EvalError::new(
+                    EvalErrorKind::TooFewParams,
+                    call_params_range,
+                ));
+            }
+            Ordering::Greater => {
+                return Err(EvalError::new(
+                    EvalErrorKind::TooManyParams,
+                    call_params_range,
+                ));
+            }
             Ordering::Equal => {}
         }
 
@@ -138,7 +154,7 @@ impl BindingUsage {
         let binding_name = self.binding_name().unwrap();
 
         env.get_binding(&binding_name)
-            .ok_or(EvalError::BindingDoesNotExist)
+            .ok_or_else(|| EvalError::new(EvalErrorKind::BindingDoesNotExist, self.text_range()))
     }
 }
 
@@ -175,7 +191,10 @@ mod tests {
 
         assert_eq!(
             binding_usage.eval(&env),
-            Err(EvalError::BindingDoesNotExist)
+            Err(EvalError::new(
+                EvalErrorKind::BindingDoesNotExist,
+                TextRange::new(0.into(), 5.into()),
+            ))
         );
     }
 
@@ -218,6 +237,7 @@ mod tests {
         // Applying id lambda to "hello" gives "hello".
         assert_eq!(
             apply_a_to_b_lambda.eval(
+                TextRange::default(),
                 vec![Val::Lambda(id_lambda), Val::Str("hello".to_string())].into_iter(),
                 &env,
             ),
@@ -238,12 +258,16 @@ mod tests {
 
         let env = Env::new();
 
+        // Dummy value.
+        let call_range = TextRange::new(0.into(), 10.into());
+
         assert_eq!(
             id_lambda.eval(
+                call_range,
                 vec![Val::Number(5), Val::Str("test".to_string())].into_iter(),
                 &env,
             ),
-            Err(EvalError::TooManyParams),
+            Err(EvalError::new(EvalErrorKind::TooManyParams, call_range)),
         );
     }
 
@@ -260,9 +284,16 @@ mod tests {
 
         let env = Env::new();
 
+        // Dummy value.
+        let call_range = TextRange::new(0.into(), 10.into());
+
         assert_eq!(
-            ls_two_dirs_lambda.eval(vec![Val::Str("~/Documents".to_string())].into_iter(), &env,),
-            Err(EvalError::TooFewParams),
+            ls_two_dirs_lambda.eval(
+                call_range,
+                vec![Val::Str("~/Documents".to_string())].into_iter(),
+                &env,
+            ),
+            Err(EvalError::new(EvalErrorKind::TooFewParams, call_range)),
         );
     }
 }

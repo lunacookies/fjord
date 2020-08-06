@@ -25,7 +25,7 @@ macro_rules! ast_node {
             #[allow(unused)]
             pub(crate) fn text_range(&self) -> TextRange {
                 self.0.text_range()
-        }
+            }
         }
     };
 }
@@ -164,17 +164,16 @@ impl Expr {
 ast_node!(FunctionCall, SyntaxKind::FunctionCall);
 
 impl FunctionCall {
-    pub(crate) fn name(&self) -> Option<SmolStr> {
-        self.0
-            .first_token()
-            .and_then(Atom::cast)
-            .map(|atom| atom.text().clone())
+    pub(crate) fn name(&self) -> Option<Atom> {
+        self.0.first_token().and_then(Atom::cast)
     }
 
-    pub(crate) fn params(&self) -> Option<impl Iterator<Item = Expr>> {
-        self.0
-            .children()
-            .find_map(FunctionCallParams::cast)
+    pub(crate) fn params(&self) -> Option<FunctionCallParams> {
+        self.0.children().find_map(FunctionCallParams::cast)
+    }
+
+    pub(crate) fn param_exprs(&self) -> Option<impl Iterator<Item = Expr>> {
+        self.params()
             .map(|params| params.0.children_with_tokens().filter_map(Expr::cast))
     }
 }

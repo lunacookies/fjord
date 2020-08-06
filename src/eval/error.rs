@@ -1,6 +1,21 @@
-/// An enum representing all the possible ways evaluation can fail.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub enum EvalError {
+use text_size::TextRange;
+
+/// A struct representing all the possible ways evaluation can fail. This includes both the kind of
+/// error that ocurred and the text range at which it is located.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct EvalError {
+    kind: EvalErrorKind,
+    range: TextRange,
+}
+
+impl EvalError {
+    pub(super) fn new(kind: EvalErrorKind, range: TextRange) -> Self {
+        Self { kind, range }
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub(super) enum EvalErrorKind {
     /// when a binding is used that has not been defined
     BindingDoesNotExist,
     /// when too many parameters are supplied to a function
