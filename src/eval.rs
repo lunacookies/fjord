@@ -9,6 +9,7 @@ use crate::ast::{
 };
 use crate::env::Env;
 use crate::val::Val;
+use std::cmp::Ordering;
 
 impl Root {
     pub(crate) fn eval(&self, env: &mut Env<'_>) -> Result<Val, EvalError> {
@@ -118,8 +119,10 @@ impl Lambda {
     ) -> Result<Val, EvalError> {
         let mut new_env = env.create_child();
 
-        if params.len() > self.param_names().unwrap().count() {
-            return Err(EvalError::TooManyParams);
+        match params.len().cmp(&self.param_names().unwrap().count()) {
+            Ordering::Less => return Err(EvalError::TooFewParams),
+            Ordering::Greater => return Err(EvalError::TooManyParams),
+            Ordering::Equal => {}
         }
 
         for (param_name, param_val) in self.param_names().unwrap().zip(params) {
@@ -241,6 +244,25 @@ mod tests {
                 &env,
             ),
             Err(EvalError::TooManyParams),
+        );
+    }
+
+    #[test]
+    fn evaluate_lambda_with_too_few_params() {
+        let ls_two_dirs_lambda = {
+            let mut p = Parser::new("|dir1 dir2| ls $dir1 $dir2");
+            parse_lambda(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+
+            Lambda::cast(syntax_node).unwrap()
+        };
+
+        let env = Env::new();
+
+        assert_eq!(
+            ls_two_dirs_lambda.eval(vec![Val::Str("~/Documents".to_string())].into_iter(), &env,),
+            Err(EvalError::TooFewParams),
         );
     }
 }

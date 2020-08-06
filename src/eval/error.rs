@@ -5,4 +5,6 @@ pub enum EvalError {
     BindingDoesNotExist,
     /// when too many parameters are supplied to a function
     TooManyParams,
+    /// when too few parameters are supplied to a function
+    TooFewParams,
 }
