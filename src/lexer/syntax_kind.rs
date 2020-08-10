@@ -10,7 +10,7 @@ pub(crate) enum SyntaxKind {
     #[token("return")]
     Return,
 
-    #[regex(r"([^\n \$\|]|\\ )+")]
+    #[regex(r"([^\n =\$\|\+]|\\ )+")]
     Atom,
 
     #[regex("[0-9]+", priority = 2)]
@@ -27,6 +27,9 @@ pub(crate) enum SyntaxKind {
 
     #[token("|")]
     Pipe,
+
+    #[token("+")]
+    Plus,
 
     #[regex(" +")]
     Whitespace,
@@ -127,6 +130,11 @@ mod tests {
     #[test]
     fn lex_pipe() {
         test_symbol("|", SyntaxKind::Pipe);
+    }
+
+    #[test]
+    fn lex_plus() {
+        test_symbol("+", SyntaxKind::Plus);
     }
 
     #[test]
