@@ -34,6 +34,9 @@ pub(crate) enum SyntaxKind {
     #[token("-")]
     Minus,
 
+    #[token("*")]
+    Star,
+
     #[regex(" +")]
     Whitespace,
 
@@ -153,6 +156,11 @@ mod tests {
     #[test]
     fn lex_minus() {
         test_join_to_atom("-", SyntaxKind::Minus);
+    }
+
+    #[test]
+    fn lex_star() {
+        test_join_to_atom("*", SyntaxKind::Star);
     }
 
     #[test]
