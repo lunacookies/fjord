@@ -177,6 +177,7 @@ impl Digits {
 mod tests {
     use super::*;
     use crate::parser::expr::{parse_binding_usage, parse_function_call, parse_lambda};
+    use crate::parser::statement::parse_let_statement;
     use crate::parser::Parser;
 
     #[test]
@@ -377,6 +378,31 @@ mod tests {
                 EvalErrorKind::CallNonLambda,
                 TextRange::new(0.into(), 3.into()),
             )),
+        );
+    }
+
+    #[test]
+    fn evaluate_binding_def() {
+        let binding_def = {
+            let mut p = Parser::new("let a = 5");
+            parse_let_statement(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+
+            BindingDef::cast(syntax_node).unwrap()
+        };
+
+        assert_eq!(
+            {
+                let mut env = Env::new();
+                binding_def.eval(&mut env).unwrap();
+                env
+            },
+            {
+                let mut env = Env::new();
+                env.store_binding("a".into(), Val::Number(5));
+                env
+            },
         );
     }
 }
