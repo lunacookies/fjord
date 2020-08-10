@@ -325,6 +325,39 @@ mod tests {
     }
 
     #[test]
+    fn call_lambda_without_any_params() {
+        let mut env = Env::new();
+
+        let always_return_100_lambda = {
+            let mut p = Parser::new("|| 100");
+            parse_lambda(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+
+            Lambda::cast(syntax_node).unwrap()
+        };
+
+        env.store_binding(
+            "always-return-100".into(),
+            Val::Lambda(always_return_100_lambda),
+        );
+
+        let always_return_100_application = {
+            let mut p = Parser::new("always-return-100");
+            parse_function_call(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+
+            FunctionCall::cast(syntax_node).unwrap()
+        };
+
+        assert_eq!(
+            always_return_100_application.eval(&env),
+            Ok(Val::Number(100)),
+        );
+    }
+
+    #[test]
     fn call_non_lambda() {
         let mut env = Env::new();
         env.store_binding("foo".into(), Val::Number(100));
