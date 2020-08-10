@@ -5,8 +5,8 @@ pub use error::EvalError;
 use error::EvalErrorKind;
 
 use crate::ast::{
-    BindingDef, BindingUsage, Digits, Expr, ExprKind, FunctionCall, Item, ItemKind, Lambda, Root,
-    Statement, StatementKind, StringLiteral,
+    BindingDef, BindingUsage, Digits, Expr, ExprKind, FunctionCall, Item, ItemKind, Lambda,
+    ReturnStatement, Root, Statement, StatementKind, StringLiteral,
 };
 use crate::env::Env;
 use crate::val::Val;
@@ -17,30 +17,31 @@ impl Root {
     pub(crate) fn eval(&self, env: &mut Env<'_>) -> Result<Val, EvalError> {
         let items: Vec<_> = self.items().collect();
 
+        let num_items = items.len();
+        let at_last = |idx| idx == num_items - 1;
+
         if items.is_empty() {
             return Ok(Val::Nil);
         }
 
-        // We process the last item seperately to allow for implicit return.
-
-        for item in &items[1..] {
+        for (idx, item) in items.iter().enumerate() {
             // If we’re at a return statement, we early return with the value of the return
             // statement.
             if let ItemKind::Statement(statement) = item.kind() {
                 if let StatementKind::ReturnStatement(return_statement) = statement.kind() {
-                    // If the return statement does not have a value, we return with Nil.
-                    return return_statement
-                        .val()
-                        .map(|expr| expr.eval(env))
-                        .unwrap_or(Ok(Val::Nil));
+                    return return_statement.eval_val(env);
                 }
             }
 
-            item.eval(env)?;
+            let eval_output = item.eval(env)?;
+            if at_last(idx) {
+                return Ok(eval_output);
+            }
         }
 
-        let last_item = items.last().unwrap();
-        last_item.eval(env)
+        // All lists are either empty (see the is_empty call before the for loop) or have a last
+        // item (see at_last call above), so we are guaranteed to have returned by this point.
+        unreachable!()
     }
 }
 
@@ -73,6 +74,15 @@ impl BindingDef {
         env.store_binding(name, expr);
 
         Ok(())
+    }
+}
+
+impl ReturnStatement {
+    fn eval_val(&self, env: &Env<'_>) -> Result<Val, EvalError> {
+        // If the return statement does not have a value, we return with Nil.
+        self.val()
+            .map(|expr| expr.eval(env))
+            .unwrap_or(Ok(Val::Nil))
     }
 }
 
@@ -446,5 +456,19 @@ mod tests {
         let mut env = Env::new();
 
         assert_eq!(root.eval(&mut env), Ok(Val::Nil));
+    }
+
+    #[test]
+    fn evaluate_root_with_return_statement_with_value() {
+        let root = {
+            let p = Parser::new("return 0");
+            let syntax_node = p.parse().syntax();
+
+            Root::cast(syntax_node).unwrap()
+        };
+
+        let mut env = Env::new();
+
+        assert_eq!(root.eval(&mut env), Ok(Val::Number(0)));
     }
 }
