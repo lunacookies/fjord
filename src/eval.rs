@@ -471,4 +471,18 @@ mod tests {
 
         assert_eq!(root.eval(&mut env), Ok(Val::Number(0)));
     }
+
+    #[test]
+    fn evaluate_root_with_return_statement_with_no_value() {
+        let root = {
+            let p = Parser::new("return");
+            let syntax_node = p.parse().syntax();
+
+            Root::cast(syntax_node).unwrap()
+        };
+
+        let mut env = Env::new();
+
+        assert_eq!(root.eval(&mut env), Ok(Val::Nil));
+    }
 }
