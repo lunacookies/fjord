@@ -298,6 +298,33 @@ mod tests {
     }
 
     #[test]
+    fn call_lambda_with_several_params() {
+        let mut env = Env::new();
+
+        let return_first_lambda = {
+            let mut p = Parser::new("|a b| $a");
+            parse_lambda(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+
+            Lambda::cast(syntax_node).unwrap()
+        };
+
+        env.store_binding("return-first".into(), Val::Lambda(return_first_lambda));
+
+        let return_first_application = {
+            let mut p = Parser::new("return-first 5 10");
+            parse_function_call(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+
+            FunctionCall::cast(syntax_node).unwrap()
+        };
+
+        assert_eq!(return_first_application.eval(&env), Ok(Val::Number(5)));
+    }
+
+    #[test]
     fn call_non_lambda() {
         let mut env = Env::new();
         env.store_binding("foo".into(), Val::Number(100));
