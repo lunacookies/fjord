@@ -37,6 +37,9 @@ pub(crate) enum SyntaxKind {
     #[token("*")]
     Star,
 
+    #[token("/")]
+    Slash,
+
     #[regex(" +")]
     Whitespace,
 
@@ -162,6 +165,11 @@ mod tests {
     fn lex_star() {
         // Stars must be kept separate from Atoms because it allows them to be used for globbing.
         test_separate_from_atom("*", SyntaxKind::Star);
+    }
+
+    #[test]
+    fn lex_slash() {
+        test_join_to_atom("/", SyntaxKind::Slash);
     }
 
     #[test]
