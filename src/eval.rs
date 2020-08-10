@@ -177,7 +177,7 @@ impl Digits {
 mod tests {
     use super::*;
     use crate::parser::expr::{parse_binding_usage, parse_function_call, parse_lambda};
-    use crate::parser::statement::parse_let_statement;
+    use crate::parser::statement::parse_binding_def;
     use crate::parser::Parser;
 
     #[test]
@@ -385,7 +385,7 @@ mod tests {
     fn evaluate_binding_def() {
         let binding_def = {
             let mut p = Parser::new("let a = 5");
-            parse_let_statement(&mut p);
+            parse_binding_def(&mut p);
 
             let syntax_node = p.finish_and_get_syntax();
 
