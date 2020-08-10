@@ -10,7 +10,7 @@ pub(crate) enum SyntaxKind {
     #[token("return")]
     Return,
 
-    #[regex(r"([^\n =\$\|]|\\ )+")]
+    #[regex(r"([^\n =$|*]|\\ )+")]
     Atom,
 
     #[regex("[0-9]+", priority = 2)]
@@ -160,7 +160,8 @@ mod tests {
 
     #[test]
     fn lex_star() {
-        test_join_to_atom("*", SyntaxKind::Star);
+        // Stars must be kept separate from Atoms because it allows them to be used for globbing.
+        test_separate_from_atom("*", SyntaxKind::Star);
     }
 
     #[test]
