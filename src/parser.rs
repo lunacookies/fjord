@@ -51,7 +51,7 @@ pub struct ParseOutput<State: ParseOutputState> {
 }
 
 impl<State: ParseOutputState> ParseOutput<State> {
-    fn syntax(&self) -> SyntaxNode {
+    pub(crate) fn syntax(&self) -> SyntaxNode {
         SyntaxNode::new_root(self.green_node.clone())
     }
 
