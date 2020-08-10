@@ -70,6 +70,20 @@ mod tests {
         assert_eq!(lexer.slice(), input);
     }
 
+    fn test_symbol(symbol: &str, expected_kind: SyntaxKind) {
+        test(symbol, expected_kind);
+
+        let lexer_input = format!("a{}b", symbol);
+        let mut lexer = SyntaxKind::lexer(&lexer_input);
+
+        assert_eq!(lexer.next(), Some(SyntaxKind::Atom));
+        assert_eq!(lexer.slice(), "a");
+        assert_eq!(lexer.next(), Some(expected_kind));
+        assert_eq!(lexer.slice(), symbol);
+        assert_eq!(lexer.next(), Some(SyntaxKind::Atom));
+        assert_eq!(lexer.slice(), "b");
+    }
+
     #[test]
     fn lex_let_keyword() {
         test("let", SyntaxKind::Let);
@@ -102,36 +116,26 @@ mod tests {
 
     #[test]
     fn lex_equals_sign() {
-        test("=", SyntaxKind::Equals);
+        test_symbol("=", SyntaxKind::Equals);
     }
 
     #[test]
     fn lex_dollar_sign() {
-        test("$", SyntaxKind::Dollar);
-    }
-
-    #[test]
-    fn lex_dollar_sign_then_atom() {
-        let mut lexer = SyntaxKind::lexer("$foo");
-
-        assert_eq!(lexer.next(), Some(SyntaxKind::Dollar));
-        assert_eq!(lexer.slice(), "$");
-        assert_eq!(lexer.next(), Some(SyntaxKind::Atom));
-        assert_eq!(lexer.slice(), "foo");
+        test_symbol("$", SyntaxKind::Dollar);
     }
 
     #[test]
     fn lex_pipe() {
-        test("|", SyntaxKind::Pipe);
+        test_symbol("|", SyntaxKind::Pipe);
     }
 
     #[test]
     fn lex_spaces() {
-        test("  ", SyntaxKind::Whitespace);
+        test_symbol("  ", SyntaxKind::Whitespace);
     }
 
     #[test]
     fn lex_line_feeds() {
-        test("\n\n\n", SyntaxKind::Eol);
+        test_symbol("\n\n\n", SyntaxKind::Eol);
     }
 }
