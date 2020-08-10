@@ -419,4 +419,18 @@ mod tests {
 
         assert_eq!(root.eval(&mut env), Ok(Val::Nil));
     }
+
+    #[test]
+    fn evaluate_root_with_one_expr_returns_value_of_expr() {
+        let root = {
+            let p = Parser::new(r#""hello""#);
+            let syntax_node = p.parse().syntax();
+
+            Root::cast(syntax_node).unwrap()
+        };
+
+        let mut env = Env::new();
+
+        assert_eq!(root.eval(&mut env), Ok(Val::Str("hello".to_string())));
+    }
 }
