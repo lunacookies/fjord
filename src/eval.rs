@@ -505,4 +505,23 @@ mod tests {
 
         assert_eq!(root.eval(&mut env), Ok(Val::Number(2)));
     }
+
+    #[test]
+    fn evaluate_root_with_return_statement_skips_following() {
+        let root = {
+            let p = Parser::new(
+                r#"
+let foo = "bar"
+return $foo
+5"#,
+            );
+            let syntax_node = p.parse().syntax();
+
+            Root::cast(syntax_node).unwrap()
+        };
+
+        let mut env = Env::new();
+
+        assert_eq!(root.eval(&mut env), Ok(Val::Str("bar".to_string())));
+    }
 }
