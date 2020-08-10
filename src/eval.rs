@@ -405,4 +405,18 @@ mod tests {
             },
         );
     }
+
+    #[test]
+    fn evaluate_empty_root() {
+        let root = {
+            let p = Parser::new("");
+            let syntax_node = p.parse().syntax();
+
+            Root::cast(syntax_node).unwrap()
+        };
+
+        let mut env = Env::new();
+
+        assert_eq!(root.eval(&mut env), Ok(Val::Nil));
+    }
 }
