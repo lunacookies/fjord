@@ -485,4 +485,24 @@ mod tests {
 
         assert_eq!(root.eval(&mut env), Ok(Val::Nil));
     }
+
+    #[test]
+    fn evaluate_root_with_multiple_expressions_returns_last() {
+        let root = {
+            let p = Parser::new(
+                r#"
+5
+10
+"foobar"
+2"#,
+            );
+            let syntax_node = p.parse().syntax();
+
+            Root::cast(syntax_node).unwrap()
+        };
+
+        let mut env = Env::new();
+
+        assert_eq!(root.eval(&mut env), Ok(Val::Number(2)));
+    }
 }
