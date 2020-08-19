@@ -10,7 +10,7 @@ pub(crate) enum SyntaxKind {
     #[token("return")]
     Return,
 
-    #[regex(r"([^\n =$|*]|\\ )+")]
+    #[regex(r"([^\n\r =$|*]|\\ )+")]
     Atom,
 
     #[regex("[0-9]+", priority = 2)]
@@ -43,7 +43,7 @@ pub(crate) enum SyntaxKind {
     #[regex(" +")]
     Whitespace,
 
-    #[regex("\n+")]
+    #[regex("[\n\r]+")]
     Eol,
 
     #[error]
@@ -181,5 +181,10 @@ mod tests {
     #[test]
     fn lex_line_feeds() {
         test_separate_from_atom("\n\n\n", SyntaxKind::Eol);
+    }
+
+    #[test]
+    fn lex_mixed_carriage_returns_and_line_feeds() {
+        test_separate_from_atom("\r\r\n\r\n\n", SyntaxKind::Eol);
     }
 }
