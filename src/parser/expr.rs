@@ -1,7 +1,57 @@
 use super::Parser;
 use crate::lexer::SyntaxKind;
 
+#[derive(Debug)]
+enum Op {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
 pub(crate) fn parse_expr(p: &mut Parser<'_>) {
+    parse_expr_bp(p, 0);
+}
+
+fn parse_expr_bp(p: &mut Parser<'_>, min_bp: u8) {
+    let checkpoint = p.builder.checkpoint();
+
+    parse_one_expr(p);
+
+    p.skip_ws();
+
+    loop {
+        let op = loop {
+            match p.peek() {
+                Some(SyntaxKind::Plus) => break Op::Add,
+                Some(SyntaxKind::Minus) => break Op::Sub,
+                Some(SyntaxKind::Star) => break Op::Mul,
+                Some(SyntaxKind::Slash) => break Op::Div,
+                Some(SyntaxKind::Eol) | None => return,
+                Some(_) => p.error("expected operator"),
+            }
+        };
+
+        let (left_bp, right_bp) = infix_bp(op);
+
+        if left_bp < min_bp {
+            break;
+        }
+
+        p.builder
+            .start_node_at(checkpoint, SyntaxKind::BinOp.into());
+
+        // Eat the operator’s token.
+        p.bump();
+        p.skip_ws();
+
+        parse_expr_bp(p, right_bp);
+
+        p.builder.finish_node();
+    }
+}
+
+fn parse_one_expr(p: &mut Parser<'_>) {
     match p.peek() {
         Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) | Some(SyntaxKind::Dollar) => {
             parse_contained_expr(p)
@@ -9,6 +59,13 @@ pub(crate) fn parse_expr(p: &mut Parser<'_>) {
         Some(SyntaxKind::Atom) => parse_function_call(p),
         Some(SyntaxKind::Pipe) => parse_lambda(p),
         _ => p.error("expected expression"),
+    }
+}
+
+fn infix_bp(op: Op) -> (u8, u8) {
+    match op {
+        Op::Add | Op::Sub => (1, 2),
+        Op::Mul | Op::Div => (3, 4),
     }
 }
 
@@ -202,6 +259,66 @@ Root@0..12
           Atom@9..10 "b"
         Whitespace@10..11 " "
         Digits@11..12 "5""#,
+        );
+    }
+
+    #[test]
+    fn parse_simple_bin_op() {
+        test(
+            "1 + 5",
+            r#"
+Root@0..5
+  BinOp@0..5
+    Digits@0..1 "1"
+    Whitespace@1..2 " "
+    Plus@2..3 "+"
+    Whitespace@3..4 " "
+    Digits@4..5 "5""#,
+        );
+    }
+
+    #[test]
+    fn parse_bin_op_showing_precedence() {
+        test(
+            "2 + 3 * 4",
+            r#"
+Root@0..9
+  BinOp@0..9
+    Digits@0..1 "2"
+    Whitespace@1..2 " "
+    Plus@2..3 "+"
+    Whitespace@3..4 " "
+    BinOp@4..9
+      Digits@4..5 "3"
+      Whitespace@5..6 " "
+      Star@6..7 "*"
+      Whitespace@7..8 " "
+      Digits@8..9 "4""#,
+        );
+    }
+
+    #[test]
+    fn parse_bin_op_showing_associativity() {
+        test(
+            "10 - 5 - 3 - 2",
+            r#"
+Root@0..14
+  BinOp@0..14
+    BinOp@0..11
+      BinOp@0..7
+        Digits@0..2 "10"
+        Whitespace@2..3 " "
+        Minus@3..4 "-"
+        Whitespace@4..5 " "
+        Digits@5..6 "5"
+        Whitespace@6..7 " "
+      Minus@7..8 "-"
+      Whitespace@8..9 " "
+      Digits@9..10 "3"
+      Whitespace@10..11 " "
+    Minus@11..12 "-"
+    Whitespace@12..13 " "
+    Digits@13..14 "2""#,
         );
     }
 }

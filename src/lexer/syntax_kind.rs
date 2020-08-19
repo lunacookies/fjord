@@ -53,6 +53,7 @@ pub(crate) enum SyntaxKind {
     Root,
     BindingDef,
     ReturnStatement,
+    BinOp,
     FunctionCall,
     FunctionCallParams,
     Lambda,
