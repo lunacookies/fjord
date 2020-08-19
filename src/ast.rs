@@ -3,7 +3,7 @@
 //! The nodes here are partially auto-generated, and as such lack documentation.
 
 use crate::lexer::SyntaxKind;
-use crate::{SyntaxElement, SyntaxNode, SyntaxToken};
+use crate::{Op, SyntaxElement, SyntaxNode, SyntaxToken};
 use smol_str::SmolStr;
 use text_size::TextRange;
 
@@ -119,6 +119,7 @@ impl ReturnStatement {
 pub(crate) struct Expr(SyntaxElement);
 
 pub(crate) enum ExprKind {
+    BinOp(BinOp),
     FunctionCall(FunctionCall),
     Lambda(Lambda),
     BindingUsage(BindingUsage),
@@ -130,7 +131,8 @@ impl Expr {
     fn cast(element: SyntaxElement) -> Option<Self> {
         let is_expr = match element {
             SyntaxElement::Node(ref node) => {
-                FunctionCall::cast(node.clone()).is_some()
+                BinOp::cast(node.clone()).is_some()
+                    || FunctionCall::cast(node.clone()).is_some()
                     || Lambda::cast(node.clone()).is_some()
                     || BindingUsage::cast(node.clone()).is_some()
             }
@@ -148,8 +150,9 @@ impl Expr {
 
     pub(crate) fn kind(&self) -> ExprKind {
         match &self.0 {
-            SyntaxElement::Node(node) => FunctionCall::cast(node.clone())
-                .map(ExprKind::FunctionCall)
+            SyntaxElement::Node(node) => BinOp::cast(node.clone())
+                .map(ExprKind::BinOp)
+                .or_else(|| FunctionCall::cast(node.clone()).map(ExprKind::FunctionCall))
                 .or_else(|| Lambda::cast(node.clone()).map(ExprKind::Lambda))
                 .or_else(|| BindingUsage::cast(node.clone()).map(ExprKind::BindingUsage))
                 .unwrap(),
@@ -158,6 +161,25 @@ impl Expr {
                 .or_else(|| Digits::cast(token.clone()).map(ExprKind::NumberLiteral))
                 .unwrap(),
         }
+    }
+}
+
+ast_node!(BinOp, SyntaxKind::BinOp);
+
+impl BinOp {
+    pub(crate) fn op(&self) -> Option<OpToken> {
+        self.0
+            .children_with_tokens()
+            .filter_map(|element| element.into_token())
+            .find_map(OpToken::cast)
+    }
+
+    pub(crate) fn lhs(&self) -> Option<Expr> {
+        self.0.children_with_tokens().find_map(Expr::cast)
+    }
+
+    pub(crate) fn rhs(&self) -> Option<Expr> {
+        self.0.children_with_tokens().filter_map(Expr::cast).nth(1)
     }
 }
 
@@ -229,6 +251,7 @@ macro_rules! ast_token {
                 }
             }
 
+            #[allow(unused)]
             pub(crate) fn text(&self) -> &SmolStr {
                 self.0.text()
             }
@@ -246,3 +269,35 @@ ast_token!(Atom, SyntaxKind::Atom);
 ast_token!(Digits, SyntaxKind::Digits);
 
 ast_token!(StringLiteral, SyntaxKind::StringLiteral);
+
+pub(crate) struct OpToken(SyntaxToken);
+
+impl OpToken {
+    fn cast(token: SyntaxToken) -> Option<Self> {
+        if Plus::cast(token.clone()).is_some()
+            || Minus::cast(token.clone()).is_some()
+            || Star::cast(token.clone()).is_some()
+            || Slash::cast(token.clone()).is_some()
+        {
+            Some(Self(token))
+        } else {
+            None
+        }
+    }
+
+    pub(crate) fn as_op(&self) -> Option<Op> {
+        Plus::cast(self.0.clone())
+            .map(|_| Op::Add)
+            .or_else(|| Minus::cast(self.0.clone()).map(|_| Op::Sub))
+            .or_else(|| Star::cast(self.0.clone()).map(|_| Op::Mul))
+            .or_else(|| Slash::cast(self.0.clone()).map(|_| Op::Div))
+    }
+}
+
+ast_token!(Plus, SyntaxKind::Plus);
+
+ast_token!(Minus, SyntaxKind::Minus);
+
+ast_token!(Star, SyntaxKind::Star);
+
+ast_token!(Slash, SyntaxKind::Slash);

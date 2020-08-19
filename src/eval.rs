@@ -5,11 +5,12 @@ pub use error::EvalError;
 use error::EvalErrorKind;
 
 use crate::ast::{
-    BindingDef, BindingUsage, Digits, Expr, ExprKind, FunctionCall, Item, ItemKind, Lambda,
+    BinOp, BindingDef, BindingUsage, Digits, Expr, ExprKind, FunctionCall, Item, ItemKind, Lambda,
     ReturnStatement, Root, Statement, StatementKind, StringLiteral,
 };
 use crate::env::Env;
 use crate::val::Val;
+use crate::Op;
 use std::cmp::Ordering;
 use text_size::TextRange;
 
@@ -89,11 +90,42 @@ impl ReturnStatement {
 impl Expr {
     fn eval(&self, env: &Env<'_>) -> Result<Val, EvalError> {
         match self.kind() {
+            ExprKind::BinOp(bin_op) => bin_op.eval(env),
             ExprKind::FunctionCall(function_call) => function_call.eval(env),
             ExprKind::Lambda(lambda) => Ok(Val::Lambda(lambda)),
             ExprKind::BindingUsage(binding_usage) => binding_usage.eval(env),
             ExprKind::StringLiteral(string_literal) => Ok(string_literal.eval()),
             ExprKind::NumberLiteral(digits) => Ok(digits.eval()),
+        }
+    }
+}
+
+impl BinOp {
+    fn eval(&self, env: &Env<'_>) -> Result<Val, EvalError> {
+        let op = self.op().unwrap().as_op().unwrap();
+
+        let lhs = self.lhs().unwrap().eval(env)?;
+        let rhs = self.rhs().unwrap().eval(env)?;
+
+        match (lhs, rhs) {
+            (Val::Number(lhs), Val::Number(rhs)) => {
+                let result = match op {
+                    Op::Add => lhs + rhs,
+                    Op::Sub => lhs - rhs,
+                    Op::Mul => lhs * rhs,
+                    Op::Div => lhs / rhs,
+                };
+
+                Ok(Val::Number(result))
+            }
+            (lhs, rhs) => {
+                let error_kind = EvalErrorKind::BinOpOnNonNumbers {
+                    lhs_ty: lhs.ty(),
+                    rhs_ty: rhs.ty(),
+                };
+
+                Err(EvalError::new(error_kind, self.text_range()))
+            }
         }
     }
 }

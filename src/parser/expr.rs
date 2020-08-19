@@ -1,13 +1,6 @@
 use super::Parser;
 use crate::lexer::SyntaxKind;
-
-#[derive(Debug)]
-enum Op {
-    Add,
-    Sub,
-    Mul,
-    Div,
-}
+use crate::Op;
 
 pub(crate) fn parse_expr(p: &mut Parser<'_>) {
     parse_expr_bp(p, 0);

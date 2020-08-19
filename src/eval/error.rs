@@ -1,3 +1,4 @@
+use crate::val::Ty;
 use text_size::TextRange;
 
 /// A struct representing all the possible ways evaluation can fail. This includes both the kind of
@@ -24,4 +25,6 @@ pub(super) enum EvalErrorKind {
     TooFewParams,
     /// when something that is not a lambda is called
     CallNonLambda,
+    /// when a binary operation is applied to two types that are not numbers
+    BinOpOnNonNumbers { lhs_ty: Ty, rhs_ty: Ty },
 }
