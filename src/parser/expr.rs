@@ -2,11 +2,17 @@ use super::Parser;
 use crate::lexer::SyntaxKind;
 use crate::Op;
 
-pub(crate) fn parse_expr(p: &mut Parser) {
-    parse_expr_bp(p, 0);
+#[derive(Copy, Clone, PartialEq)]
+enum VirtualOp {
+    Op(Op),
+    Application,
 }
 
-fn parse_expr_bp(p: &mut Parser, min_bp: u8) {
+pub(crate) fn parse_expr(p: &mut Parser) {
+    parse_expr_bp(p, 0, false);
+}
+
+fn parse_expr_bp(p: &mut Parser, min_bp: u8, in_func_call_params: bool) {
     let checkpoint = p.builder.checkpoint();
 
     parse_one_expr(p);
@@ -16,10 +22,14 @@ fn parse_expr_bp(p: &mut Parser, min_bp: u8) {
     loop {
         let op = loop {
             match p.peek() {
-                Some(SyntaxKind::Plus) => break Op::Add,
-                Some(SyntaxKind::Minus) => break Op::Sub,
-                Some(SyntaxKind::Star) => break Op::Mul,
-                Some(SyntaxKind::Slash) => break Op::Div,
+                Some(SyntaxKind::Plus) => break VirtualOp::Op(Op::Add),
+                Some(SyntaxKind::Minus) => break VirtualOp::Op(Op::Sub),
+                Some(SyntaxKind::Star) => break VirtualOp::Op(Op::Mul),
+                Some(SyntaxKind::Slash) => break VirtualOp::Op(Op::Div),
+                Some(SyntaxKind::Digits)
+                | Some(SyntaxKind::StringLiteral)
+                | Some(SyntaxKind::Dollar)
+                | Some(SyntaxKind::Pipe) => break VirtualOp::Application,
                 Some(SyntaxKind::Eol) | None => return,
                 Some(_) => p.error("expected operator"),
             }
@@ -31,58 +41,55 @@ fn parse_expr_bp(p: &mut Parser, min_bp: u8) {
             break;
         }
 
-        p.builder
-            .start_node_at(checkpoint, SyntaxKind::BinOp.into());
+        if op == VirtualOp::Application {
+            if !in_func_call_params {
+                p.builder
+                    .start_node_at(checkpoint, SyntaxKind::FunctionCall.into());
 
-        // Eat the operator’s token.
-        p.bump();
-        p.skip_ws();
+                p.builder.start_node(SyntaxKind::FunctionCallParams.into());
+            }
 
-        parse_expr_bp(p, right_bp);
+            parse_expr_bp(p, right_bp, true);
+            p.skip_ws();
 
-        p.builder.finish_node();
+            if !in_func_call_params {
+                p.builder.finish_node();
+                p.builder.finish_node();
+            }
+        } else {
+            p.builder
+                .start_node_at(checkpoint, SyntaxKind::BinOp.into());
+
+            // Eat the operator’s token.
+            p.bump();
+            p.skip_ws();
+
+            parse_expr_bp(p, right_bp, false);
+
+            p.builder.finish_node();
+        }
     }
 }
 
 fn parse_one_expr(p: &mut Parser) {
     match p.peek() {
-        Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) | Some(SyntaxKind::Dollar) => {
-            parse_contained_expr(p)
+        Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) | Some(SyntaxKind::Atom) => {
+            p.bump()
         }
-        Some(SyntaxKind::Atom) => parse_function_call(p),
+        Some(SyntaxKind::Dollar) => parse_binding_usage(p),
         Some(SyntaxKind::Pipe) => parse_lambda(p),
         _ => p.error("expected expression"),
     }
 }
 
-fn infix_bp(op: Op) -> (u8, u8) {
+fn infix_bp(op: VirtualOp) -> (u8, u8) {
     match op {
-        Op::Add | Op::Sub => (1, 2),
-        Op::Mul | Op::Div => (3, 4),
+        VirtualOp::Op(op) => match op {
+            Op::Add | Op::Sub => (1, 2),
+            Op::Mul | Op::Div => (3, 4),
+        },
+        VirtualOp::Application => (5, 6),
     }
-}
-
-pub(crate) fn parse_function_call(p: &mut Parser) {
-    assert_eq!(p.peek(), Some(SyntaxKind::Atom));
-
-    p.builder.start_node(SyntaxKind::FunctionCall.into());
-    p.bump();
-    p.skip_ws();
-
-    p.builder.start_node(SyntaxKind::FunctionCallParams.into());
-
-    loop {
-        if p.at_end_or_eol() {
-            break;
-        }
-
-        parse_contained_expr(p);
-        p.skip_ws();
-    }
-
-    p.builder.finish_node();
-
-    p.builder.finish_node();
 }
 
 pub(crate) fn parse_lambda(p: &mut Parser) {
@@ -119,16 +126,6 @@ pub(crate) fn parse_lambda(p: &mut Parser) {
     parse_expr(p);
 
     p.builder.finish_node();
-}
-
-fn parse_contained_expr(p: &mut Parser) {
-    match p.peek() {
-        Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) | Some(SyntaxKind::Atom) => {
-            p.bump()
-        }
-        Some(SyntaxKind::Dollar) => parse_binding_usage(p),
-        _ => p.error("expected expression"),
-    }
 }
 
 pub(crate) fn parse_binding_usage(p: &mut Parser) {
@@ -312,6 +309,25 @@ Root@0..14
     Minus@11..12 "-"
     Whitespace@12..13 " "
     Digits@13..14 "2""#,
+        );
+    }
+
+    #[test]
+    fn function_call_has_higher_precedence_than_bin_op() {
+        test(
+            "sin 90 * 2",
+            r#"
+Root@0..10
+  BinOp@0..10
+    FunctionCall@0..7
+      Atom@0..3 "sin"
+      Whitespace@3..4 " "
+      FunctionCallParams@4..7
+        Digits@4..6 "90"
+        Whitespace@6..7 " "
+    Star@7..8 "*"
+    Whitespace@8..9 " "
+    Digits@9..10 "2""#,
         );
     }
 }
