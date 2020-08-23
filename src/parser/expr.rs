@@ -26,7 +26,8 @@ fn parse_expr_bp(p: &mut Parser, min_bp: u8, in_func_call_params: bool) {
                 Some(SyntaxKind::Minus) => break VirtualOp::Op(Op::Sub),
                 Some(SyntaxKind::Star) => break VirtualOp::Op(Op::Mul),
                 Some(SyntaxKind::Slash) => break VirtualOp::Op(Op::Div),
-                Some(SyntaxKind::Digits)
+                Some(SyntaxKind::Atom)
+                | Some(SyntaxKind::Digits)
                 | Some(SyntaxKind::StringLiteral)
                 | Some(SyntaxKind::Dollar)
                 | Some(SyntaxKind::Pipe) => break VirtualOp::Application,
