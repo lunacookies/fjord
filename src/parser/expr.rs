@@ -65,7 +65,7 @@ fn parse_expr_bp(p: &mut Parser, min_bp: u8, in_func_call_params: bool) {
             p.bump();
             p.skip_ws();
 
-            parse_expr_bp(p, right_bp, false);
+            parse_expr_bp(p, right_bp, in_func_call_params);
 
             p.builder.finish_node();
         }
@@ -89,7 +89,7 @@ fn infix_bp(op: VirtualOp) -> (u8, u8) {
             Op::Add | Op::Sub => (1, 2),
             Op::Mul | Op::Div => (3, 4),
         },
-        VirtualOp::Application => (5, 6),
+        VirtualOp::Application => (5, 5),
     }
 }
 
@@ -184,6 +184,18 @@ Root@0..8
       Atom@5..6 "a"
       Whitespace@6..7 " "
       Digits@7..8 "1""#,
+        );
+    }
+
+    #[test]
+    fn parse_function_call_with_no_params() {
+        test(
+            "ls",
+            r#"
+Root@0..2
+  FunctionCall@0..2
+    Atom@0..2 "ls"
+    FunctionCallParams@2..2"#,
         );
     }
 
