@@ -117,8 +117,15 @@ impl Parser {
         }
     }
 
-    fn peek(&mut self) -> Option<SyntaxKind> {
-        self.lexemes.last().map(|Lexeme { kind, .. }| *kind)
+    fn lookahead(&self, n_tokens: usize) -> Option<SyntaxKind> {
+        let num_lexemes = self.lexemes.len();
+        self.lexemes
+            .get(num_lexemes.saturating_sub(n_tokens).saturating_sub(1))
+            .map(|Lexeme { kind, .. }| *kind)
+    }
+
+    fn peek(&self) -> Option<SyntaxKind> {
+        self.lookahead(0)
     }
 
     fn at_end(&mut self) -> bool {
