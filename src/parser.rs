@@ -14,7 +14,6 @@ use crate::lexer::{Lexeme, Lexer, SyntaxKind};
 use crate::val::Val;
 use crate::SyntaxNode;
 use rowan::{GreenNode, GreenNodeBuilder};
-use std::iter::Peekable;
 use text_size::TextRange;
 
 /// A type representing the state of a `ParseOutput` containing no errors.
@@ -97,18 +96,21 @@ impl ParseOutput<ContainsErrors> {
 }
 
 /// Parses Fjord code.
-pub struct Parser<'a> {
-    lexer: Peekable<Lexer<'a>>,
+pub struct Parser {
+    lexemes: Vec<Lexeme>,
     builder: GreenNodeBuilder<'static>,
     errors: Vec<SyntaxError>,
     last_lexeme_range: TextRange,
 }
 
-impl<'a> Parser<'a> {
+impl Parser {
     /// Creates a new Parser given the input.
-    pub fn new(input: &'a str) -> Self {
+    pub fn new(input: &str) -> Self {
+        let mut lexemes: Vec<Lexeme> = Lexer::new(input).collect();
+        lexemes.reverse();
+
         Self {
-            lexer: Lexer::new(input).peekable(),
+            lexemes,
             builder: GreenNodeBuilder::new(),
             errors: Vec::new(),
             last_lexeme_range: TextRange::default(),
@@ -116,11 +118,11 @@ impl<'a> Parser<'a> {
     }
 
     fn peek(&mut self) -> Option<SyntaxKind> {
-        self.lexer.peek().map(|Lexeme { kind, .. }| *kind)
+        self.lexemes.last().map(|Lexeme { kind, .. }| *kind)
     }
 
     fn at_end(&mut self) -> bool {
-        self.lexer.peek().is_none()
+        self.lexemes.is_empty()
     }
 
     fn at_end_or_eol(&mut self) -> bool {
@@ -128,7 +130,7 @@ impl<'a> Parser<'a> {
     }
 
     fn bump(&mut self) {
-        let lexeme = self.lexer.next().unwrap();
+        let lexeme = self.lexemes.pop().unwrap();
         self.builder.token(lexeme.kind.into(), lexeme.text);
 
         self.last_lexeme_range = lexeme.range;
@@ -160,7 +162,7 @@ impl<'a> Parser<'a> {
         match self.peek() {
             Some(SyntaxKind::Eol) | None => {}
             Some(_) => {
-                let lexeme = self.lexer.next().unwrap();
+                let lexeme = self.lexemes.pop().unwrap();
                 self.builder.token(SyntaxKind::Error.into(), lexeme.text);
 
                 self.last_lexeme_range = lexeme.range;

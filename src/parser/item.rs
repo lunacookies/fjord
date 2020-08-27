@@ -3,7 +3,7 @@ use super::statement::parse_statement;
 use super::Parser;
 use crate::lexer::SyntaxKind;
 
-pub(crate) fn parse_item(p: &mut Parser<'_>) {
+pub(crate) fn parse_item(p: &mut Parser) {
     match p.peek() {
         Some(SyntaxKind::Let) | Some(SyntaxKind::Return) => parse_statement(p),
         _ => parse_expr(p),

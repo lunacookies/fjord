@@ -2,11 +2,11 @@ use super::Parser;
 use crate::lexer::SyntaxKind;
 use crate::Op;
 
-pub(crate) fn parse_expr(p: &mut Parser<'_>) {
+pub(crate) fn parse_expr(p: &mut Parser) {
     parse_expr_bp(p, 0);
 }
 
-fn parse_expr_bp(p: &mut Parser<'_>, min_bp: u8) {
+fn parse_expr_bp(p: &mut Parser, min_bp: u8) {
     let checkpoint = p.builder.checkpoint();
 
     parse_one_expr(p);
@@ -44,7 +44,7 @@ fn parse_expr_bp(p: &mut Parser<'_>, min_bp: u8) {
     }
 }
 
-fn parse_one_expr(p: &mut Parser<'_>) {
+fn parse_one_expr(p: &mut Parser) {
     match p.peek() {
         Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) | Some(SyntaxKind::Dollar) => {
             parse_contained_expr(p)
@@ -62,7 +62,7 @@ fn infix_bp(op: Op) -> (u8, u8) {
     }
 }
 
-pub(crate) fn parse_function_call(p: &mut Parser<'_>) {
+pub(crate) fn parse_function_call(p: &mut Parser) {
     assert_eq!(p.peek(), Some(SyntaxKind::Atom));
 
     p.builder.start_node(SyntaxKind::FunctionCall.into());
@@ -85,7 +85,7 @@ pub(crate) fn parse_function_call(p: &mut Parser<'_>) {
     p.builder.finish_node();
 }
 
-pub(crate) fn parse_lambda(p: &mut Parser<'_>) {
+pub(crate) fn parse_lambda(p: &mut Parser) {
     assert_eq!(p.peek(), Some(SyntaxKind::Pipe));
 
     p.builder.start_node(SyntaxKind::Lambda.into());
@@ -121,7 +121,7 @@ pub(crate) fn parse_lambda(p: &mut Parser<'_>) {
     p.builder.finish_node();
 }
 
-fn parse_contained_expr(p: &mut Parser<'_>) {
+fn parse_contained_expr(p: &mut Parser) {
     match p.peek() {
         Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) | Some(SyntaxKind::Atom) => {
             p.bump()
@@ -131,7 +131,7 @@ fn parse_contained_expr(p: &mut Parser<'_>) {
     }
 }
 
-pub(crate) fn parse_binding_usage(p: &mut Parser<'_>) {
+pub(crate) fn parse_binding_usage(p: &mut Parser) {
     assert_eq!(p.peek(), Some(SyntaxKind::Dollar));
 
     p.builder.start_node(SyntaxKind::BindingUsage.into());
