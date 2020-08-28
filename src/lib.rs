@@ -1,6 +1,11 @@
 //! A library that parses and evaluates Fjord code.
 
-#![warn(missing_docs, rust_2018_idioms)]
+#![warn(
+    missing_docs,
+    missing_copy_implementations,
+    missing_debug_implementations,
+    rust_2018_idioms
+)]
 
 mod lang;
 mod lexer;

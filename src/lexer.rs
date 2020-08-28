@@ -6,6 +6,7 @@ use smol_str::SmolStr;
 use std::{convert::TryFrom, ops::Range};
 use text_size::{TextRange, TextSize};
 
+#[derive(Debug)]
 pub(crate) struct Lexeme {
     pub(crate) kind: SyntaxKind,
     pub(crate) text: SmolStr,

@@ -17,7 +17,7 @@ use rowan::{GreenNode, GreenNodeBuilder};
 use text_size::TextRange;
 
 /// A type representing the state of a `ParseOutput` containing no errors.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct NoErrors;
 
 /// A type representing the state of a `ParseOutput` containing some number of errors.
@@ -96,6 +96,7 @@ impl ParseOutput<ContainsErrors> {
 }
 
 /// Parses Fjord code.
+#[derive(Debug)]
 pub struct Parser {
     lexemes: Vec<Lexeme>,
     builder: GreenNodeBuilder<'static>,
