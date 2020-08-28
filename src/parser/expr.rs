@@ -206,8 +206,8 @@ mod tests {
         test(
             "10",
             expect![[r#"
-Root@0..2
-  Digits@0..2 "10""#]],
+            Root@0..2
+              Digits@0..2 "10""#]],
         );
     }
 
@@ -216,8 +216,8 @@ Root@0..2
         test(
             "\"Hello, world!\"",
             expect![[r#"
-Root@0..15
-  StringLiteral@0..15 "\"Hello, world!\"""#]],
+            Root@0..15
+              StringLiteral@0..15 "\"Hello, world!\"""#]],
         );
     }
 
@@ -226,14 +226,14 @@ Root@0..15
         test(
             "func a 1",
             expect![[r#"
-Root@0..8
-  FunctionCall@0..8
-    Atom@0..4 "func"
-    Whitespace@4..5 " "
-    FunctionCallParams@5..8
-      Atom@5..6 "a"
-      Whitespace@6..7 " "
-      Digits@7..8 "1""#]],
+            Root@0..8
+              FunctionCall@0..8
+                Atom@0..4 "func"
+                Whitespace@4..5 " "
+                FunctionCallParams@5..8
+                  Atom@5..6 "a"
+                  Whitespace@6..7 " "
+                  Digits@7..8 "1""#]],
         );
     }
 
@@ -242,10 +242,10 @@ Root@0..8
         test(
             "ls",
             expect![[r#"
-Root@0..2
-  FunctionCall@0..2
-    Atom@0..2 "ls"
-    FunctionCallParams@2..2"#]],
+            Root@0..2
+              FunctionCall@0..2
+                Atom@0..2 "ls"
+                FunctionCallParams@2..2"#]],
         );
     }
 
@@ -254,14 +254,14 @@ Root@0..2
         test(
             "ls $dir\n",
             expect![[r#"
-Root@0..7
-  FunctionCall@0..7
-    Atom@0..2 "ls"
-    Whitespace@2..3 " "
-    FunctionCallParams@3..7
-      BindingUsage@3..7
-        Dollar@3..4 "$"
-        Atom@4..7 "dir""#]],
+            Root@0..7
+              FunctionCall@0..7
+                Atom@0..2 "ls"
+                Whitespace@2..3 " "
+                FunctionCallParams@3..7
+                  BindingUsage@3..7
+                    Dollar@3..4 "$"
+                    Atom@4..7 "dir""#]],
         );
     }
 
@@ -270,10 +270,10 @@ Root@0..7
         test(
             "$var",
             expect![[r#"
-Root@0..4
-  BindingUsage@0..4
-    Dollar@0..1 "$"
-    Atom@1..4 "var""#]],
+            Root@0..4
+              BindingUsage@0..4
+                Dollar@0..1 "$"
+                Atom@1..4 "var""#]],
         );
     }
 
@@ -282,10 +282,10 @@ Root@0..4
         test(
             "$let",
             expect![[r#"
-Root@0..4
-  BindingUsage@0..4
-    Dollar@0..1 "$"
-    Error@1..4 "let""#]],
+            Root@0..4
+              BindingUsage@0..4
+                Dollar@0..1 "$"
+                Error@1..4 "let""#]],
         );
     }
 
@@ -294,24 +294,24 @@ Root@0..4
         test(
             "|a b| a $b 5",
             expect![[r#"
-Root@0..12
-  Lambda@0..12
-    LambdaParams@0..5
-      Pipe@0..1 "|"
-      Atom@1..2 "a"
-      Whitespace@2..3 " "
-      Atom@3..4 "b"
-      Pipe@4..5 "|"
-    Whitespace@5..6 " "
-    FunctionCall@6..12
-      Atom@6..7 "a"
-      Whitespace@7..8 " "
-      FunctionCallParams@8..12
-        BindingUsage@8..10
-          Dollar@8..9 "$"
-          Atom@9..10 "b"
-        Whitespace@10..11 " "
-        Digits@11..12 "5""#]],
+            Root@0..12
+              Lambda@0..12
+                LambdaParams@0..5
+                  Pipe@0..1 "|"
+                  Atom@1..2 "a"
+                  Whitespace@2..3 " "
+                  Atom@3..4 "b"
+                  Pipe@4..5 "|"
+                Whitespace@5..6 " "
+                FunctionCall@6..12
+                  Atom@6..7 "a"
+                  Whitespace@7..8 " "
+                  FunctionCallParams@8..12
+                    BindingUsage@8..10
+                      Dollar@8..9 "$"
+                      Atom@9..10 "b"
+                    Whitespace@10..11 " "
+                    Digits@11..12 "5""#]],
         );
     }
 
@@ -320,13 +320,13 @@ Root@0..12
         test(
             "1 + 5",
             expect![[r#"
-Root@0..5
-  BinOp@0..5
-    Digits@0..1 "1"
-    Whitespace@1..2 " "
-    Plus@2..3 "+"
-    Whitespace@3..4 " "
-    Digits@4..5 "5""#]],
+            Root@0..5
+              BinOp@0..5
+                Digits@0..1 "1"
+                Whitespace@1..2 " "
+                Plus@2..3 "+"
+                Whitespace@3..4 " "
+                Digits@4..5 "5""#]],
         );
     }
 
@@ -335,18 +335,18 @@ Root@0..5
         test(
             "2 + 3 * 4",
             expect![[r#"
-Root@0..9
-  BinOp@0..9
-    Digits@0..1 "2"
-    Whitespace@1..2 " "
-    Plus@2..3 "+"
-    Whitespace@3..4 " "
-    BinOp@4..9
-      Digits@4..5 "3"
-      Whitespace@5..6 " "
-      Star@6..7 "*"
-      Whitespace@7..8 " "
-      Digits@8..9 "4""#]],
+            Root@0..9
+              BinOp@0..9
+                Digits@0..1 "2"
+                Whitespace@1..2 " "
+                Plus@2..3 "+"
+                Whitespace@3..4 " "
+                BinOp@4..9
+                  Digits@4..5 "3"
+                  Whitespace@5..6 " "
+                  Star@6..7 "*"
+                  Whitespace@7..8 " "
+                  Digits@8..9 "4""#]],
         );
     }
 
@@ -355,23 +355,23 @@ Root@0..9
         test(
             "10 - 5 - 3 - 2",
             expect![[r#"
-Root@0..14
-  BinOp@0..14
-    BinOp@0..11
-      BinOp@0..7
-        Digits@0..2 "10"
-        Whitespace@2..3 " "
-        Minus@3..4 "-"
-        Whitespace@4..5 " "
-        Digits@5..6 "5"
-        Whitespace@6..7 " "
-      Minus@7..8 "-"
-      Whitespace@8..9 " "
-      Digits@9..10 "3"
-      Whitespace@10..11 " "
-    Minus@11..12 "-"
-    Whitespace@12..13 " "
-    Digits@13..14 "2""#]],
+            Root@0..14
+              BinOp@0..14
+                BinOp@0..11
+                  BinOp@0..7
+                    Digits@0..2 "10"
+                    Whitespace@2..3 " "
+                    Minus@3..4 "-"
+                    Whitespace@4..5 " "
+                    Digits@5..6 "5"
+                    Whitespace@6..7 " "
+                  Minus@7..8 "-"
+                  Whitespace@8..9 " "
+                  Digits@9..10 "3"
+                  Whitespace@10..11 " "
+                Minus@11..12 "-"
+                Whitespace@12..13 " "
+                Digits@13..14 "2""#]],
         );
     }
 
@@ -380,17 +380,17 @@ Root@0..14
         test(
             "sin 90 * 2",
             expect![[r#"
-Root@0..10
-  BinOp@0..10
-    FunctionCall@0..7
-      Atom@0..3 "sin"
-      Whitespace@3..4 " "
-      FunctionCallParams@4..7
-        Digits@4..6 "90"
-        Whitespace@6..7 " "
-    Star@7..8 "*"
-    Whitespace@8..9 " "
-    Digits@9..10 "2""#]],
+            Root@0..10
+              BinOp@0..10
+                FunctionCall@0..7
+                  Atom@0..3 "sin"
+                  Whitespace@3..4 " "
+                  FunctionCallParams@4..7
+                    Digits@4..6 "90"
+                    Whitespace@6..7 " "
+                Star@7..8 "*"
+                Whitespace@8..9 " "
+                Digits@9..10 "2""#]],
         );
     }
 }

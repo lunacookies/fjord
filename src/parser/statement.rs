@@ -64,25 +64,25 @@ mod tests {
         test(
             r#"let foo = bar "baz" $quux 5"#,
             expect![[r#"
-Root@0..27
-  BindingDef@0..27
-    Let@0..3 "let"
-    Whitespace@3..4 " "
-    Atom@4..7 "foo"
-    Whitespace@7..8 " "
-    Equals@8..9 "="
-    Whitespace@9..10 " "
-    FunctionCall@10..27
-      Atom@10..13 "bar"
-      Whitespace@13..14 " "
-      FunctionCallParams@14..27
-        StringLiteral@14..19 "\"baz\""
-        Whitespace@19..20 " "
-        BindingUsage@20..25
-          Dollar@20..21 "$"
-          Atom@21..25 "quux"
-        Whitespace@25..26 " "
-        Digits@26..27 "5""#]],
+            Root@0..27
+              BindingDef@0..27
+                Let@0..3 "let"
+                Whitespace@3..4 " "
+                Atom@4..7 "foo"
+                Whitespace@7..8 " "
+                Equals@8..9 "="
+                Whitespace@9..10 " "
+                FunctionCall@10..27
+                  Atom@10..13 "bar"
+                  Whitespace@13..14 " "
+                  FunctionCallParams@14..27
+                    StringLiteral@14..19 "\"baz\""
+                    Whitespace@19..20 " "
+                    BindingUsage@20..25
+                      Dollar@20..21 "$"
+                      Atom@21..25 "quux"
+                    Whitespace@25..26 " "
+                    Digits@26..27 "5""#]],
         );
     }
 
@@ -91,15 +91,15 @@ Root@0..27
         test(
             "let 5 = 10",
             expect![[r#"
-Root@0..10
-  BindingDef@0..10
-    Let@0..3 "let"
-    Whitespace@3..4 " "
-    Error@4..5 "5"
-    Whitespace@5..6 " "
-    Equals@6..7 "="
-    Whitespace@7..8 " "
-    Digits@8..10 "10""#]],
+            Root@0..10
+              BindingDef@0..10
+                Let@0..3 "let"
+                Whitespace@3..4 " "
+                Error@4..5 "5"
+                Whitespace@5..6 " "
+                Equals@6..7 "="
+                Whitespace@7..8 " "
+                Digits@8..10 "10""#]],
         );
     }
 
@@ -108,15 +108,15 @@ Root@0..10
         test(
             "let x _ 10",
             expect![[r#"
-Root@0..10
-  BindingDef@0..10
-    Let@0..3 "let"
-    Whitespace@3..4 " "
-    Atom@4..5 "x"
-    Whitespace@5..6 " "
-    Error@6..7 "_"
-    Whitespace@7..8 " "
-    Digits@8..10 "10""#]],
+            Root@0..10
+              BindingDef@0..10
+                Let@0..3 "let"
+                Whitespace@3..4 " "
+                Atom@4..5 "x"
+                Whitespace@5..6 " "
+                Error@6..7 "_"
+                Whitespace@7..8 " "
+                Digits@8..10 "10""#]],
         );
     }
 
@@ -125,15 +125,15 @@ Root@0..10
         test(
             "let a = =",
             expect![[r#"
-Root@0..9
-  BindingDef@0..9
-    Let@0..3 "let"
-    Whitespace@3..4 " "
-    Atom@4..5 "a"
-    Whitespace@5..6 " "
-    Equals@6..7 "="
-    Whitespace@7..8 " "
-    Error@8..9 "=""#]],
+            Root@0..9
+              BindingDef@0..9
+                Let@0..3 "let"
+                Whitespace@3..4 " "
+                Atom@4..5 "a"
+                Whitespace@5..6 " "
+                Equals@6..7 "="
+                Whitespace@7..8 " "
+                Error@8..9 "=""#]],
         );
     }
 
@@ -142,15 +142,15 @@ Root@0..9
         test(
             "return ls ~/Documents",
             expect![[r#"
-Root@0..21
-  ReturnStatement@0..21
-    Return@0..6 "return"
-    Whitespace@6..7 " "
-    FunctionCall@7..21
-      Atom@7..9 "ls"
-      Whitespace@9..10 " "
-      FunctionCallParams@10..21
-        Atom@10..21 "~/Documents""#]],
+            Root@0..21
+              ReturnStatement@0..21
+                Return@0..6 "return"
+                Whitespace@6..7 " "
+                FunctionCall@7..21
+                  Atom@7..9 "ls"
+                  Whitespace@9..10 " "
+                  FunctionCallParams@10..21
+                    Atom@10..21 "~/Documents""#]],
         );
     }
 
@@ -159,9 +159,9 @@ Root@0..21
         test(
             "return",
             expect![[r#"
-Root@0..6
-  ReturnStatement@0..6
-    Return@0..6 "return""#]],
+            Root@0..6
+              ReturnStatement@0..6
+                Return@0..6 "return""#]],
         );
     }
 
@@ -170,9 +170,9 @@ Root@0..6
         test(
             "return\nblah",
             expect![[r#"
-Root@0..6
-  ReturnStatement@0..6
-    Return@0..6 "return""#]],
+            Root@0..6
+              ReturnStatement@0..6
+                Return@0..6 "return""#]],
         );
     }
 
@@ -181,10 +181,10 @@ Root@0..6
         test(
             "return   \nfoobar",
             expect![[r#"
-Root@0..9
-  ReturnStatement@0..9
-    Return@0..6 "return"
-    Whitespace@6..9 "   ""#]],
+            Root@0..9
+              ReturnStatement@0..9
+                Return@0..6 "return"
+                Whitespace@6..9 "   ""#]],
         );
     }
 }

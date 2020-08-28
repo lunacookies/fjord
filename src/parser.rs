@@ -248,7 +248,7 @@ mod tests {
 
     #[test]
     fn parse_nothing() {
-        test("", expect![["Root@0..0"]]);
+        test("", expect![[r#"Root@0..0"#]]);
     }
 
     #[test]
@@ -259,35 +259,35 @@ let a = "dir"
 let b = $a
 ls $b"#,
             expect![[r#"
-Root@0..31
-  Eol@0..1 "\n"
-  BindingDef@1..14
-    Let@1..4 "let"
-    Whitespace@4..5 " "
-    Atom@5..6 "a"
-    Whitespace@6..7 " "
-    Equals@7..8 "="
-    Whitespace@8..9 " "
-    StringLiteral@9..14 "\"dir\""
-  Eol@14..15 "\n"
-  BindingDef@15..25
-    Let@15..18 "let"
-    Whitespace@18..19 " "
-    Atom@19..20 "b"
-    Whitespace@20..21 " "
-    Equals@21..22 "="
-    Whitespace@22..23 " "
-    BindingUsage@23..25
-      Dollar@23..24 "$"
-      Atom@24..25 "a"
-  Eol@25..26 "\n"
-  FunctionCall@26..31
-    Atom@26..28 "ls"
-    Whitespace@28..29 " "
-    FunctionCallParams@29..31
-      BindingUsage@29..31
-        Dollar@29..30 "$"
-        Atom@30..31 "b""#]],
+                Root@0..31
+                  Eol@0..1 "\n"
+                  BindingDef@1..14
+                    Let@1..4 "let"
+                    Whitespace@4..5 " "
+                    Atom@5..6 "a"
+                    Whitespace@6..7 " "
+                    Equals@7..8 "="
+                    Whitespace@8..9 " "
+                    StringLiteral@9..14 "\"dir\""
+                  Eol@14..15 "\n"
+                  BindingDef@15..25
+                    Let@15..18 "let"
+                    Whitespace@18..19 " "
+                    Atom@19..20 "b"
+                    Whitespace@20..21 " "
+                    Equals@21..22 "="
+                    Whitespace@22..23 " "
+                    BindingUsage@23..25
+                      Dollar@23..24 "$"
+                      Atom@24..25 "a"
+                  Eol@25..26 "\n"
+                  FunctionCall@26..31
+                    Atom@26..28 "ls"
+                    Whitespace@28..29 " "
+                    FunctionCallParams@29..31
+                      BindingUsage@29..31
+                        Dollar@29..30 "$"
+                        Atom@30..31 "b""#]],
         );
     }
 }

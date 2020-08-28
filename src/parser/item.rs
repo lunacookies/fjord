@@ -24,8 +24,8 @@ mod tests {
         test(
             "5",
             expect![[r#"
-Root@0..1
-  Digits@0..1 "5""#]],
+            Root@0..1
+              Digits@0..1 "5""#]],
         );
     }
 
@@ -34,17 +34,17 @@ Root@0..1
         test(
             "let x = $y",
             expect![[r#"
-Root@0..10
-  BindingDef@0..10
-    Let@0..3 "let"
-    Whitespace@3..4 " "
-    Atom@4..5 "x"
-    Whitespace@5..6 " "
-    Equals@6..7 "="
-    Whitespace@7..8 " "
-    BindingUsage@8..10
-      Dollar@8..9 "$"
-      Atom@9..10 "y""#]],
+            Root@0..10
+              BindingDef@0..10
+                Let@0..3 "let"
+                Whitespace@3..4 " "
+                Atom@4..5 "x"
+                Whitespace@5..6 " "
+                Equals@6..7 "="
+                Whitespace@7..8 " "
+                BindingUsage@8..10
+                  Dollar@8..9 "$"
+                  Atom@9..10 "y""#]],
         );
     }
 
@@ -53,13 +53,13 @@ Root@0..10
         test(
             "return $x",
             expect![[r#"
-Root@0..9
-  ReturnStatement@0..9
-    Return@0..6 "return"
-    Whitespace@6..7 " "
-    BindingUsage@7..9
-      Dollar@7..8 "$"
-      Atom@8..9 "x""#]],
+            Root@0..9
+              ReturnStatement@0..9
+                Return@0..6 "return"
+                Whitespace@6..7 " "
+                BindingUsage@7..9
+                  Dollar@7..8 "$"
+                  Atom@8..9 "x""#]],
         );
     }
 }
