@@ -15,7 +15,7 @@ pub(crate) fn parse_expr(p: &mut Parser) {
 fn parse_expr_bp(p: &mut Parser, min_bp: u8, in_func_call_params: bool) {
     let checkpoint = p.builder.checkpoint();
 
-    parse_one_expr(p);
+    parse_one_expr(p, in_func_call_params);
 
     p.skip_ws();
 
@@ -72,14 +72,63 @@ fn parse_expr_bp(p: &mut Parser, min_bp: u8, in_func_call_params: bool) {
     }
 }
 
-fn parse_one_expr(p: &mut Parser) {
+fn parse_one_expr(p: &mut Parser, in_func_call_params: bool) {
     match p.peek() {
-        Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) | Some(SyntaxKind::Atom) => {
-            p.bump()
-        }
+        Some(SyntaxKind::Atom) => parse_atom(p, in_func_call_params),
+        Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) => p.bump(),
         Some(SyntaxKind::Dollar) => parse_binding_usage(p),
         Some(SyntaxKind::Pipe) => parse_lambda(p),
         _ => p.error("expected expression"),
+    }
+}
+
+fn parse_atom(p: &mut Parser, in_func_call_params: bool) {
+    assert_eq!(p.peek(), Some(SyntaxKind::Atom));
+
+    // If we’re in the parameters of a function call, then atoms are parsed as bare words, and we
+    // can immediately return.
+    if in_func_call_params {
+        p.bump();
+        return;
+    }
+
+    let idx_of_next_non_whitespace_token = {
+        // We know we’re at an atom, so we don’t need to look at that token.
+        let mut idx = 1;
+
+        loop {
+            // If we’re at whitespace, then we increment idx so we can see the next token.
+            if p.lookahead(idx) == Some(SyntaxKind::Whitespace) {
+                idx += 1;
+            } else {
+                break idx;
+            }
+        }
+    };
+
+    let at_expr = match p.lookahead(idx_of_next_non_whitespace_token) {
+        Some(SyntaxKind::Atom)
+        | Some(SyntaxKind::Digits)
+        | Some(SyntaxKind::StringLiteral)
+        | Some(SyntaxKind::Dollar)
+        | Some(SyntaxKind::Pipe) => true,
+        _ => false,
+    };
+
+    // Being at an expression means that we’re at the start of a function call (i.e. we’re at the
+    // name of the function being called) that has one or more parameters.
+    if at_expr {
+        p.bump();
+    } else {
+        // In this case we’re not at an expression and we’re not in a function call (see the early
+        // return further up), and we’re at an atom. The only thing this could be is a function call
+        // with no parameters.
+        p.builder.start_node(SyntaxKind::FunctionCall.into());
+        p.bump();
+        p.builder.start_node(SyntaxKind::FunctionCallParams.into());
+
+        p.builder.finish_node();
+        p.builder.finish_node();
     }
 }
 
