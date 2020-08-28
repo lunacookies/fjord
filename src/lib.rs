@@ -15,7 +15,7 @@ type SyntaxNode = rowan::SyntaxNode<lang::Lang>;
 type SyntaxToken = rowan::SyntaxToken<lang::Lang>;
 type SyntaxElement = rowan::NodeOrToken<SyntaxNode, SyntaxToken>;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum Op {
     Add,
     Sub,

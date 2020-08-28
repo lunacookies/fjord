@@ -218,7 +218,7 @@ impl Digits {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::expr::{parse_binding_usage, parse_function_call, parse_lambda};
+    use crate::parser::expr::{parse_binding_usage, parse_expr, parse_lambda};
     use crate::parser::statement::parse_binding_def;
     use crate::parser::Parser;
 
@@ -357,7 +357,7 @@ mod tests {
 
         let return_first_application = {
             let mut p = Parser::new("return-first 5 10");
-            parse_function_call(&mut p);
+            parse_expr(&mut p);
 
             let syntax_node = p.finish_and_get_syntax();
 
@@ -387,7 +387,7 @@ mod tests {
 
         let always_return_100_application = {
             let mut p = Parser::new("always-return-100");
-            parse_function_call(&mut p);
+            parse_expr(&mut p);
 
             let syntax_node = p.finish_and_get_syntax();
 
@@ -407,7 +407,7 @@ mod tests {
 
         let call = {
             let mut p = Parser::new("foo 10");
-            parse_function_call(&mut p);
+            parse_expr(&mut p);
 
             let syntax_node = p.finish_and_get_syntax();
 

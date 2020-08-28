@@ -132,10 +132,6 @@ impl Parser {
         self.lexemes.is_empty()
     }
 
-    fn at_end_or_eol(&mut self) -> bool {
-        self.at_end() || self.peek() == Some(SyntaxKind::Eol)
-    }
-
     fn bump(&mut self) {
         let lexeme = self.lexemes.pop().unwrap();
         self.builder.token(lexeme.kind.into(), lexeme.text);
