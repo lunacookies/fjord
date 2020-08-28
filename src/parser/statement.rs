@@ -53,8 +53,9 @@ pub(crate) fn parse_return_statement(p: &mut Parser) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use expect_test::{expect, Expect};
 
-    fn test(input: &'static str, expected_output: &'static str) {
+    fn test(input: &'static str, expected_output: Expect) {
         Parser::test(parse_statement, input, expected_output);
     }
 
@@ -62,7 +63,7 @@ mod tests {
     fn parse_binding_definition() {
         test(
             r#"let foo = bar "baz" $quux 5"#,
-            r#"
+            expect![[r#"
 Root@0..27
   BindingDef@0..27
     Let@0..3 "let"
@@ -81,7 +82,7 @@ Root@0..27
           Dollar@20..21 "$"
           Atom@21..25 "quux"
         Whitespace@25..26 " "
-        Digits@26..27 "5""#,
+        Digits@26..27 "5""#]],
         );
     }
 
@@ -89,7 +90,7 @@ Root@0..27
     fn recover_from_junk_binding_name_in_binding_definition() {
         test(
             "let 5 = 10",
-            r#"
+            expect![[r#"
 Root@0..10
   BindingDef@0..10
     Let@0..3 "let"
@@ -98,7 +99,7 @@ Root@0..10
     Whitespace@5..6 " "
     Equals@6..7 "="
     Whitespace@7..8 " "
-    Digits@8..10 "10""#,
+    Digits@8..10 "10""#]],
         );
     }
 
@@ -106,7 +107,7 @@ Root@0..10
     fn recover_from_junk_equals_sign_in_binding_definition() {
         test(
             "let x _ 10",
-            r#"
+            expect![[r#"
 Root@0..10
   BindingDef@0..10
     Let@0..3 "let"
@@ -115,7 +116,7 @@ Root@0..10
     Whitespace@5..6 " "
     Error@6..7 "_"
     Whitespace@7..8 " "
-    Digits@8..10 "10""#,
+    Digits@8..10 "10""#]],
         );
     }
 
@@ -123,7 +124,7 @@ Root@0..10
     fn recover_from_junk_rhs_of_binding_definition() {
         test(
             "let a = =",
-            r#"
+            expect![[r#"
 Root@0..9
   BindingDef@0..9
     Let@0..3 "let"
@@ -132,7 +133,7 @@ Root@0..9
     Whitespace@5..6 " "
     Equals@6..7 "="
     Whitespace@7..8 " "
-    Error@8..9 "=""#,
+    Error@8..9 "=""#]],
         );
     }
 
@@ -140,7 +141,7 @@ Root@0..9
     fn parse_return_statement() {
         test(
             "return ls ~/Documents",
-            r#"
+            expect![[r#"
 Root@0..21
   ReturnStatement@0..21
     Return@0..6 "return"
@@ -149,7 +150,7 @@ Root@0..21
       Atom@7..9 "ls"
       Whitespace@9..10 " "
       FunctionCallParams@10..21
-        Atom@10..21 "~/Documents""#,
+        Atom@10..21 "~/Documents""#]],
         );
     }
 
@@ -157,10 +158,10 @@ Root@0..21
     fn parse_return_statement_without_val() {
         test(
             "return",
-            r#"
+            expect![[r#"
 Root@0..6
   ReturnStatement@0..6
-    Return@0..6 "return""#,
+    Return@0..6 "return""#]],
         );
     }
 
@@ -168,10 +169,10 @@ Root@0..6
     fn parse_return_statement_without_val_followed_by_eol() {
         test(
             "return\nblah",
-            r#"
+            expect![[r#"
 Root@0..6
   ReturnStatement@0..6
-    Return@0..6 "return""#,
+    Return@0..6 "return""#]],
         );
     }
 
@@ -179,11 +180,11 @@ Root@0..6
     fn parse_return_statement_without_val_followed_by_whitespace_then_eol() {
         test(
             "return   \nfoobar",
-            r#"
+            expect![[r#"
 Root@0..9
   ReturnStatement@0..9
     Return@0..6 "return"
-    Whitespace@6..9 "   ""#,
+    Whitespace@6..9 "   ""#]],
         );
     }
 }

@@ -13,8 +13,9 @@ pub(crate) fn parse_item(p: &mut Parser) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use expect_test::{expect, Expect};
 
-    fn test(input: &'static str, expected_output: &'static str) {
+    fn test(input: &'static str, expected_output: Expect) {
         Parser::test(parse_item, input, expected_output);
     }
 
@@ -22,9 +23,9 @@ mod tests {
     fn parse_expr() {
         test(
             "5",
-            r#"
+            expect![[r#"
 Root@0..1
-  Digits@0..1 "5""#,
+  Digits@0..1 "5""#]],
         );
     }
 
@@ -32,7 +33,7 @@ Root@0..1
     fn parse_binding_def() {
         test(
             "let x = $y",
-            r#"
+            expect![[r#"
 Root@0..10
   BindingDef@0..10
     Let@0..3 "let"
@@ -43,7 +44,7 @@ Root@0..10
     Whitespace@7..8 " "
     BindingUsage@8..10
       Dollar@8..9 "$"
-      Atom@9..10 "y""#,
+      Atom@9..10 "y""#]],
         );
     }
 
@@ -51,14 +52,14 @@ Root@0..10
     fn parse_return_statement() {
         test(
             "return $x",
-            r#"
+            expect![[r#"
 Root@0..9
   ReturnStatement@0..9
     Return@0..6 "return"
     Whitespace@6..7 " "
     BindingUsage@7..9
       Dollar@7..8 "$"
-      Atom@8..9 "x""#,
+      Atom@8..9 "x""#]],
         );
     }
 }

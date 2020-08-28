@@ -16,6 +16,9 @@ use crate::SyntaxNode;
 use rowan::{GreenNode, GreenNodeBuilder};
 use text_size::TextRange;
 
+#[cfg(test)]
+use expect_test::Expect;
+
 /// A type representing the state of a `ParseOutput` containing no errors.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct NoErrors;
@@ -215,9 +218,7 @@ impl Parser {
     }
 
     #[cfg(test)]
-    fn test(f: impl Fn(&mut Self), input: &'static str, expected_output: &'static str) {
-        use pretty_assertions::assert_eq;
-
+    fn test(f: impl Fn(&mut Self), input: &'static str, expected_output: Expect) {
         let mut p = Self::new(input);
 
         p.builder.start_node(SyntaxKind::Root.into());
@@ -229,25 +230,25 @@ impl Parser {
             state: ContainsErrors(p.errors),
         };
 
-        assert_eq!(parse_output.debug_tree(), expected_output.trim());
+        expected_output.assert_eq(&parse_output.debug_tree());
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pretty_assertions::assert_eq;
+    use expect_test::expect;
 
-    fn test(input: &'static str, expected_output: &'static str) {
+    fn test(input: &'static str, expected_output: Expect) {
         let parser = Parser::new(input);
         let parse_output = parser.parse();
 
-        assert_eq!(parse_output.debug_tree(), expected_output.trim());
+        expected_output.assert_eq(&parse_output.debug_tree());
     }
 
     #[test]
     fn parse_nothing() {
-        test("", "Root@0..0");
+        test("", expect![["Root@0..0"]]);
     }
 
     #[test]
@@ -257,7 +258,7 @@ mod tests {
 let a = "dir"
 let b = $a
 ls $b"#,
-            r#"
+            expect![[r#"
 Root@0..31
   Eol@0..1 "\n"
   BindingDef@1..14
@@ -286,7 +287,7 @@ Root@0..31
     FunctionCallParams@29..31
       BindingUsage@29..31
         Dollar@29..30 "$"
-        Atom@30..31 "b""#,
+        Atom@30..31 "b""#]],
         );
     }
 }

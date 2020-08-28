@@ -195,8 +195,9 @@ pub(crate) fn parse_binding_usage(p: &mut Parser) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use expect_test::{expect, Expect};
 
-    fn test(input: &'static str, expected_output: &'static str) {
+    fn test(input: &'static str, expected_output: Expect) {
         Parser::test(parse_expr, input, expected_output);
     }
 
@@ -204,9 +205,9 @@ mod tests {
     fn parse_number_literal() {
         test(
             "10",
-            r#"
+            expect![[r#"
 Root@0..2
-  Digits@0..2 "10""#,
+  Digits@0..2 "10""#]],
         );
     }
 
@@ -214,9 +215,9 @@ Root@0..2
     fn parse_string_literal() {
         test(
             "\"Hello, world!\"",
-            r#"
+            expect![[r#"
 Root@0..15
-  StringLiteral@0..15 "\"Hello, world!\"""#,
+  StringLiteral@0..15 "\"Hello, world!\"""#]],
         );
     }
 
@@ -224,7 +225,7 @@ Root@0..15
     fn parse_function_call() {
         test(
             "func a 1",
-            r#"
+            expect![[r#"
 Root@0..8
   FunctionCall@0..8
     Atom@0..4 "func"
@@ -232,7 +233,7 @@ Root@0..8
     FunctionCallParams@5..8
       Atom@5..6 "a"
       Whitespace@6..7 " "
-      Digits@7..8 "1""#,
+      Digits@7..8 "1""#]],
         );
     }
 
@@ -240,11 +241,11 @@ Root@0..8
     fn parse_function_call_with_no_params() {
         test(
             "ls",
-            r#"
+            expect![[r#"
 Root@0..2
   FunctionCall@0..2
     Atom@0..2 "ls"
-    FunctionCallParams@2..2"#,
+    FunctionCallParams@2..2"#]],
         );
     }
 
@@ -252,7 +253,7 @@ Root@0..2
     fn stop_parsing_function_call_at_end_of_line() {
         test(
             "ls $dir\n",
-            r#"
+            expect![[r#"
 Root@0..7
   FunctionCall@0..7
     Atom@0..2 "ls"
@@ -260,7 +261,7 @@ Root@0..7
     FunctionCallParams@3..7
       BindingUsage@3..7
         Dollar@3..4 "$"
-        Atom@4..7 "dir""#,
+        Atom@4..7 "dir""#]],
         );
     }
 
@@ -268,11 +269,11 @@ Root@0..7
     fn parse_binding_usage() {
         test(
             "$var",
-            r#"
+            expect![[r#"
 Root@0..4
   BindingUsage@0..4
     Dollar@0..1 "$"
-    Atom@1..4 "var""#,
+    Atom@1..4 "var""#]],
         );
     }
 
@@ -280,11 +281,11 @@ Root@0..4
     fn recover_from_junk_binding_usage() {
         test(
             "$let",
-            r#"
+            expect![[r#"
 Root@0..4
   BindingUsage@0..4
     Dollar@0..1 "$"
-    Error@1..4 "let""#,
+    Error@1..4 "let""#]],
         );
     }
 
@@ -292,7 +293,7 @@ Root@0..4
     fn parse_lambda() {
         test(
             "|a b| a $b 5",
-            r#"
+            expect![[r#"
 Root@0..12
   Lambda@0..12
     LambdaParams@0..5
@@ -310,7 +311,7 @@ Root@0..12
           Dollar@8..9 "$"
           Atom@9..10 "b"
         Whitespace@10..11 " "
-        Digits@11..12 "5""#,
+        Digits@11..12 "5""#]],
         );
     }
 
@@ -318,14 +319,14 @@ Root@0..12
     fn parse_simple_bin_op() {
         test(
             "1 + 5",
-            r#"
+            expect![[r#"
 Root@0..5
   BinOp@0..5
     Digits@0..1 "1"
     Whitespace@1..2 " "
     Plus@2..3 "+"
     Whitespace@3..4 " "
-    Digits@4..5 "5""#,
+    Digits@4..5 "5""#]],
         );
     }
 
@@ -333,7 +334,7 @@ Root@0..5
     fn parse_bin_op_showing_precedence() {
         test(
             "2 + 3 * 4",
-            r#"
+            expect![[r#"
 Root@0..9
   BinOp@0..9
     Digits@0..1 "2"
@@ -345,7 +346,7 @@ Root@0..9
       Whitespace@5..6 " "
       Star@6..7 "*"
       Whitespace@7..8 " "
-      Digits@8..9 "4""#,
+      Digits@8..9 "4""#]],
         );
     }
 
@@ -353,7 +354,7 @@ Root@0..9
     fn parse_bin_op_showing_associativity() {
         test(
             "10 - 5 - 3 - 2",
-            r#"
+            expect![[r#"
 Root@0..14
   BinOp@0..14
     BinOp@0..11
@@ -370,7 +371,7 @@ Root@0..14
       Whitespace@10..11 " "
     Minus@11..12 "-"
     Whitespace@12..13 " "
-    Digits@13..14 "2""#,
+    Digits@13..14 "2""#]],
         );
     }
 
@@ -378,7 +379,7 @@ Root@0..14
     fn function_call_has_higher_precedence_than_bin_op() {
         test(
             "sin 90 * 2",
-            r#"
+            expect![[r#"
 Root@0..10
   BinOp@0..10
     FunctionCall@0..7
@@ -389,7 +390,7 @@ Root@0..10
         Whitespace@6..7 " "
     Star@7..8 "*"
     Whitespace@8..9 " "
-    Digits@9..10 "2""#,
+    Digits@9..10 "2""#]],
         );
     }
 }
