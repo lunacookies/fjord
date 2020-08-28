@@ -41,13 +41,13 @@ impl Root {
 pub(crate) struct Item(SyntaxElement);
 
 pub(crate) enum ItemKind {
-    Statement(Statement),
+    BindingDef(BindingDef),
     Expr(Expr),
 }
 
 impl Item {
     fn cast(element: SyntaxElement) -> Option<Self> {
-        if element.clone().into_node().map(Statement::cast).is_some()
+        if element.clone().into_node().map(BindingDef::cast).is_some()
             || Expr::cast(element.clone()).is_some()
         {
             Some(Self(element))
@@ -60,34 +60,9 @@ impl Item {
         self.0
             .clone()
             .into_node()
-            .and_then(Statement::cast)
-            .map(ItemKind::Statement)
+            .and_then(BindingDef::cast)
+            .map(ItemKind::BindingDef)
             .or_else(|| Expr::cast(self.0.clone()).map(ItemKind::Expr))
-            .unwrap()
-    }
-}
-
-pub(crate) struct Statement(SyntaxNode);
-
-pub(crate) enum StatementKind {
-    BindingDef(BindingDef),
-    ReturnStatement(ReturnStatement),
-}
-
-impl Statement {
-    fn cast(node: SyntaxNode) -> Option<Self> {
-        if BindingDef::cast(node.clone()).is_some() || ReturnStatement::cast(node.clone()).is_some()
-        {
-            Some(Self(node))
-        } else {
-            None
-        }
-    }
-
-    pub(crate) fn kind(&self) -> StatementKind {
-        BindingDef::cast(self.0.clone())
-            .map(StatementKind::BindingDef)
-            .or_else(|| ReturnStatement::cast(self.0.clone()).map(StatementKind::ReturnStatement))
             .unwrap()
     }
 }
@@ -104,14 +79,6 @@ impl BindingDef {
     }
 
     pub(crate) fn expr(&self) -> Option<Expr> {
-        self.0.children_with_tokens().find_map(Expr::cast)
-    }
-}
-
-ast_node!(ReturnStatement, SyntaxKind::ReturnStatement);
-
-impl ReturnStatement {
-    pub(crate) fn val(&self) -> Option<Expr> {
         self.0.children_with_tokens().find_map(Expr::cast)
     }
 }

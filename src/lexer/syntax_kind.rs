@@ -7,9 +7,6 @@ pub(crate) enum SyntaxKind {
     #[token("let")]
     Let,
 
-    #[token("return")]
-    Return,
-
     #[regex(r"([^\n\r =$|*]|\\ )+")]
     Atom,
 
@@ -52,7 +49,6 @@ pub(crate) enum SyntaxKind {
     // Compound variants
     Root,
     BindingDef,
-    ReturnStatement,
     BinOp,
     FunctionCall,
     FunctionCallParams,
@@ -110,11 +106,6 @@ mod tests {
     #[test]
     fn lex_let_keyword() {
         test_join_to_atom("let", SyntaxKind::Let);
-    }
-
-    #[test]
-    fn lex_return_keyword() {
-        test_join_to_atom("return", SyntaxKind::Return);
     }
 
     #[test]

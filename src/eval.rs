@@ -6,7 +6,7 @@ use error::EvalErrorKind;
 
 use crate::ast::{
     BinOp, BindingDef, BindingUsage, Digits, Expr, ExprKind, FunctionCall, Item, ItemKind, Lambda,
-    ReturnStatement, Root, Statement, StatementKind, StringLiteral,
+    Root, StringLiteral,
 };
 use crate::env::Env;
 use crate::val::Val;
@@ -26,14 +26,6 @@ impl Root {
         }
 
         for (idx, item) in items.iter().enumerate() {
-            // If we’re at a return statement, we early return with the value of the return
-            // statement.
-            if let ItemKind::Statement(statement) = item.kind() {
-                if let StatementKind::ReturnStatement(return_statement) = statement.kind() {
-                    return return_statement.eval_val(env);
-                }
-            }
-
             let eval_output = item.eval(env)?;
             if at_last(idx) {
                 return Ok(eval_output);
@@ -49,20 +41,11 @@ impl Root {
 impl Item {
     fn eval(&self, env: &mut Env<'_>) -> Result<Val, EvalError> {
         match self.kind() {
-            ItemKind::Statement(statement) => {
-                statement.eval(env)?;
+            ItemKind::BindingDef(binding_def) => {
+                binding_def.eval(env)?;
                 Ok(Val::Nil)
             }
             ItemKind::Expr(expr) => expr.eval(env),
-        }
-    }
-}
-
-impl Statement {
-    fn eval(&self, env: &mut Env<'_>) -> Result<(), EvalError> {
-        match self.kind() {
-            StatementKind::BindingDef(binding_def) => binding_def.eval(env),
-            StatementKind::ReturnStatement(_) => Ok(()),
         }
     }
 }
@@ -75,15 +58,6 @@ impl BindingDef {
         env.store_binding(name, expr);
 
         Ok(())
-    }
-}
-
-impl ReturnStatement {
-    fn eval_val(&self, env: &Env<'_>) -> Result<Val, EvalError> {
-        // If the return statement does not have a value, we return with Nil.
-        self.val()
-            .map(|expr| expr.eval(env))
-            .unwrap_or(Ok(Val::Nil))
     }
 }
 
@@ -219,7 +193,7 @@ impl Digits {
 mod tests {
     use super::*;
     use crate::parser::expr::{parse_binding_usage, parse_expr, parse_lambda};
-    use crate::parser::statement::parse_binding_def;
+    use crate::parser::item::parse_binding_def;
     use crate::parser::Parser;
 
     #[test]
@@ -491,34 +465,6 @@ mod tests {
     }
 
     #[test]
-    fn evaluate_root_with_return_statement_with_value() {
-        let root = {
-            let p = Parser::new("return 0");
-            let syntax_node = p.parse().syntax();
-
-            Root::cast(syntax_node).unwrap()
-        };
-
-        let mut env = Env::new();
-
-        assert_eq!(root.eval(&mut env), Ok(Val::Number(0)));
-    }
-
-    #[test]
-    fn evaluate_root_with_return_statement_with_no_value() {
-        let root = {
-            let p = Parser::new("return");
-            let syntax_node = p.parse().syntax();
-
-            Root::cast(syntax_node).unwrap()
-        };
-
-        let mut env = Env::new();
-
-        assert_eq!(root.eval(&mut env), Ok(Val::Nil));
-    }
-
-    #[test]
     fn evaluate_root_with_multiple_expressions_returns_last() {
         let root = {
             let p = Parser::new(
@@ -536,24 +482,5 @@ mod tests {
         let mut env = Env::new();
 
         assert_eq!(root.eval(&mut env), Ok(Val::Number(2)));
-    }
-
-    #[test]
-    fn evaluate_root_with_return_statement_skips_following() {
-        let root = {
-            let p = Parser::new(
-                r#"
-let foo = "bar"
-return $foo
-5"#,
-            );
-            let syntax_node = p.parse().syntax();
-
-            Root::cast(syntax_node).unwrap()
-        };
-
-        let mut env = Env::new();
-
-        assert_eq!(root.eval(&mut env), Ok(Val::Str("bar".to_string())));
     }
 }

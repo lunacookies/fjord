@@ -5,7 +5,6 @@ pub use error::SyntaxError;
 
 pub(crate) mod expr;
 pub(crate) mod item;
-pub(crate) mod statement;
 
 use crate::ast::Root;
 use crate::env::Env;
