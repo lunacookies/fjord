@@ -118,9 +118,9 @@ impl Parser {
     }
 
     fn lookahead(&self, n_tokens: usize) -> Option<SyntaxKind> {
-        let num_lexemes = self.lexemes.len();
         self.lexemes
-            .get(num_lexemes.saturating_sub(n_tokens).saturating_sub(1))
+            .iter()
+            .nth_back(n_tokens)
             .map(|Lexeme { kind, .. }| *kind)
     }
 
