@@ -31,7 +31,7 @@ fn parse_expr_bp(p: &mut Parser, min_bp: u8, in_func_call_params: bool) {
                 | Some(SyntaxKind::StringLiteral)
                 | Some(SyntaxKind::Dollar)
                 | Some(SyntaxKind::Pipe) => break VirtualOp::Application,
-                Some(SyntaxKind::Eol) | None => return,
+                Some(SyntaxKind::RParen) | Some(SyntaxKind::Eol) | None => return,
                 Some(_) => p.error("expected operator"),
             }
         };
@@ -78,6 +78,16 @@ fn parse_one_expr(p: &mut Parser, in_func_call_params: bool) {
         Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) => p.bump(),
         Some(SyntaxKind::Dollar) => parse_binding_usage(p),
         Some(SyntaxKind::Pipe) => parse_lambda(p),
+        Some(SyntaxKind::LParen) => {
+            p.bump();
+            parse_expr_bp(p, 0, false);
+
+            if p.peek() == Some(SyntaxKind::RParen) {
+                p.bump();
+            } else {
+                p.error("expected right parenthesis");
+            }
+        }
         _ => p.error("expected expression"),
     }
 }
@@ -391,6 +401,55 @@ mod tests {
                 Star@7..8 "*"
                 Whitespace@8..9 " "
                 Digits@9..10 "2""#]],
+        );
+    }
+
+    #[test]
+    fn parse_bin_op_containing_parens() {
+        test(
+            "2 * (3 + 5)",
+            expect![[r#"
+            Root@0..11
+              BinOp@0..11
+                Digits@0..1 "2"
+                Whitespace@1..2 " "
+                Star@2..3 "*"
+                Whitespace@3..4 " "
+                LParen@4..5 "("
+                BinOp@5..10
+                  Digits@5..6 "3"
+                  Whitespace@6..7 " "
+                  Plus@7..8 "+"
+                  Whitespace@8..9 " "
+                  Digits@9..10 "5"
+                RParen@10..11 ")""#]],
+        );
+    }
+
+    #[test]
+    fn unneeded_parentheses_are_flattened() {
+        test(
+            "(((((1 + (1))))))",
+            expect![[r#"
+            Root@0..17
+              LParen@0..1 "("
+              LParen@1..2 "("
+              LParen@2..3 "("
+              LParen@3..4 "("
+              LParen@4..5 "("
+              BinOp@5..12
+                Digits@5..6 "1"
+                Whitespace@6..7 " "
+                Plus@7..8 "+"
+                Whitespace@8..9 " "
+                LParen@9..10 "("
+                Digits@10..11 "1"
+                RParen@11..12 ")"
+              RParen@12..13 ")"
+              RParen@13..14 ")"
+              RParen@14..15 ")"
+              RParen@15..16 ")"
+              RParen@16..17 ")""#]],
         );
     }
 }
