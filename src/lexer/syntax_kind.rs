@@ -7,7 +7,7 @@ pub(crate) enum SyntaxKind {
     #[token("let")]
     Let,
 
-    #[regex(r"([^\n\r =$|*]|\\ )+")]
+    #[regex(r"([^\n\r =$|*()]|\\ )+")]
     Atom,
 
     #[regex("[0-9]+", priority = 2)]
@@ -36,6 +36,12 @@ pub(crate) enum SyntaxKind {
 
     #[token("/")]
     Slash,
+
+    #[token("(")]
+    LParen,
+
+    #[token(")")]
+    RParen,
 
     #[regex(" +")]
     Whitespace,
@@ -162,6 +168,16 @@ mod tests {
     #[test]
     fn lex_slash() {
         test_join_to_atom("/", SyntaxKind::Slash);
+    }
+
+    #[test]
+    fn lex_l_paren() {
+        test_separate_from_atom("(", SyntaxKind::LParen);
+    }
+
+    #[test]
+    fn lex_r_paren() {
+        test_separate_from_atom(")", SyntaxKind::RParen);
     }
 
     #[test]
