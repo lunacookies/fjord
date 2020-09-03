@@ -10,6 +10,7 @@ homepage = "https://github.com/arzg/fjord"
 repository = "https://github.com/arzg/fjord"
 
 [dependencies]
+is_executable = "0.1"
 logos = "0.11"
 num_enum = "0.5"
 rowan = "0.10"

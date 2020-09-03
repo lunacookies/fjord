@@ -204,7 +204,7 @@ mod tests {
         let syntax_node = p.finish_and_get_syntax();
         let binding_usage = BindingUsage::cast(syntax_node).unwrap();
 
-        let env = Env::new();
+        let env = Env::new(Vec::new()).unwrap();
 
         assert_eq!(
             binding_usage.eval(&env),
@@ -223,7 +223,7 @@ mod tests {
         let syntax_node = p.finish_and_get_syntax();
         let binding_usage = BindingUsage::cast(syntax_node).unwrap();
 
-        let mut env = Env::new();
+        let mut env = Env::new(Vec::new()).unwrap();
         env.store_binding("foo-bar".into(), Val::Number(5));
 
         assert_eq!(binding_usage.eval(&env), Ok(Val::Number(5)));
@@ -249,7 +249,7 @@ mod tests {
             Lambda::cast(syntax_node).unwrap()
         };
 
-        let env = Env::new();
+        let env = Env::new(Vec::new()).unwrap();
 
         // Applying id lambda to "hello" gives "hello".
         assert_eq!(
@@ -273,7 +273,7 @@ mod tests {
             Lambda::cast(syntax_node).unwrap()
         };
 
-        let env = Env::new();
+        let env = Env::new(Vec::new()).unwrap();
 
         // Dummy value.
         let call_range = TextRange::new(0.into(), 10.into());
@@ -299,7 +299,7 @@ mod tests {
             Lambda::cast(syntax_node).unwrap()
         };
 
-        let env = Env::new();
+        let env = Env::new(Vec::new()).unwrap();
 
         // Dummy value.
         let call_range = TextRange::new(0.into(), 10.into());
@@ -316,7 +316,7 @@ mod tests {
 
     #[test]
     fn call_lambda_with_several_params() {
-        let mut env = Env::new();
+        let mut env = Env::new(Vec::new()).unwrap();
 
         let return_first_lambda = {
             let mut p = Parser::new("|a b| $a");
@@ -343,7 +343,7 @@ mod tests {
 
     #[test]
     fn call_lambda_without_any_params() {
-        let mut env = Env::new();
+        let mut env = Env::new(Vec::new()).unwrap();
 
         let always_return_100_lambda = {
             let mut p = Parser::new("|| 100");
@@ -376,7 +376,7 @@ mod tests {
 
     #[test]
     fn call_non_lambda() {
-        let mut env = Env::new();
+        let mut env = Env::new(Vec::new()).unwrap();
         env.store_binding("foo".into(), Val::Number(100));
 
         let call = {
@@ -410,12 +410,12 @@ mod tests {
 
         assert_eq!(
             {
-                let mut env = Env::new();
+                let mut env = Env::new(Vec::new()).unwrap();
                 binding_def.eval(&mut env).unwrap();
                 env
             },
             {
-                let mut env = Env::new();
+                let mut env = Env::new(Vec::new()).unwrap();
                 env.store_binding("a".into(), Val::Number(5));
                 env
             },
@@ -431,7 +431,7 @@ mod tests {
             Root::cast(syntax_node).unwrap()
         };
 
-        let mut env = Env::new();
+        let mut env = Env::new(Vec::new()).unwrap();
 
         assert_eq!(root.eval(&mut env), Ok(Val::Nil));
     }
@@ -445,7 +445,7 @@ mod tests {
             Root::cast(syntax_node).unwrap()
         };
 
-        let mut env = Env::new();
+        let mut env = Env::new(Vec::new()).unwrap();
 
         assert_eq!(root.eval(&mut env), Ok(Val::Str("hello".to_string())));
     }
@@ -459,7 +459,7 @@ mod tests {
             Root::cast(syntax_node).unwrap()
         };
 
-        let mut env = Env::new();
+        let mut env = Env::new(Vec::new()).unwrap();
 
         assert_eq!(root.eval(&mut env), Ok(Val::Nil));
     }
@@ -479,7 +479,7 @@ mod tests {
             Root::cast(syntax_node).unwrap()
         };
 
-        let mut env = Env::new();
+        let mut env = Env::new(Vec::new()).unwrap();
 
         assert_eq!(root.eval(&mut env), Ok(Val::Number(2)));
     }
