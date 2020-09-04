@@ -146,7 +146,7 @@ impl FunctionCall {
 
                 Command::new(path)
                     .args(displayed_params)
-                    .spawn()
+                    .status()
                     .map_err(|_| {
                         EvalError::new(EvalErrorKind::FailedRunningCommand, name.text_range())
                     })?;
