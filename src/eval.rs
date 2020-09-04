@@ -214,6 +214,7 @@ mod tests {
     use crate::parser::expr::{parse_binding_usage, parse_expr, parse_lambda};
     use crate::parser::item::parse_binding_def;
     use crate::parser::Parser;
+    use crate::val::Ty;
 
     #[test]
     fn evaluate_non_existent_binding_usage() {
@@ -410,7 +411,7 @@ mod tests {
         assert_eq!(
             call.eval(&env),
             Err(EvalError::new(
-                EvalErrorKind::CallNonLambda,
+                EvalErrorKind::CallNonLambda { ty: Ty::Number },
                 TextRange::new(0.into(), 3.into()),
             )),
         );

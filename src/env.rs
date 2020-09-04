@@ -61,7 +61,7 @@ impl<'parent> Env<'parent> {
             (_, Some(path)) => Ok(FuncOrCommand::Command(path.to_path_buf())),
 
             // Here we have a binding with the name, but it isn’t a lambda.
-            (Some(_), None) => Err(EvalErrorKind::CallNonLambda),
+            (Some(val), None) => Err(EvalErrorKind::CallNonLambda { ty: val.ty() }),
 
             // In this case nothing exists with the specified name.
             (None, None) => Err(EvalErrorKind::FuncOrCommandDoesNotExist),

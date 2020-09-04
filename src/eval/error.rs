@@ -24,7 +24,7 @@ pub(crate) enum EvalErrorKind {
     /// when too few parameters are supplied to a function
     TooFewParams,
     /// when something that is not a lambda is called
-    CallNonLambda,
+    CallNonLambda { ty: Ty },
     /// when a function or command that does not exist is called
     FuncOrCommandDoesNotExist,
     /// when something that cannot be displayed is passed as an argument into a command
