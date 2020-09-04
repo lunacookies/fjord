@@ -29,6 +29,8 @@ pub(crate) enum EvalErrorKind {
     FuncOrCommandDoesNotExist,
     /// when something that cannot be displayed is passed as an argument into a command
     UndisplayableCommandArg,
+    /// when running a command fails
+    FailedRunningCommand,
     /// when a binary operation is applied to two types that are not numbers
     BinOpOnNonNumbers { lhs_ty: Ty, rhs_ty: Ty },
 }

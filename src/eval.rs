@@ -143,7 +143,12 @@ impl FunctionCall {
                     }
                 }
 
-                Command::new(path).args(displayed_params);
+                Command::new(path)
+                    .args(displayed_params)
+                    .spawn()
+                    .map_err(|_| {
+                        EvalError::new(EvalErrorKind::FailedRunningCommand, name.text_range())
+                    })?;
 
                 Ok(Val::Nil)
             }
