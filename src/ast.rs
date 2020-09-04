@@ -79,7 +79,15 @@ impl BindingDef {
     }
 
     pub(crate) fn expr(&self) -> Option<Expr> {
-        self.0.children_with_tokens().find_map(Expr::cast)
+        let mut children = self.0.children_with_tokens();
+
+        loop {
+            let element = children.next()?;
+
+            if element.into_token().and_then(Equals::cast).is_some() {
+                return children.find_map(Expr::cast);
+            }
+        }
     }
 }
 
@@ -90,6 +98,7 @@ pub(crate) enum ExprKind {
     FunctionCall(FunctionCall),
     Lambda(Lambda),
     BindingUsage(BindingUsage),
+    Atom(Atom),
     StringLiteral(StringLiteral),
     NumberLiteral(Digits),
 }
@@ -104,7 +113,9 @@ impl Expr {
                     || BindingUsage::cast(node.clone()).is_some()
             }
             SyntaxElement::Token(ref token) => {
-                token.kind() == SyntaxKind::StringLiteral || token.kind() == SyntaxKind::Digits
+                token.kind() == SyntaxKind::Atom
+                    || token.kind() == SyntaxKind::StringLiteral
+                    || token.kind() == SyntaxKind::Digits
             }
         };
 
@@ -123,8 +134,9 @@ impl Expr {
                 .or_else(|| Lambda::cast(node.clone()).map(ExprKind::Lambda))
                 .or_else(|| BindingUsage::cast(node.clone()).map(ExprKind::BindingUsage))
                 .unwrap(),
-            SyntaxElement::Token(token) => StringLiteral::cast(token.clone())
-                .map(ExprKind::StringLiteral)
+            SyntaxElement::Token(token) => Atom::cast(token.clone())
+                .map(ExprKind::Atom)
+                .or_else(|| StringLiteral::cast(token.clone()).map(ExprKind::StringLiteral))
                 .or_else(|| Digits::cast(token.clone()).map(ExprKind::NumberLiteral))
                 .unwrap(),
         }
@@ -240,6 +252,8 @@ ast_token!(Atom, SyntaxKind::Atom);
 ast_token!(Digits, SyntaxKind::Digits);
 
 ast_token!(StringLiteral, SyntaxKind::StringLiteral);
+
+ast_token!(Equals, SyntaxKind::Equals);
 
 pub(crate) struct OpToken(SyntaxToken);
 

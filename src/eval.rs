@@ -5,8 +5,8 @@ pub use error::EvalError;
 pub(crate) use error::EvalErrorKind;
 
 use crate::ast::{
-    BinOp, BindingDef, BindingUsage, Digits, Expr, ExprKind, FunctionCall, Item, ItemKind, Lambda,
-    Root, StringLiteral,
+    Atom, BinOp, BindingDef, BindingUsage, Digits, Expr, ExprKind, FunctionCall, Item, ItemKind,
+    Lambda, Root, StringLiteral,
 };
 use crate::env::Env;
 use crate::val::{FuncOrCommand, Val};
@@ -69,6 +69,7 @@ impl Expr {
             ExprKind::FunctionCall(function_call) => function_call.eval(env),
             ExprKind::Lambda(lambda) => Ok(Val::Lambda(lambda)),
             ExprKind::BindingUsage(binding_usage) => binding_usage.eval(env),
+            ExprKind::Atom(atom) => Ok(atom.eval()),
             ExprKind::StringLiteral(string_literal) => Ok(string_literal.eval()),
             ExprKind::NumberLiteral(digits) => Ok(digits.eval()),
         }
@@ -195,6 +196,12 @@ impl BindingUsage {
 
         env.get_binding(&binding_name)
             .ok_or_else(|| EvalError::new(EvalErrorKind::BindingDoesNotExist, self.text_range()))
+    }
+}
+
+impl Atom {
+    fn eval(&self) -> Val {
+        Val::Str(self.text().to_string())
     }
 }
 
@@ -336,6 +343,36 @@ mod tests {
                 &env,
             ),
             Err(EvalError::new(EvalErrorKind::TooFewParams, call_range)),
+        );
+    }
+
+    #[test]
+    fn evaluate_lambda_with_atom_param() {
+        let mut env = Env::new(Vec::new()).unwrap();
+
+        let id_lambda = {
+            let mut p = Parser::new("|x| $x");
+            parse_lambda(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+
+            Lambda::cast(syntax_node).unwrap()
+        };
+
+        env.store_binding("id".into(), Val::Lambda(id_lambda));
+
+        let call_id_with_atom = {
+            let mut p = Parser::new("id this-is-an-atom");
+            parse_expr(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+
+            FunctionCall::cast(syntax_node).unwrap()
+        };
+
+        assert_eq!(
+            call_id_with_atom.eval(&env),
+            Ok(Val::Str("this-is-an-atom".to_string())),
         );
     }
 
