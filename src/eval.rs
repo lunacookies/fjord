@@ -2,16 +2,17 @@
 
 mod error;
 pub use error::EvalError;
-use error::EvalErrorKind;
+pub(crate) use error::EvalErrorKind;
 
 use crate::ast::{
     BinOp, BindingDef, BindingUsage, Digits, Expr, ExprKind, FunctionCall, Item, ItemKind, Lambda,
     Root, StringLiteral,
 };
 use crate::env::Env;
-use crate::val::Val;
+use crate::val::{FuncOrCommand, Val};
 use crate::Op;
 use std::cmp::Ordering;
+use std::process::Command;
 use text_size::TextRange;
 
 impl Root {
@@ -108,26 +109,44 @@ impl FunctionCall {
     fn eval(&self, env: &Env<'_>) -> Result<Val, EvalError> {
         let name = self.name().unwrap();
 
-        let val = env
-            .get_binding(name.text())
-            .ok_or_else(|| EvalError::new(EvalErrorKind::BindingDoesNotExist, name.text_range()))?;
+        let func_or_command = env
+            .get_func_or_command(name.text())
+            .map_err(|kind| EvalError::new(kind, name.text_range()))?;
 
-        if let Val::Lambda(lambda) = val {
-            let params: Result<Vec<_>, _> = self
-                .param_exprs()
-                .unwrap()
-                .map(|param| param.eval(env))
-                .collect();
+        let params: Result<Vec<_>, _> = self
+            .param_exprs()
+            .unwrap()
+            .map(|param| param.eval(env))
+            .collect();
 
-            let params = params?;
-            let params_range = self.params().unwrap().text_range();
+        let params = params?;
 
-            lambda.eval(params_range, params.into_iter(), env)
-        } else {
-            Err(EvalError::new(
-                EvalErrorKind::CallNonLambda,
-                name.text_range(),
-            ))
+        match func_or_command {
+            FuncOrCommand::Func(lambda) => {
+                let params_range = self.params().unwrap().text_range();
+                lambda.eval(params_range, params.into_iter(), env)
+            }
+            FuncOrCommand::Command(path) => {
+                let mut displayed_params = Vec::with_capacity(params.len());
+
+                for (param, range) in params
+                    .into_iter()
+                    .zip(self.param_exprs().unwrap().map(|expr| expr.text_range()))
+                {
+                    if let Some(display_repr) = param.display_repr() {
+                        displayed_params.push(display_repr);
+                    } else {
+                        return Err(EvalError::new(
+                            EvalErrorKind::UndisplayableCommandArg,
+                            range,
+                        ));
+                    }
+                }
+
+                Command::new(path).args(displayed_params);
+
+                Ok(Val::Nil)
+            }
         }
     }
 }

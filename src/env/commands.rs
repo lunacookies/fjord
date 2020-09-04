@@ -1,6 +1,6 @@
 use is_executable::IsExecutable;
 use std::collections::HashMap;
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
@@ -49,5 +49,9 @@ impl Commands {
             commands,
             search_path,
         })
+    }
+
+    pub(crate) fn get(&self, name: impl AsRef<OsStr>) -> Option<&Path> {
+        self.commands.get(name.as_ref()).map(PathBuf::as_path)
     }
 }

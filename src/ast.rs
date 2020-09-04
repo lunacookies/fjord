@@ -129,6 +129,10 @@ impl Expr {
                 .unwrap(),
         }
     }
+
+    pub(crate) fn text_range(&self) -> TextRange {
+        self.0.text_range()
+    }
 }
 
 ast_node!(BinOp, SyntaxKind::BinOp);

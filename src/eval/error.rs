@@ -16,7 +16,7 @@ impl EvalError {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub(super) enum EvalErrorKind {
+pub(crate) enum EvalErrorKind {
     /// when a binding is used that has not been defined
     BindingDoesNotExist,
     /// when too many parameters are supplied to a function
@@ -25,6 +25,10 @@ pub(super) enum EvalErrorKind {
     TooFewParams,
     /// when something that is not a lambda is called
     CallNonLambda,
+    /// when a function or command that does not exist is called
+    FuncOrCommandDoesNotExist,
+    /// when something that cannot be displayed is passed as an argument into a command
+    UndisplayableCommandArg,
     /// when a binary operation is applied to two types that are not numbers
     BinOpOnNonNumbers { lhs_ty: Ty, rhs_ty: Ty },
 }
