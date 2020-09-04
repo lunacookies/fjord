@@ -418,6 +418,28 @@ mod tests {
     }
 
     #[test]
+    fn call_non_existent_func_or_command() {
+        let env = Env::new(Vec::new()).unwrap();
+
+        let call = {
+            let mut p = Parser::new("non-existent 1 2 3");
+            parse_expr(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+
+            FunctionCall::cast(syntax_node).unwrap()
+        };
+
+        assert_eq!(
+            call.eval(&env),
+            Err(EvalError::new(
+                EvalErrorKind::FuncOrCommandDoesNotExist,
+                TextRange::new(0.into(), 12.into()),
+            )),
+        );
+    }
+
+    #[test]
     fn evaluate_binding_def() {
         let binding_def = {
             let mut p = Parser::new("let a = 5");
