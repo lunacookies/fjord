@@ -211,3 +211,19 @@ mod tests {
         test_separate_from_atom("\r\r\n\r\n\n", SyntaxKind::Eol);
     }
 }
+
+impl SyntaxKind {
+    pub(crate) fn can_start_expr(&self) -> bool {
+        match self {
+            Self::Atom
+            | Self::Digits
+            | Self::StringLiteral
+            | Self::True
+            | Self::False
+            | Self::Dollar
+            | Self::Pipe
+            | Self::LParen => true,
+            _ => false,
+        }
+    }
+}

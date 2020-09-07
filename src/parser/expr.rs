@@ -22,17 +22,11 @@ fn parse_expr_bp(p: &mut Parser, min_bp: u8, in_func_call_params: bool) {
     loop {
         let op = loop {
             match p.peek() {
+                Some(kind) if kind.can_start_expr() => break VirtualOp::Application,
                 Some(SyntaxKind::Plus) => break VirtualOp::Op(Op::Add),
                 Some(SyntaxKind::Minus) => break VirtualOp::Op(Op::Sub),
                 Some(SyntaxKind::Star) => break VirtualOp::Op(Op::Mul),
                 Some(SyntaxKind::Slash) => break VirtualOp::Op(Op::Div),
-                Some(SyntaxKind::Atom)
-                | Some(SyntaxKind::Digits)
-                | Some(SyntaxKind::StringLiteral)
-                | Some(SyntaxKind::True)
-                | Some(SyntaxKind::False)
-                | Some(SyntaxKind::Dollar)
-                | Some(SyntaxKind::Pipe) => break VirtualOp::Application,
                 Some(SyntaxKind::RParen) | Some(SyntaxKind::Eol) | None => return,
                 Some(_) => p.error("expected operator"),
             }
@@ -121,16 +115,10 @@ fn parse_atom(p: &mut Parser, in_func_call_params: bool) {
         }
     };
 
-    let at_expr = match p.lookahead(idx_of_next_non_whitespace_token) {
-        Some(SyntaxKind::Atom)
-        | Some(SyntaxKind::Digits)
-        | Some(SyntaxKind::StringLiteral)
-        | Some(SyntaxKind::True)
-        | Some(SyntaxKind::False)
-        | Some(SyntaxKind::Dollar)
-        | Some(SyntaxKind::Pipe) => true,
-        _ => false,
-    };
+    let at_expr = p
+        .lookahead(idx_of_next_non_whitespace_token)
+        .map(|kind| kind.can_start_expr())
+        .unwrap_or(false);
 
     // Being at an expression means that we’re at the start of a function call (i.e. we’re at the
     // name of the function being called) that has one or more parameters.
@@ -493,6 +481,36 @@ mod tests {
                   True@2..6 "true"
                   Whitespace@6..7 " "
                   False@7..12 "false""#]],
+        );
+    }
+
+    #[test]
+    fn parse_function_application_with_parens() {
+        test(
+            "f (1 + 1) (2 * 2)",
+            expect![[r#"
+            Root@0..17
+              FunctionCall@0..17
+                Atom@0..1 "f"
+                Whitespace@1..2 " "
+                FunctionCallParams@2..17
+                  LParen@2..3 "("
+                  BinOp@3..8
+                    Digits@3..4 "1"
+                    Whitespace@4..5 " "
+                    Plus@5..6 "+"
+                    Whitespace@6..7 " "
+                    Digits@7..8 "1"
+                  RParen@8..9 ")"
+                  Whitespace@9..10 " "
+                  LParen@10..11 "("
+                  BinOp@11..16
+                    Digits@11..12 "2"
+                    Whitespace@12..13 " "
+                    Star@13..14 "*"
+                    Whitespace@14..15 " "
+                    Digits@15..16 "2"
+                  RParen@16..17 ")""#]],
         );
     }
 }
