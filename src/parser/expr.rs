@@ -117,8 +117,7 @@ fn parse_atom(p: &mut Parser, in_func_call_params: bool) {
 
     let at_expr = p
         .lookahead(idx_of_next_non_whitespace_token)
-        .map(|kind| kind.can_start_expr())
-        .unwrap_or(false);
+        .map_or(false, SyntaxKind::can_start_expr);
 
     // Being at an expression means that we’re at the start of a function call (i.e. we’re at the
     // name of the function being called) that has one or more parameters.

@@ -31,7 +31,7 @@ impl Commands {
             // user can just type out the full file name.
             #[cfg(not(windows))]
             {
-                path.file_name().map(|file_name| file_name.to_os_string())
+                path.file_name().map(OsStr::to_os_string)
             }
         };
 

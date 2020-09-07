@@ -4,6 +4,7 @@
 
 use crate::lexer::SyntaxKind;
 use crate::{Op, SyntaxElement, SyntaxNode, SyntaxToken};
+use rowan::NodeOrToken;
 use smol_str::SmolStr;
 use text_size::TextRange;
 
@@ -73,7 +74,7 @@ impl BindingDef {
     pub(crate) fn binding_name(&self) -> Option<SmolStr> {
         self.0
             .children_with_tokens()
-            .filter_map(|element| element.into_token())
+            .filter_map(NodeOrToken::into_token)
             .find(|token| token.kind() == SyntaxKind::Atom)
             .map(|token| token.text().clone())
     }
@@ -159,7 +160,7 @@ impl BinOp {
     pub(crate) fn op(&self) -> Option<OpToken> {
         self.0
             .children_with_tokens()
-            .filter_map(|element| element.into_token())
+            .filter_map(NodeOrToken::into_token)
             .find_map(OpToken::cast)
     }
 
@@ -201,7 +202,7 @@ impl Lambda {
             params
                 .0
                 .children_with_tokens()
-                .filter_map(|element| element.into_token())
+                .filter_map(NodeOrToken::into_token)
                 .filter_map(Atom::cast)
                 .map(|atom| atom.text().clone()),
         )
@@ -220,7 +221,7 @@ impl BindingUsage {
     pub(crate) fn binding_name(&self) -> Option<SmolStr> {
         self.0
             .children_with_tokens()
-            .filter_map(|element| element.into_token())
+            .filter_map(NodeOrToken::into_token)
             .find(|token| token.kind() == SyntaxKind::Atom)
             .map(|token| token.text().clone())
     }

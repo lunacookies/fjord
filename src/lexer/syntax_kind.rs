@@ -213,7 +213,7 @@ mod tests {
 }
 
 impl SyntaxKind {
-    pub(crate) fn can_start_expr(&self) -> bool {
+    pub(crate) fn can_start_expr(self) -> bool {
         match self {
             Self::Atom
             | Self::Digits
