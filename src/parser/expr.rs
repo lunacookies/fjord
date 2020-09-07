@@ -29,6 +29,8 @@ fn parse_expr_bp(p: &mut Parser, min_bp: u8, in_func_call_params: bool) {
                 Some(SyntaxKind::Atom)
                 | Some(SyntaxKind::Digits)
                 | Some(SyntaxKind::StringLiteral)
+                | Some(SyntaxKind::True)
+                | Some(SyntaxKind::False)
                 | Some(SyntaxKind::Dollar)
                 | Some(SyntaxKind::Pipe) => break VirtualOp::Application,
                 Some(SyntaxKind::RParen) | Some(SyntaxKind::Eol) | None => return,
@@ -123,6 +125,8 @@ fn parse_atom(p: &mut Parser, in_func_call_params: bool) {
         Some(SyntaxKind::Atom)
         | Some(SyntaxKind::Digits)
         | Some(SyntaxKind::StringLiteral)
+        | Some(SyntaxKind::True)
+        | Some(SyntaxKind::False)
         | Some(SyntaxKind::Dollar)
         | Some(SyntaxKind::Pipe) => true,
         _ => false,
@@ -473,6 +477,22 @@ mod tests {
               RParen@14..15 ")"
               RParen@15..16 ")"
               RParen@16..17 ")""#]],
+        );
+    }
+
+    #[test]
+    fn parse_function_application_with_boolean() {
+        test(
+            "f true false",
+            expect![[r#"
+            Root@0..12
+              FunctionCall@0..12
+                Atom@0..1 "f"
+                Whitespace@1..2 " "
+                FunctionCallParams@2..12
+                  True@2..6 "true"
+                  Whitespace@6..7 " "
+                  False@7..12 "false""#]],
         );
     }
 }
