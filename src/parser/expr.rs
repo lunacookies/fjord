@@ -75,7 +75,10 @@ fn parse_expr_bp(p: &mut Parser, min_bp: u8, in_func_call_params: bool) {
 fn parse_one_expr(p: &mut Parser, in_func_call_params: bool) {
     match p.peek() {
         Some(SyntaxKind::Atom) => parse_atom(p, in_func_call_params),
-        Some(SyntaxKind::Digits) | Some(SyntaxKind::StringLiteral) => p.bump(),
+        Some(SyntaxKind::Digits)
+        | Some(SyntaxKind::StringLiteral)
+        | Some(SyntaxKind::True)
+        | Some(SyntaxKind::False) => p.bump(),
         Some(SyntaxKind::Dollar) => parse_binding_usage(p),
         Some(SyntaxKind::Pipe) => parse_lambda(p),
         Some(SyntaxKind::LParen) => {
@@ -228,6 +231,26 @@ mod tests {
             expect![[r#"
             Root@0..15
               StringLiteral@0..15 "\"Hello, world!\"""#]],
+        );
+    }
+
+    #[test]
+    fn parse_true() {
+        test(
+            "true",
+            expect![[r#"
+            Root@0..4
+              True@0..4 "true""#]],
+        );
+    }
+
+    #[test]
+    fn parse_false() {
+        test(
+            "false",
+            expect![[r#"
+            Root@0..5
+              False@0..5 "false""#]],
         );
     }
 
