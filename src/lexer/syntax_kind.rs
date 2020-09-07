@@ -16,6 +16,12 @@ pub(crate) enum SyntaxKind {
     #[regex("\"[^\"]*\"")]
     StringLiteral,
 
+    #[token("true")]
+    True,
+
+    #[token("false")]
+    False,
+
     #[token("=")]
     Equals,
 
@@ -132,6 +138,16 @@ mod tests {
     #[test]
     fn lex_string_literal() {
         test_join_to_atom("\"hello\"", SyntaxKind::StringLiteral);
+    }
+
+    #[test]
+    fn lex_true() {
+        test_join_to_atom("true", SyntaxKind::True);
+    }
+
+    #[test]
+    fn lex_false() {
+        test_join_to_atom("false", SyntaxKind::False);
     }
 
     #[test]
