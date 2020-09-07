@@ -99,8 +99,10 @@ pub(crate) enum ExprKind {
     Lambda(Lambda),
     BindingUsage(BindingUsage),
     Atom(Atom),
-    StringLiteral(StringLiteral),
     NumberLiteral(Digits),
+    StringLiteral(StringLiteral),
+    True(True),
+    False(False),
 }
 
 impl Expr {
@@ -114,8 +116,10 @@ impl Expr {
             }
             SyntaxElement::Token(ref token) => {
                 token.kind() == SyntaxKind::Atom
-                    || token.kind() == SyntaxKind::StringLiteral
                     || token.kind() == SyntaxKind::Digits
+                    || token.kind() == SyntaxKind::StringLiteral
+                    || token.kind() == SyntaxKind::True
+                    || token.kind() == SyntaxKind::False
             }
         };
 
@@ -136,8 +140,10 @@ impl Expr {
                 .unwrap(),
             SyntaxElement::Token(token) => Atom::cast(token.clone())
                 .map(ExprKind::Atom)
-                .or_else(|| StringLiteral::cast(token.clone()).map(ExprKind::StringLiteral))
                 .or_else(|| Digits::cast(token.clone()).map(ExprKind::NumberLiteral))
+                .or_else(|| StringLiteral::cast(token.clone()).map(ExprKind::StringLiteral))
+                .or_else(|| True::cast(token.clone()).map(ExprKind::True))
+                .or_else(|| False::cast(token.clone()).map(ExprKind::False))
                 .unwrap(),
         }
     }
@@ -252,6 +258,10 @@ ast_token!(Atom, SyntaxKind::Atom);
 ast_token!(Digits, SyntaxKind::Digits);
 
 ast_token!(StringLiteral, SyntaxKind::StringLiteral);
+
+ast_token!(True, SyntaxKind::True);
+
+ast_token!(False, SyntaxKind::False);
 
 ast_token!(Equals, SyntaxKind::Equals);
 
