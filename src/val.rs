@@ -9,6 +9,7 @@ use std::path::PathBuf;
 pub enum Val {
     Number(i64),
     Str(String),
+    Bool(bool),
     Lambda(Lambda),
     Nil,
 }
@@ -18,6 +19,7 @@ impl Val {
         match self {
             Self::Number(_) => Ty::Number,
             Self::Str(_) => Ty::Str,
+            Self::Bool(_) => Ty::Bool,
             Self::Lambda(_) => Ty::Lambda,
             Self::Nil => Ty::Nil,
         }
@@ -29,6 +31,13 @@ impl Val {
         match self {
             Self::Number(n) => Some(n.to_string()),
             Self::Str(s) => Some(s.clone()),
+            Self::Bool(b) => {
+                if *b {
+                    Some("true".to_string())
+                } else {
+                    Some("false".to_string())
+                }
+            }
             Self::Lambda(_) => None,
             Self::Nil => Some("nil".to_string()),
         }
@@ -39,6 +48,7 @@ impl Val {
 pub(crate) enum Ty {
     Number,
     Str,
+    Bool,
     Lambda,
     Nil,
 }
