@@ -70,8 +70,10 @@ impl Expr {
             ExprKind::Lambda(lambda) => Ok(Val::Lambda(lambda)),
             ExprKind::BindingUsage(binding_usage) => binding_usage.eval(env),
             ExprKind::Atom(atom) => Ok(atom.eval()),
-            ExprKind::StringLiteral(string_literal) => Ok(string_literal.eval()),
             ExprKind::NumberLiteral(digits) => Ok(digits.eval()),
+            ExprKind::StringLiteral(string_literal) => Ok(string_literal.eval()),
+            ExprKind::True(_) => Ok(Val::Bool(true)),
+            ExprKind::False(_) => Ok(Val::Bool(false)),
         }
     }
 }
@@ -205,18 +207,18 @@ impl Atom {
     }
 }
 
+impl Digits {
+    fn eval(&self) -> Val {
+        Val::Number(self.text().parse().unwrap())
+    }
+}
+
 impl StringLiteral {
     fn eval(&self) -> Val {
         let text = self.text();
 
         // Slice off quotes.
         Val::Str(text[1..text.len() - 1].to_string())
-    }
-}
-
-impl Digits {
-    fn eval(&self) -> Val {
-        Val::Number(self.text().parse().unwrap())
     }
 }
 
