@@ -5,7 +5,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[repr(u16)]
 pub(crate) enum SyntaxKind {
     #[token("let")]
-    Let,
+    LetKw,
 
     #[regex(r"([^\n\r =$|*()]|\\ )+")]
     Atom,
@@ -117,7 +117,7 @@ mod tests {
 
     #[test]
     fn lex_let_keyword() {
-        test_join_to_atom("let", SyntaxKind::Let);
+        test_join_to_atom("let", SyntaxKind::LetKw);
     }
 
     #[test]

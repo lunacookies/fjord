@@ -261,7 +261,7 @@ ls $b"#,
                 Root@0..31
                   Eol@0..1 "\n"
                   BindingDef@1..14
-                    Let@1..4 "let"
+                    LetKw@1..4 "let"
                     Whitespace@4..5 " "
                     Atom@5..6 "a"
                     Whitespace@6..7 " "
@@ -270,7 +270,7 @@ ls $b"#,
                     StringLiteral@9..14 "\"dir\""
                   Eol@14..15 "\n"
                   BindingDef@15..25
-                    Let@15..18 "let"
+                    LetKw@15..18 "let"
                     Whitespace@18..19 " "
                     Atom@19..20 "b"
                     Whitespace@20..21 " "

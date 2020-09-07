@@ -4,13 +4,13 @@ use crate::lexer::SyntaxKind;
 
 pub(crate) fn parse_item(p: &mut Parser) {
     match p.peek() {
-        Some(SyntaxKind::Let) => parse_binding_def(p),
+        Some(SyntaxKind::LetKw) => parse_binding_def(p),
         _ => parse_expr(p),
     }
 }
 
 pub(crate) fn parse_binding_def(p: &mut Parser) {
-    assert_eq!(p.peek(), Some(SyntaxKind::Let));
+    assert_eq!(p.peek(), Some(SyntaxKind::LetKw));
 
     p.builder.start_node(SyntaxKind::BindingDef.into());
     p.bump();
@@ -63,7 +63,7 @@ mod tests {
             expect![[r#"
             Root@0..10
               BindingDef@0..10
-                Let@0..3 "let"
+                LetKw@0..3 "let"
                 Whitespace@3..4 " "
                 Atom@4..5 "x"
                 Whitespace@5..6 " "
@@ -82,7 +82,7 @@ mod tests {
             expect![[r#"
             Root@0..27
               BindingDef@0..27
-                Let@0..3 "let"
+                LetKw@0..3 "let"
                 Whitespace@3..4 " "
                 Atom@4..7 "foo"
                 Whitespace@7..8 " "
@@ -109,7 +109,7 @@ mod tests {
             expect![[r#"
             Root@0..10
               BindingDef@0..10
-                Let@0..3 "let"
+                LetKw@0..3 "let"
                 Whitespace@3..4 " "
                 Error@4..5 "5"
                 Whitespace@5..6 " "
@@ -126,7 +126,7 @@ mod tests {
             expect![[r#"
             Root@0..10
               BindingDef@0..10
-                Let@0..3 "let"
+                LetKw@0..3 "let"
                 Whitespace@3..4 " "
                 Atom@4..5 "x"
                 Whitespace@5..6 " "
@@ -143,7 +143,7 @@ mod tests {
             expect![[r#"
             Root@0..9
               BindingDef@0..9
-                Let@0..3 "let"
+                LetKw@0..3 "let"
                 Whitespace@3..4 " "
                 Atom@4..5 "a"
                 Whitespace@5..6 " "
