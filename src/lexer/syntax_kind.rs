@@ -7,7 +7,7 @@ pub(crate) enum SyntaxKind {
     #[token("let")]
     LetKw,
 
-    #[regex(r"([^\n\r =$|*()]|\\ )+")]
+    #[regex(r"([^\n\r =$|*(){}]|\\ )+")]
     Atom,
 
     #[regex("[0-9]+", priority = 2)]
@@ -48,6 +48,12 @@ pub(crate) enum SyntaxKind {
 
     #[token(")")]
     RParen,
+
+    #[token("{")]
+    LBrace,
+
+    #[token("}")]
+    RBrace,
 
     #[regex(" +")]
     Whitespace,
@@ -194,6 +200,16 @@ mod tests {
     #[test]
     fn lex_r_paren() {
         test_separate_from_atom(")", SyntaxKind::RParen);
+    }
+
+    #[test]
+    fn lex_l_brace() {
+        test_separate_from_atom("{", SyntaxKind::LBrace);
+    }
+
+    #[test]
+    fn lex_r_brace() {
+        test_separate_from_atom("}", SyntaxKind::RBrace);
     }
 
     #[test]
