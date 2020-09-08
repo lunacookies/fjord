@@ -13,8 +13,9 @@ pub(crate) fn parse_expr(p: &mut Parser) {
 }
 
 fn parse_expr_bp(p: &mut Parser, min_bp: u8, in_func_call_params: bool) {
-    let checkpoint = p.builder.checkpoint();
+    p.skip_ws();
 
+    let checkpoint = p.builder.checkpoint();
     parse_one_expr(p, in_func_call_params);
 
     p.skip_ws();
@@ -464,6 +465,19 @@ mod tests {
               RParen@14..15 ")"
               RParen@15..16 ")"
               RParen@16..17 ")""#]],
+        );
+    }
+
+    #[test]
+    fn parse_parenthesized_expression_with_whitespace_before_paren() {
+        test(
+            "( 5)",
+            expect![[r#"
+            Root@0..4
+              LParen@0..1 "("
+              Whitespace@1..2 " "
+              Digits@2..3 "5"
+              RParen@3..4 ")""#]],
         );
     }
 
