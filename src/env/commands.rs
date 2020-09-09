@@ -24,7 +24,7 @@ impl Commands {
             // extension).
             #[cfg(windows)]
             {
-                path.file_stem().to_os_string()
+                path.file_stem().map(OsStr::to_os_string)
             }
 
             // If we’re not on Windows, then we don’t have to worry about the file extenion, and the
