@@ -73,6 +73,7 @@ pub(crate) enum SyntaxKind {
     Lambda,
     LambdaParams,
     BindingUsage,
+    Block,
 }
 
 impl From<SyntaxKind> for rowan::SyntaxKind {
@@ -238,7 +239,8 @@ impl SyntaxKind {
             | Self::False
             | Self::Dollar
             | Self::Pipe
-            | Self::LParen => true,
+            | Self::LParen
+            | Self::LBrace => true,
             _ => false,
         }
     }
