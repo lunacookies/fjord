@@ -5,8 +5,8 @@ pub use error::EvalError;
 pub(crate) use error::EvalErrorKind;
 
 use crate::ast::{
-    Atom, BinOp, BindingDef, BindingUsage, Digits, Expr, ExprKind, FunctionCall, Item, ItemKind,
-    Lambda, Root, StringLiteral,
+    Atom, BinOp, BindingDef, BindingUsage, Block, Digits, Expr, ExprKind, FunctionCall, Item,
+    ItemKind, Lambda, Root, StringLiteral,
 };
 use crate::env::Env;
 use crate::val::{FuncOrCommand, Val};
@@ -15,27 +15,29 @@ use std::cmp::Ordering;
 use std::process::Command;
 use text_size::TextRange;
 
+fn eval_items(items: Vec<Item>, env: &mut Env<'_>) -> Result<Val, EvalError> {
+    let num_items = items.len();
+    let at_last = |idx| idx == num_items - 1;
+
+    if items.is_empty() {
+        return Ok(Val::Nil);
+    }
+
+    for (idx, item) in items.iter().enumerate() {
+        let eval_output = item.eval(env)?;
+        if at_last(idx) {
+            return Ok(eval_output);
+        }
+    }
+
+    // All lists are either empty (see the is_empty call before the for loop) or have a last
+    // item (see at_last call above), so we are guaranteed to have returned by this point.
+    unreachable!()
+}
+
 impl Root {
     pub(crate) fn eval(&self, env: &mut Env<'_>) -> Result<Val, EvalError> {
-        let items: Vec<_> = self.items().collect();
-
-        let num_items = items.len();
-        let at_last = |idx| idx == num_items - 1;
-
-        if items.is_empty() {
-            return Ok(Val::Nil);
-        }
-
-        for (idx, item) in items.iter().enumerate() {
-            let eval_output = item.eval(env)?;
-            if at_last(idx) {
-                return Ok(eval_output);
-            }
-        }
-
-        // All lists are either empty (see the is_empty call before the for loop) or have a last
-        // item (see at_last call above), so we are guaranteed to have returned by this point.
-        unreachable!()
+        eval_items(self.items().collect(), env)
     }
 }
 
@@ -69,6 +71,7 @@ impl Expr {
             ExprKind::FunctionCall(function_call) => function_call.eval(env),
             ExprKind::Lambda(lambda) => Ok(Val::Lambda(lambda)),
             ExprKind::BindingUsage(binding_usage) => binding_usage.eval(env),
+            ExprKind::Block(block) => block.eval(env),
             ExprKind::Atom(atom) => Ok(atom.eval()),
             ExprKind::NumberLiteral(digits) => Ok(digits.eval()),
             ExprKind::StringLiteral(string_literal) => Ok(string_literal.eval()),
@@ -198,6 +201,13 @@ impl BindingUsage {
 
         env.get_binding(&binding_name)
             .ok_or_else(|| EvalError::new(EvalErrorKind::BindingDoesNotExist, self.text_range()))
+    }
+}
+
+impl Block {
+    fn eval(&self, env: &Env<'_>) -> Result<Val, EvalError> {
+        let mut child_env = env.create_child();
+        eval_items(self.items().collect(), &mut child_env)
     }
 }
 

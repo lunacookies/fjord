@@ -99,6 +99,7 @@ pub(crate) enum ExprKind {
     FunctionCall(FunctionCall),
     Lambda(Lambda),
     BindingUsage(BindingUsage),
+    Block(Block),
     Atom(Atom),
     NumberLiteral(Digits),
     StringLiteral(StringLiteral),
@@ -114,6 +115,7 @@ impl Expr {
                     || FunctionCall::cast(node.clone()).is_some()
                     || Lambda::cast(node.clone()).is_some()
                     || BindingUsage::cast(node.clone()).is_some()
+                    || Block::cast(node.clone()).is_some()
             }
             SyntaxElement::Token(ref token) => {
                 token.kind() == SyntaxKind::Atom
@@ -138,6 +140,7 @@ impl Expr {
                 .or_else(|| FunctionCall::cast(node.clone()).map(ExprKind::FunctionCall))
                 .or_else(|| Lambda::cast(node.clone()).map(ExprKind::Lambda))
                 .or_else(|| BindingUsage::cast(node.clone()).map(ExprKind::BindingUsage))
+                .or_else(|| Block::cast(node.clone()).map(ExprKind::Block))
                 .unwrap(),
             SyntaxElement::Token(token) => Atom::cast(token.clone())
                 .map(ExprKind::Atom)
@@ -224,6 +227,14 @@ impl BindingUsage {
             .filter_map(NodeOrToken::into_token)
             .find(|token| token.kind() == SyntaxKind::Atom)
             .map(|token| token.text().clone())
+    }
+}
+
+ast_node!(Block, SyntaxKind::Block);
+
+impl Block {
+    pub(crate) fn items(&self) -> impl Iterator<Item = Item> {
+        self.0.children_with_tokens().filter_map(Item::cast)
     }
 }
 
