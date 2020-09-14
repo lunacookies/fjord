@@ -7,10 +7,10 @@
     rust_2018_idioms
 )]
 
+mod ast;
 mod lang;
 mod lexer;
 
-pub mod ast;
 pub mod env;
 pub mod eval;
 pub mod parser;

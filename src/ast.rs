@@ -1,7 +1,3 @@
-//! Abstract Syntax Trees.
-//!
-//! The nodes here are partially auto-generated, and as such lack documentation.
-
 use crate::lexer::SyntaxKind;
 use crate::{Op, SyntaxElement, SyntaxNode, SyntaxToken};
 use rowan::NodeOrToken;
