@@ -7,6 +7,9 @@ pub(crate) enum SyntaxKind {
     #[token("let")]
     LetKw,
 
+    #[token("if")]
+    IfKw,
+
     #[regex(r"([^\n\r =$|*(){}]|\\ )+")]
     Atom,
 
@@ -125,6 +128,11 @@ mod tests {
     #[test]
     fn lex_let_keyword() {
         test_join_to_atom("let", SyntaxKind::LetKw);
+    }
+
+    #[test]
+    fn lex_if_keyword() {
+        test_join_to_atom("if", SyntaxKind::IfKw);
     }
 
     #[test]
