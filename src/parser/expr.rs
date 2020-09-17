@@ -30,6 +30,8 @@ fn parse_expr_bp(p: &mut Parser, min_bp: u8, in_func_call_params: bool) {
                 Some(SyntaxKind::Slash) => break VirtualOp::Op(Op::Div),
                 Some(SyntaxKind::RParen)
                 | Some(SyntaxKind::RBrace)
+                | Some(SyntaxKind::ThenKw)
+                | Some(SyntaxKind::ElseKw)
                 | Some(SyntaxKind::Eol)
                 | None => return,
                 Some(_) => p.error("expected operator"),
@@ -73,6 +75,7 @@ fn parse_expr_bp(p: &mut Parser, min_bp: u8, in_func_call_params: bool) {
 
 fn parse_one_expr(p: &mut Parser, in_func_call_params: bool) {
     match p.peek() {
+        Some(SyntaxKind::IfKw) => parse_if(p),
         Some(SyntaxKind::Atom) => parse_atom(p, in_func_call_params),
         Some(SyntaxKind::Digits)
         | Some(SyntaxKind::StringLiteral)
@@ -93,6 +96,47 @@ fn parse_one_expr(p: &mut Parser, in_func_call_params: bool) {
         Some(SyntaxKind::LBrace) => parse_block(p),
         _ => p.error("expected expression"),
     }
+}
+
+fn parse_if(p: &mut Parser) {
+    assert_eq!(p.peek(), Some(SyntaxKind::IfKw));
+
+    p.builder.start_node(SyntaxKind::If.into());
+    p.bump();
+    p.skip_ws();
+
+    parse_expr(p);
+    p.skip_ws();
+
+    if p.peek() == Some(SyntaxKind::ThenKw) {
+        p.bump();
+        p.skip_ws()
+    } else {
+        p.error("expected then keyword");
+    }
+
+    if p.peek() == Some(SyntaxKind::LBrace) {
+        parse_block(p);
+    } else {
+        p.error("expected block");
+    }
+
+    p.skip_ws();
+
+    if p.peek() == Some(SyntaxKind::ElseKw) {
+        p.bump();
+        p.skip_ws();
+    } else {
+        p.error("expected else keyword");
+    }
+
+    if p.peek() == Some(SyntaxKind::LBrace) {
+        parse_block(p);
+    } else {
+        p.error("expected block");
+    }
+
+    p.builder.finish_node();
 }
 
 fn parse_atom(p: &mut Parser, in_func_call_params: bool) {
@@ -264,6 +308,37 @@ mod tests {
             expect![[r#"
             Root@0..15
               StringLiteral@0..15 "\"Hello, world!\"""#]],
+        );
+    }
+
+    #[test]
+    fn parse_if() {
+        test(
+            "if true then { false } else { true }",
+            expect![[r#"
+            Root@0..36
+              If@0..36
+                IfKw@0..2 "if"
+                Whitespace@2..3 " "
+                True@3..7 "true"
+                Whitespace@7..8 " "
+                ThenKw@8..12 "then"
+                Whitespace@12..13 " "
+                Block@13..22
+                  LBrace@13..14 "{"
+                  Whitespace@14..15 " "
+                  False@15..20 "false"
+                  Whitespace@20..21 " "
+                  RBrace@21..22 "}"
+                Whitespace@22..23 " "
+                ElseKw@23..27 "else"
+                Whitespace@27..28 " "
+                Block@28..36
+                  LBrace@28..29 "{"
+                  Whitespace@29..30 " "
+                  True@30..34 "true"
+                  Whitespace@34..35 " "
+                  RBrace@35..36 "}""#]],
         );
     }
 
