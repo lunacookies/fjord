@@ -10,6 +10,9 @@ pub(crate) enum SyntaxKind {
     #[token("if")]
     IfKw,
 
+    #[token("then")]
+    ThenKw,
+
     #[token("else")]
     ElseKw,
 
@@ -137,6 +140,11 @@ mod tests {
     #[test]
     fn lex_if_keyword() {
         test_join_to_atom("if", SyntaxKind::IfKw);
+    }
+
+    #[test]
+    fn lex_then_keyword() {
+        test_join_to_atom("then", SyntaxKind::ThenKw);
     }
 
     #[test]
