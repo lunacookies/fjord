@@ -257,7 +257,8 @@ mod tests {
 impl SyntaxKind {
     pub(crate) fn can_start_expr(self) -> bool {
         match self {
-            Self::Atom
+            Self::IfKw
+            | Self::Atom
             | Self::Digits
             | Self::StringLiteral
             | Self::True
