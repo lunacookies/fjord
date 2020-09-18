@@ -33,4 +33,6 @@ pub(crate) enum EvalErrorKind {
     FailedRunningCommand,
     /// when a binary operation is applied to two types that are not numbers
     BinOpOnNonNumbers { lhs_ty: Ty, rhs_ty: Ty },
+    /// when a non-boolean condition is used in an if-expression
+    NonBoolCond,
 }

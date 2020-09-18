@@ -92,6 +92,7 @@ pub(crate) struct Expr(SyntaxElement);
 
 pub(crate) enum ExprKind {
     BinOp(BinOp),
+    If(If),
     FunctionCall(FunctionCall),
     Lambda(Lambda),
     BindingUsage(BindingUsage),
@@ -108,6 +109,7 @@ impl Expr {
         let is_expr = match element {
             SyntaxElement::Node(ref node) => {
                 BinOp::cast(node.clone()).is_some()
+                    || If::cast(node.clone()).is_some()
                     || FunctionCall::cast(node.clone()).is_some()
                     || Lambda::cast(node.clone()).is_some()
                     || BindingUsage::cast(node.clone()).is_some()
@@ -133,6 +135,7 @@ impl Expr {
         match &self.0 {
             SyntaxElement::Node(node) => BinOp::cast(node.clone())
                 .map(ExprKind::BinOp)
+                .or_else(|| If::cast(node.clone()).map(ExprKind::If))
                 .or_else(|| FunctionCall::cast(node.clone()).map(ExprKind::FunctionCall))
                 .or_else(|| Lambda::cast(node.clone()).map(ExprKind::Lambda))
                 .or_else(|| BindingUsage::cast(node.clone()).map(ExprKind::BindingUsage))
@@ -169,6 +172,29 @@ impl BinOp {
 
     pub(crate) fn rhs(&self) -> Option<Expr> {
         self.0.children_with_tokens().filter_map(Expr::cast).nth(1)
+    }
+}
+
+ast_node!(If, SyntaxKind::If);
+
+impl If {
+    pub(crate) fn condition(&self) -> Option<Expr> {
+        self.0.children_with_tokens().find_map(Expr::cast)
+    }
+
+    pub(crate) fn true_branch(&self) -> Option<Expr> {
+        self.0
+            .children()
+            .find_map(Block::cast)
+            .and_then(|block| Expr::cast(block.0.into()))
+    }
+
+    pub(crate) fn false_branch(&self) -> Option<Expr> {
+        self.0
+            .children()
+            .filter_map(Block::cast)
+            .nth(1)
+            .and_then(|block| Expr::cast(block.0.into()))
     }
 }
 

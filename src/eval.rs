@@ -5,7 +5,7 @@ pub use error::EvalError;
 pub(crate) use error::EvalErrorKind;
 
 use crate::ast::{
-    Atom, BinOp, BindingDef, BindingUsage, Block, Digits, Expr, ExprKind, FunctionCall, Item,
+    Atom, BinOp, BindingDef, BindingUsage, Block, Digits, Expr, ExprKind, FunctionCall, If, Item,
     ItemKind, Lambda, Root, StringLiteral,
 };
 use crate::env::Env;
@@ -68,6 +68,7 @@ impl Expr {
     fn eval(&self, env: &Env<'_>) -> Result<Val, EvalError> {
         match self.kind() {
             ExprKind::BinOp(bin_op) => bin_op.eval(env),
+            ExprKind::If(if_) => if_.eval(env),
             ExprKind::FunctionCall(function_call) => function_call.eval(env),
             ExprKind::Lambda(lambda) => Ok(Val::Lambda(lambda)),
             ExprKind::BindingUsage(binding_usage) => binding_usage.eval(env),
@@ -107,6 +108,21 @@ impl BinOp {
 
                 Err(EvalError::new(error_kind, self.text_range()))
             }
+        }
+    }
+}
+
+impl If {
+    fn eval(&self, env: &Env<'_>) -> Result<Val, EvalError> {
+        let condition = self.condition().unwrap();
+
+        match condition.eval(env)? {
+            Val::Bool(true) => self.true_branch().unwrap().eval(env),
+            Val::Bool(false) => self.false_branch().unwrap().eval(env),
+            _ => Err(EvalError::new(
+                EvalErrorKind::NonBoolCond,
+                condition.text_range(),
+            )),
         }
     }
 }
@@ -235,10 +251,61 @@ impl StringLiteral {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::expr::{parse_binding_usage, parse_expr, parse_lambda};
+    use crate::parser::expr::{parse_binding_usage, parse_expr, parse_if, parse_lambda};
     use crate::parser::item::parse_binding_def;
     use crate::parser::Parser;
     use crate::val::Ty;
+
+    #[test]
+    fn evaluate_if_expr_with_true_condition() {
+        let if_ = {
+            let mut p = Parser::new("if true then { 1 } else { 0 }");
+            parse_if(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+            If::cast(syntax_node).unwrap()
+        };
+
+        let env = Env::new(Vec::new()).unwrap();
+
+        assert_eq!(if_.eval(&env), Ok(Val::Number(1)));
+    }
+
+    #[test]
+    fn evaluate_if_expr_with_false_condition() {
+        let if_ = {
+            let mut p = Parser::new(r#"if false then { "Hello" } else { "Goodbye" }"#);
+            parse_if(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+            If::cast(syntax_node).unwrap()
+        };
+
+        let env = Env::new(Vec::new()).unwrap();
+
+        assert_eq!(if_.eval(&env), Ok(Val::Str("Goodbye".to_string())));
+    }
+
+    #[test]
+    fn evaluate_if_expr_with_non_bool_condition() {
+        let if_ = {
+            let mut p = Parser::new(r#"if "hello" then { 10 - 1 } else { 100 / 2 }"#);
+            parse_if(&mut p);
+
+            let syntax_node = p.finish_and_get_syntax();
+            If::cast(syntax_node).unwrap()
+        };
+
+        let env = Env::new(Vec::new()).unwrap();
+
+        assert_eq!(
+            if_.eval(&env),
+            Err(EvalError::new(
+                EvalErrorKind::NonBoolCond,
+                TextRange::new(3.into(), 10.into()),
+            )),
+        );
+    }
 
     #[test]
     fn evaluate_non_existent_binding_usage() {

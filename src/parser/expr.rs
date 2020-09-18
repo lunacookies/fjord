@@ -98,7 +98,7 @@ fn parse_one_expr(p: &mut Parser, in_func_call_params: bool) {
     }
 }
 
-fn parse_if(p: &mut Parser) {
+pub(crate) fn parse_if(p: &mut Parser) {
     assert_eq!(p.peek(), Some(SyntaxKind::IfKw));
 
     p.builder.start_node(SyntaxKind::If.into());
