@@ -7,7 +7,7 @@ homepage = "https://github.com/arzg/fjord"
 license = "MIT OR Apache-2.0"
 name = "fjord"
 repository = "https://github.com/arzg/fjord"
-version = "0.4.11"
+version = "0.4.12"
 
 [dependencies]
 is_executable = "0.1"
